@@ -13,7 +13,7 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
     const row = {
       id, cate_id: id, member_id: LOCAL_MEMBER_ID, type: int(ctx, 'type', 1),
       title: str(ctx, 'title', '新分类'), icon_id: int(ctx, 'iconId', id),
-      base_icon: 'more', icon: 'more', is_custom: 1, status: 1,
+      base_icon: str(ctx, 'icon', 'more'), icon: str(ctx, 'icon', 'more'), is_custom: 1, status: 1,
       sort: id, hidden: 0, create_time: nowSec(),
     };
     await save('category', row);
@@ -26,7 +26,10 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
     const row = {
       ...old, cate_id: int(ctx, 'cateId', Number(old.cate_id ?? id)),
       title: str(ctx, 'title', String(old.title ?? '')), type: int(ctx, 'type', Number(old.type ?? 1)),
-      icon_id: int(ctx, 'iconId', Number(old.icon_id ?? 1)), update_time: nowSec(),
+      icon_id: int(ctx, 'iconId', Number(old.icon_id ?? 1)),
+      icon: str(ctx, 'icon', String(old.icon ?? 'more')),
+      base_icon: str(ctx, 'icon', String(old.base_icon ?? old.icon ?? 'more')),
+      update_time: nowSec(),
     };
     await save('category', row);
     return ok(row);

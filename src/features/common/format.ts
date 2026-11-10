@@ -34,6 +34,16 @@ export function jsonArray(v: unknown): string[] {
   return [];
 }
 
+/** 整数分 → 元（展示用，不四舍五入）。空值返回空串，避免编辑框被填成 "0"。 */
+export function centsToYuan(cents: unknown): string {
+  const n = N(cents, 0);
+  if (!n) return '';
+  const neg = n < 0;
+  const abs = Math.abs(n);
+  const yuan = `${Math.floor(abs / 100)}${abs % 100 ? `.${String(abs % 100).padStart(2, '0')}` : ''}`;
+  return neg ? `-${yuan}` : yuan;
+}
+
 /** 金额输入 → 整数分；严格校验，非法输入返回 null（UI 会提示而不是静默吞字符）。 */
 export function toCents(input: string): number | null {
   const s = input.trim();

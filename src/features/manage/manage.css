@@ -1,0 +1,30 @@
+/* 账本 / 分类 / 资产 模块：灯影玻璃风格，选中态用更亮更实的玻璃面。 */
+.manage-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 42px; height: 42px; border-radius: 14px;
+  background: var(--chip-fill); border: 1px solid var(--glass-border); color: var(--brand);
+}
+.manage-icon.selected { background: var(--chip-selected-fill); font-weight: 600; }
+.manage-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 72px; padding: 10px; border-radius: 16px;
+  background: var(--chip-fill); border: 1px solid var(--glass-border); color: var(--text-primary);
+}
+.manage-tile.selected { background: var(--chip-selected-fill); font-weight: 600; box-shadow: 0 2px 10px var(--glass-shadow); }
+.manage-progress { height: 8px; border-radius: 999px; background: var(--search-bg); overflow: hidden; }
+.manage-bar { height: 100%; border-radius: 999px; background: var(--brand-secondary); transition: width .25s; }
+.manage-bar.over { background: var(--danger); }
+.manage-code {
+  padding: 12px 14px; border-radius: 14px; background: var(--search-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 2px; text-align: center;
+}
+.manage-note { padding: 10px 4px; line-height: 1.8; }
+.widget-preview {
+  padding: 14px 16px; border-radius: 18px;
+  background: var(--card-bg); border: 1px solid var(--glass-border);
+  box-shadow: 0 6px 18px var(--glass-shadow);
+}
+.widget-preview.size-small { max-width: 160px; min-height: 72px; }
+.widget-preview.size-medium { max-width: 280px; min-height: 96px; }
+.widget-preview.size-large { min-height: 120px; }

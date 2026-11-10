@@ -21,12 +21,35 @@ import { AutoBillData } from '../features/auto/pages/AutoBillData';
 import { BillIdentified } from '../features/auto/pages/BillIdentified';
 import { RuleList } from '../features/auto/pages/RuleList';
 import { KeepAlive } from '../features/auto/pages/KeepAlive';
+import { CategoryManage } from '../features/manage/CategoryManage';
+import { CateEdit } from '../features/manage/CateEdit';
+import { TagList } from '../features/manage/TagList';
+import { BookList } from '../features/manage/BookList';
+import { BookEdit } from '../features/manage/BookEdit';
+import { BookDetail } from '../features/manage/BookDetail';
+import { BookMemberList } from '../features/manage/BookMemberList';
+import { AssetHome } from '../features/manage/AssetHome';
+import { AssetEdit } from '../features/manage/AssetEdit';
+import { AssetDetail } from '../features/manage/AssetDetail';
+import { SavePlanList, SavePlanEdit, SavePlanDetail } from '../features/manage/SavePlan';
+import { FixedBillList, FixedBillEdit, ReminderList } from '../features/manage/FixedBill';
+import { InstallmentList, InstallmentEdit, InstallmentDetail } from '../features/manage/Installment';
+import { ImportHome, ImportPaste, ImportOcr, ImportHistory } from '../features/manage/Import';
+import { WidgetHome, WidgetEdit } from '../features/manage/Widget';
 
 const registry: Record<string, ComponentType<PageProps>> = {
   BillsHome, StatsHome, AutoHome, MineHome,
   BillEdit, BillList, BillDetail, GlobalSearch,
   ReportCategory, ReportTrend, BudgetList, ExportBills,
   GuideAutoBill, AutoBillSetting, AppList, AutoBillData, BillIdentified, RuleList, KeepAlive,
+  CategoryManage, CateEdit, TagList,
+  BookList, BookEdit, BookDetail, BookMemberList,
+  AssetHome, AssetEdit, AssetDetail,
+  SavePlanList, SavePlanEdit, SavePlanDetail,
+  FixedBillList, FixedBillEdit, ReminderList,
+  InstallmentList, InstallmentEdit, InstallmentDetail,
+  ImportHome, ImportPaste, ImportOcr, ImportHistory,
+  WidgetHome, WidgetEdit,
 };
 
 /** 动态扩展：模块通过 registerRoutes 追加自己的页面。 */

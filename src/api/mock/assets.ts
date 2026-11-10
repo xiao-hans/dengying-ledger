@@ -185,7 +185,7 @@ async function assetWrite(ctx: RequestCtx, update: boolean) {
     desc: str(ctx, 'desc', String(old.desc ?? '')), icon: str(ctx, 'icon', String(old.icon ?? 'wallet')),
     currency: str(ctx, 'currency', String(old.currency ?? 'CNY')),
     balance_cents: moneyCents(ctx, 'balance', Number(old.balance_cents ?? 0)),
-    credit_line: int(ctx, 'creditLine', Number(old.credit_line ?? 0)),
+    credit_line: moneyCents(ctx, 'creditLine', Number(old.credit_line ?? 0)),
     repayment_date: int(ctx, 'repaymentDate', Number(old.repayment_date ?? 0)),
     statement_date: int(ctx, 'statementDate', Number(old.statement_date ?? 0)),
     is_remind: int(ctx, 'isRemind', Number(old.is_remind ?? 0)),
