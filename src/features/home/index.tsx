@@ -5,6 +5,7 @@
 import { Icon } from '../../components/Icon';
 import { TopBar, SearchPill, ChipRow, GlassCard, EmptyState, SectionTitle, ListRow, Switch, formatMoney } from '../../components/ui';
 import { useNav } from '../../app/navigation';
+import { useToast } from '../../app/useToast';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { PageProps } from '../../app/App';
 import { useState, useMemo } from 'react';
@@ -163,10 +164,24 @@ export function StatsHome(_: PageProps) {
   );
 }
 
-/* ---------------- 自动记账首页 ---------------- */
+/* ---------------- 自动记账首页（真实设置与队列） ---------------- */
 export function AutoHome(_: PageProps) {
   const nav = useNav();
-  const [enabled, setEnabled] = useState(false);
+  const toast = useToast();
+  const { data, reload } = useAsync(async () => {
+    const { loadSettings, pendingEvents } = await import('../auto/engine');
+    const [settings, events, rules] = await Promise.all([loadSettings(), pendingEvents(), api.ruleList()]);
+    return { settings, pending: events.filter((e) => e.status === 0).length, rules: rules.length };
+  });
+  const s = data?.settings;
+  const onCount = [s?.notification, s?.accessibility, s?.ocr].filter(Boolean).length;
+  async function toggleMaster(v: boolean) {
+    const { saveSetting } = await import('../auto/engine');
+    await saveSetting('master', v);
+    if (v && !onCount) { toast.show('先完成 5 步引导，选择要开启的识别方式'); nav.push('GuideAutoBill'); return; }
+    toast.show(v ? '自动记账已开启' : '自动记账已关闭');
+    reload();
+  }
   return (
     <div className="page">
       <TopBar title="自动记账" brand right={<button className="icon-btn" aria-label="设置" onClick={() => nav.push('AutoBillSetting')}><Icon name="settings" /></button>} />
@@ -178,28 +193,29 @@ export function AutoHome(_: PageProps) {
                 <span className="list-row-icon"><Icon name="auto" size={19} /></span>
                 <div>
                   <div className="t-body-large t-semi">自动记账</div>
-                  <div className="t-label-medium t-secondary">{enabled ? '已开启 · 识别结果需你确认' : '未开启'}</div>
+                  <div className="t-label-medium t-secondary">{s?.master ? `已开启 · ${onCount} 路采集 · 结果需你确认` : '未开启'}</div>
                 </div>
               </div>
-              <Switch checked={enabled} onChange={(v) => { setEnabled(v); if (v) nav.push('GuideAutoBill'); }} />
+              <Switch checked={!!s?.master} onChange={toggleMaster} />
             </div>
           </GlassCard>
 
-          <SectionTitle>三路采集</SectionTitle>
+          <SectionTitle action={<button onClick={() => nav.push('GuideAutoBill')}>开启引导 ›</button>}>三路采集</SectionTitle>
           <div className="card">
-            <ListRow icon="bell" title="通知识别" subtitle="支付通知 → 金额与商户" onClick={() => nav.push('AutoBillData', { source: 'notification' })} />
-            <ListRow icon="shield" title="无障碍识别" subtitle="页面文本树 → 交易信息" onClick={() => nav.push('AutoBillData', { source: 'accessibility' })} />
-            <ListRow icon="camera" title="截屏 OCR" subtitle="截图 → 文字识别" onClick={() => nav.push('AutoBillData', { source: 'ocr' })} />
+            <ListRow icon="bell" title="通知识别" subtitle={s?.notification ? '已开启 · 支付通知 → 金额与商户' : '未开启 · 支付通知 → 金额与商户'} right={s?.notification ? '开' : '关'} onClick={() => nav.push('AutoBillData', { source: 'notification' })} />
+            <ListRow icon="shield" title="无障碍识别" subtitle={s?.accessibility ? '已开启 · 页面文本树 → 交易信息' : '未开启 · 页面文本树 → 交易信息'} right={s?.accessibility ? '开' : '关'} onClick={() => nav.push('AutoBillData', { source: 'accessibility' })} />
+            <ListRow icon="camera" title="截屏 OCR" subtitle={s?.ocr ? '已开启 · 截图 → 文字识别' : '未开启 · 截图 → 文字识别'} right={s?.ocr ? '开' : '关'} onClick={() => nav.push('AutoBillData', { source: 'ocr' })} />
           </div>
 
           <SectionTitle>识别与确认</SectionTitle>
           <div className="card">
-            <ListRow icon="check" title="待确认队列" subtitle="识别结果不会静默入账" right="0 条" onClick={() => nav.push('BillIdentified')} />
-            <ListRow icon="note" title="匹配规则" subtitle="关键词 → 分类 / 账户 / 标签" onClick={() => nav.push('RuleList')} />
+            <ListRow icon="check" title="待确认队列" subtitle="识别结果不会静默入账" right={`${data?.pending ?? 0} 条`} onClick={() => nav.push('BillIdentified')} />
+            <ListRow icon="note" title="匹配规则" subtitle={`关键词 → 分类 / 账户 / 标签 · ${data?.rules ?? 0} 条`} onClick={() => nav.push('RuleList')} />
+            <ListRow icon="grid" title="监听 App 白名单" subtitle={s ? `已选 ${s.apps.length} 个` : '读取中…'} onClick={() => nav.push('AppList')} />
             <ListRow icon="refresh" title="保活设置" subtitle="保证后台持续监听" onClick={() => nav.push('KeepAlive')} />
           </div>
-          <div className="t-label-medium t-secondary" style={{ padding: '14px 4px' }}>
-            灯影不会在未经你确认的情况下写入任何账单；Web 版以模拟采集等价覆盖交互链路，不申请系统级权限。
+          <div className="t-label-medium t-secondary" style={{ padding: '14px 4px', lineHeight: 1.8 }}>
+            灯影不会在未经你确认的情况下写入任何账单；Web 版以粘贴文本等价覆盖三路识别链路，不申请系统级权限。
           </div>
         </div>
       </div>

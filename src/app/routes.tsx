@@ -14,11 +14,19 @@ import { ReportCategory } from '../features/stats/ReportCategory';
 import { ReportTrend } from '../features/stats/ReportTrend';
 import { BudgetList } from '../features/stats/BudgetList';
 import { ExportBills } from '../features/stats/ExportBills';
+import { GuideAutoBill } from '../features/auto/pages/GuideAutoBill';
+import { AutoBillSetting } from '../features/auto/pages/AutoBillSetting';
+import { AppList } from '../features/auto/pages/AppList';
+import { AutoBillData } from '../features/auto/pages/AutoBillData';
+import { BillIdentified } from '../features/auto/pages/BillIdentified';
+import { RuleList } from '../features/auto/pages/RuleList';
+import { KeepAlive } from '../features/auto/pages/KeepAlive';
 
 const registry: Record<string, ComponentType<PageProps>> = {
   BillsHome, StatsHome, AutoHome, MineHome,
   BillEdit, BillList, BillDetail, GlobalSearch,
   ReportCategory, ReportTrend, BudgetList, ExportBills,
+  GuideAutoBill, AutoBillSetting, AppList, AutoBillData, BillIdentified, RuleList, KeepAlive,
 };
 
 /** 动态扩展：模块通过 registerRoutes 追加自己的页面。 */

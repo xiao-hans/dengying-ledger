@@ -1,0 +1,26 @@
+/* 自动记账专属样式：全部复用灯影变量，玻璃高亮选中态，不出现墨色实底。 */
+.guide-progress { display: flex; gap: 8px; padding: 4px 2px 18px; }
+.guide-dot { flex: 1; height: 4px; border-radius: 999px; background: var(--divider); transition: background .2s; }
+.guide-dot.on { background: var(--chip-selected-fill); box-shadow: 0 1px 8px var(--glass-shadow); }
+.guide-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 60px; height: 60px; border-radius: 20px;
+  background: var(--chip-selected-fill); border: 1px solid var(--glass-border); color: var(--brand);
+}
+.app-row { width: 100%; text-align: left; background: transparent; border: none; color: var(--text-primary); font: inherit; }
+.app-check {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 22px; height: 22px; border-radius: 8px; border: 1px solid var(--divider);
+  background: var(--chip-fill); color: var(--text-secondary); font-size: 12px;
+}
+.app-check.on { background: var(--chip-selected-fill); border-color: var(--glass-border); color: var(--brand); font-weight: 700; }
+.raw-input { width: 100%; margin-top: 10px; resize: vertical; min-height: 106px; line-height: 1.6; }
+.identified-card { margin-bottom: 12px; }
+.raw-preview {
+  margin: 0 14px 10px; padding: 8px 10px; border-radius: 10px;
+  background: var(--search-bg); color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cate-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 210px; overflow-y: auto; }
+.cate-picker .pick-tile { background: var(--chip-fill); border: 1px solid var(--glass-border); }
+.cate-picker .pick-tile.selected { background: var(--chip-selected-fill); }

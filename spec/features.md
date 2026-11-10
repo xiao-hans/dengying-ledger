@@ -8,30 +8,30 @@
 - [ ] 通用 WebView 容器（协议页 / 帮助页 / 活动页，14 篇协议自撰）
 - [ ] 扫码入口（加入账本 / 绑定设备）
 - [ ] 票据/券 + 支付结果引导页
-- [ ] 权限申请引导（自动记账逐项说明用途，可全程跳过）
+- [x] 权限申请引导（自动记账逐项说明用途，可全程跳过）
 - [ ] 快捷磁贴「一键记一笔」入口
 - [x] 悬浮宠物（可关闭）
 
 ## 2 自动记账（核心）
-- [ ] 引导页 GuideAutoBill（5 步权限引导）
-- [ ] 设置页 AutoBillSetting（总开关、监听 App 白名单、三路采集开关）
-- [ ] App 选择页 AppList（支付宝/微信/QQ/云闪付/银行/快手）
-- [ ] 识别数据页 AutoBillData（原始事件列表）
-- [ ] 识别结果确认页 BillIdentified（批量通过/修改，去重键）
-- [ ] 保活引导页 KeepAlive
-- [ ] 匹配规则：列表 / 搜索 / 设置三页（key_word → 分类/账户/标签）
-- [ ] 通知采集（模拟 NotificationListener，正则提取金额与商户）
-- [ ] 无障碍采集（模拟 AccessibilityNodeInfo 文本树）
-- [ ] 截屏 OCR 采集（模拟 MediaProjection + OcrLite 三模型输出）
-- [ ] 规则引擎 + 三路共用去重 + 待确认队列 → 写 bill
-- [ ] 识别结果回传 `Bills/AutoBillsCallBack`
+- [x] 引导页 GuideAutoBill（5 步权限引导）
+- [x] 设置页 AutoBillSetting（总开关、监听 App 白名单、三路采集开关）
+- [x] App 选择页 AppList（支付宝/微信/QQ/云闪付/银行/快手）
+- [x] 识别数据页 AutoBillData（原始事件列表）
+- [x] 识别结果确认页 BillIdentified（批量通过/修改，去重键）
+- [x] 保活引导页 KeepAlive
+- [x] 匹配规则：列表 / 搜索 / 设置三页（key_word → 分类/账户/标签）
+- [x] 通知采集（模拟 NotificationListener，正则提取金额与商户）
+- [x] 无障碍采集（模拟 AccessibilityNodeInfo 文本树）
+- [x] 截屏 OCR 采集（模拟 MediaProjection + OcrLite 三模型输出）
+- [x] 规则引擎 + 三路共用去重 + 待确认队列 → 写 bill
+- [x] 识别结果回传 `Bills/AutoBillsCallBack`
 
 ## 3 账单核心
 - [x] 记一笔（支出/收入/转账，金额、分类、账本、账户、标签、图片、备注、不计入预算）
 - [x] 账单列表（按月/日分组，收支头）
 - [x] 编辑 / 详情 / 删除（二次确认）
 - [ ] 批量修改分类 / 批量删除
-- [ ] 搜索（关键词、金额区间、分类、账本、时间）
+- [x] 搜索（关键词、金额区间、分类、账本、时间）
 - [ ] 退款（创建/更新/删除，退款净额口径）
 - [ ] 周期账（创建/更新/删除/列表，按 fixedType/fixedDay 生成）
 - [x] 账单导入 / 导出（CSV，可再导入）
