@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.tmp/
+spec/.eps_sorted.tmp
 .vite/
 *.local
 .DS_Store
