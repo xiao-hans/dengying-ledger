@@ -1,13 +1,17 @@
 /**
- * 四个 Tab 首页骨架（M1）。真实业务数据在 M2 接入 IndexedDB 后替换，
- * 此处保留完整页面结构与空态出口，保证「进得去出得来」。
+ * 四个 Tab 首页：账单/统计已接真实数据（M4），自动记账/我的在后续里程碑接入。
+ * 视觉全部走灯影玻璃组件与主题变量，没有硬编码颜色。
  */
 import { Icon } from '../../components/Icon';
-import { TopBar, SearchPill, ChipRow, GlassCard, EmptyState, SectionTitle, ListRow, Switch } from '../../components/ui';
+import { TopBar, SearchPill, ChipRow, GlassCard, EmptyState, SectionTitle, ListRow, Switch, formatMoney } from '../../components/ui';
 import { useNav } from '../../app/navigation';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { PageProps } from '../../app/App';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { api, type Dict } from '../common/api';
+import { useAsync } from '../common/hooks';
+import { N, S, dayText, dayMonth, cateName, cateIcon, cateMap } from '../common/format';
+import { summarize } from '../stats/stats';
 
 const BrandHead = ({ title, right }: { title: string; right?: React.ReactNode }) => (
   <div className="brand-head">
@@ -17,16 +21,41 @@ const BrandHead = ({ title, right }: { title: string; right?: React.ReactNode })
   </div>
 );
 
-/* ---------------- 账单首页 ---------------- */
+/* ---------------- 账单首页（真实数据） ---------------- */
 export function BillsHome(_: PageProps) {
   const nav = useNav();
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 1 | 2 | 3>('all');
+  const { data, loading, error, reload } = useAsync(async () => {
+    const [page, cates] = await Promise.all([api.billsPage(1), api.mainCates()]);
+    return {
+      rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
+      cates: [...(cates.expense || []), ...(cates.income || [])],
+    };
+  }); // 写操作后由全局版本号触发刷新
+  const cmap = useMemo(() => cateMap(data?.cates || []), [data?.cates]);
+  const rows = data?.rows || [];
+  const thisMonth = new Date();
+  const ym = thisMonth.getFullYear() * 100 + thisMonth.getMonth() + 1;
+  const monthRows = rows.filter((r) => dayMonth(r.day) === ym);
+  const expense = monthRows.filter((r) => N(r.type, 1) === 1).reduce((s, r) => s + N(r.money), 0);
+  const income = monthRows.filter((r) => N(r.type, 1) === 2).reduce((s, r) => s + N(r.money), 0);
+  const recent = rows.filter((r) => {
+    if (filter !== 'all' && N(r.type, 1) !== filter) return false;
+    if (q.trim()) return `${S(r.desc)} ${cateName(cmap, r.member_cate_id)}`.toLowerCase().includes(q.trim().toLowerCase());
+    return true;
+  }).slice(0, 12);
+  const groups = useMemo(() => {
+    const m = new Map<string, Dict[]>();
+    for (const r of recent) { const k = S(r.day); if (!m.has(k)) m.set(k, []); m.get(k)!.push(r); }
+    return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [recent]);
+
   return (
     <div className="page">
       <BrandHead
         title="灯影记账"
-        right={<button className="icon-btn" aria-label="设置" onClick={() => nav.push('Settings')}><Icon name="settings" /></button>}
+        right={<button className="icon-btn" aria-label="刷新" onClick={reload}><Icon name="refresh" /></button>}
       />
       <SearchPill value={q} onChange={setQ} placeholder="搜索账单、分类、标签" onFocus={() => nav.push('GlobalSearch')} />
       <ChipRow
@@ -41,22 +70,44 @@ export function BillsHome(_: PageProps) {
             <div className="row-between">
               <div>
                 <div className="t-label-medium t-secondary">本月支出</div>
-                <div className="t-title-large" style={{ marginTop: 4 }}>¥ 0.00</div>
+                <div className="t-title-large" style={{ marginTop: 4 }}>¥ {formatMoney(expense)}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div className="t-label-medium t-secondary">本月收入</div>
-                <div className="t-body-large t-semi" style={{ marginTop: 8 }}>¥ 0.00</div>
+                <div className="t-body-large t-semi" style={{ marginTop: 8 }}>¥ {formatMoney(income)}</div>
               </div>
+            </div>
+            <div className="t-label-medium t-secondary" style={{ marginTop: 10 }}>
+              {thisMonth.getMonth() + 1}月结余 ¥ {formatMoney(income - expense)} · 共 {monthRows.length} 笔
             </div>
           </GlassCard>
 
+          {error && <div className="card card-pad"><div className="t-body-medium t-danger">读取失败：{error}</div></div>}
+          {loading && <div className="card card-pad"><div className="t-body-medium t-secondary">正在读取本地账本…</div></div>}
           <SectionTitle action={<button onClick={() => nav.push('BillList')}>查看全部 ›</button>}>最近账单</SectionTitle>
-          <div className="card">
-            <EmptyState
-              icon="receipt" title="还没有账单" hint="记下第一笔，或开启自动记账让灯影帮你记"
-              actionLabel="去记一笔" onAction={() => nav.push('BillEdit', { mode: 'create' })}
-            />
-          </div>
+          {!loading && groups.length === 0 ? (
+            <div className="card">
+              <EmptyState
+                icon="receipt" title={q ? '没有匹配的账单' : '还没有账单'}
+                hint={q ? '清空搜索或换个关键词' : '记下第一笔，或开启自动记账让灯影帮你记'}
+                actionLabel={q ? '清空搜索' : '去记一笔'} onAction={() => q ? setQ('') : nav.push('BillEdit', { mode: 'create' })}
+              />
+            </div>
+          ) : groups.map(([day, list]) => (
+            <div key={day}>
+              <div className="day-label t-label-medium t-secondary">{dayText(day)}</div>
+              <div className="card">
+                {list.map((r) => (
+                  <ListRow key={S(r.client_id)}
+                    icon={cateIcon(cmap, r.member_cate_id) as 'wallet'}
+                    title={<span className="row-between"><span>{cateName(cmap, r.member_cate_id)}</span><span className={N(r.type) === 2 ? 't-semi' : ''}>{N(r.type) === 2 ? '+' : N(r.type) === 1 ? '-' : ''}¥{formatMoney(N(r.money))}</span></span>}
+                    subtitle={[S(r.desc), S(r.tag_ids) && '含标签'].filter(Boolean).join(' · ') || '无备注'}
+                    chevron={false}
+                    onClick={() => nav.push('BillDetail', { clientId: S(r.client_id) })} />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -67,6 +118,19 @@ export function BillsHome(_: PageProps) {
 export function StatsHome(_: PageProps) {
   const nav = useNav();
   const [period, setPeriod] = useState<'month' | 'year'>('month');
+  const { data } = useAsync(async () => {
+    const [page, cates, budgets] = await Promise.all([api.billsPage(1), api.mainCates(), api.budgetList()]);
+    return {
+      rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
+      cates: [...(cates.expense || []), ...(cates.income || [])], budgets,
+    };
+  });
+  const cmap = useMemo(() => cateMap(data?.cates || []), [data?.cates]);
+  const now = new Date();
+  const key = now.getFullYear() * 100 + now.getMonth() + 1;
+  const scoped = (data?.rows || []).filter((r) => period === 'year' ? S(r.day).slice(0, 4) === String(now.getFullYear()) : Number(S(r.day).slice(0, 6)) === key);
+  const stats = useMemo(() => summarize(scoped, 1, (id) => cateName(cmap, id)), [scoped, cmap]);
+  const budget = (data?.budgets || []).find((b) => N(b.day) === key);
   return (
     <div className="page">
       <TopBar title="统计与报表" brand />
@@ -77,15 +141,20 @@ export function StatsHome(_: PageProps) {
             items={[{ key: 'month', label: '按月' }, { key: 'year', label: '按年' }]}
           />
           <GlassCard>
-            <div className="t-label-medium t-secondary">收支总览</div>
-            <div className="t-title-large" style={{ marginTop: 6 }}>¥ 0.00</div>
-            <div className="t-body-small t-secondary" style={{ marginTop: 8 }}>记一笔后这里会生成分类占比与趋势</div>
+            <div className="t-label-medium t-secondary">{period === 'month' ? '本月' : '本年'}收支总览</div>
+            <div className="row" style={{ gap: 24, marginTop: 6 }}>
+              <div><div className="t-label-medium t-secondary">支出</div><div className="t-title-medium">¥ {formatMoney(stats.expense)}</div></div>
+              <div><div className="t-label-medium t-secondary">收入</div><div className="t-title-medium">¥ {formatMoney(stats.income)}</div></div>
+            </div>
+            <div className="t-body-small t-secondary" style={{ marginTop: 8 }}>
+              结余 ¥ {formatMoney(stats.net)} · {stats.count} 笔账单{stats.count === 0 ? '，记一笔后这里会生成分类占比与趋势' : ''}
+            </div>
           </GlassCard>
           <SectionTitle>报表与工具</SectionTitle>
           <div className="card">
             <ListRow icon="pie" title="分类报表" subtitle="按分类 / 标签下钻" onClick={() => nav.push('ReportCategory')} />
             <ListRow icon="chart" title="收支趋势" subtitle="按月 / 按年" onClick={() => nav.push('ReportTrend')} />
-            <ListRow icon="wallet" title="预算执行" subtitle="总预算 / 分类预算" onClick={() => nav.push('BudgetList')} />
+            <ListRow icon="wallet" title="预算执行" subtitle={budget ? `本月预算 ¥${formatMoney(N(budget.money))} · 已用 ¥${formatMoney(stats.expense)}` : '总预算 / 分类预算'} onClick={() => nav.push('BudgetList')} />
             <ListRow icon="download" title="导出账单" subtitle="CSV，可再导入" onClick={() => nav.push('ExportBills')} />
           </div>
         </div>

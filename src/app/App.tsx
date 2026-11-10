@@ -2,8 +2,9 @@
  * 应用外壳：Splash → 主界面（Tab 栈 + Dock + 路由注册表）。
  * 路由名对齐样本 Activity 名，见各 features/*\/routes.tsx 注册。
  */
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { NavProvider, useNav, DraftProvider, type Route } from './navigation';
+import { RefreshCtx } from './useRefresh';
 import { Dock } from '../components/Dock';
 import { Icon } from '../components/Icon';
 import { Toast } from '../components/ui';
@@ -16,15 +17,19 @@ export interface PageProps { route: Route }
 type PageComponent = ComponentType<PageProps>;
 
 export function App() {
+  const [version, setVersion] = useState(0);
+  const refresh = useMemo(() => ({ version, bump: () => setVersion((v) => v + 1) }), [version]);
   return (
     <ThemeWrapper>
-      <NavProvider>
-        <DraftProvider>
-          <ToastProvider>
-            <Shell />
-          </ToastProvider>
-        </DraftProvider>
-      </NavProvider>
+      <RefreshCtx.Provider value={refresh}>
+        <NavProvider>
+          <DraftProvider>
+            <ToastProvider>
+              <Shell />
+            </ToastProvider>
+          </DraftProvider>
+        </NavProvider>
+      </RefreshCtx.Provider>
     </ThemeWrapper>
   );
 }

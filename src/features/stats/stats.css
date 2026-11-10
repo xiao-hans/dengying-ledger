@@ -1,0 +1,12 @@
+/* 报表图形：只用主题变量，深色模式自动反相 */
+.bar-track { height: 8px; border-radius: 99px; background: var(--search-bg); margin-top: 10px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; background: var(--brand-secondary); }
+.day-label { padding: 10px 4px 6px; }
+.trend-chart { overflow-x: auto; }
+.trend-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 190px; padding-top: 8px; }
+.trend-col { flex: 1; min-width: 34px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.trend-pair { height: 150px; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.trend-bar { width: 12px; border-radius: 6px 6px 2px 2px; min-height: 2px; }
+.trend-bar.expense { background: var(--brand); }
+.trend-bar.income { background: var(--brand-secondary); }
+.trend-label { white-space: nowrap; }

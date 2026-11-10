@@ -6,9 +6,19 @@
 import type { ComponentType } from 'react';
 import type { PageProps } from './App';
 import { BillsHome, StatsHome, AutoHome, MineHome } from '../features/home';
+import { BillEdit } from '../features/bills/BillEdit';
+import { BillList } from '../features/bills/BillList';
+import { BillDetail } from '../features/bills/BillDetail';
+import { GlobalSearch } from '../features/bills/GlobalSearch';
+import { ReportCategory } from '../features/stats/ReportCategory';
+import { ReportTrend } from '../features/stats/ReportTrend';
+import { BudgetList } from '../features/stats/BudgetList';
+import { ExportBills } from '../features/stats/ExportBills';
 
 const registry: Record<string, ComponentType<PageProps>> = {
   BillsHome, StatsHome, AutoHome, MineHome,
+  BillEdit, BillList, BillDetail, GlobalSearch,
+  ReportCategory, ReportTrend, BudgetList, ExportBills,
 };
 
 /** 动态扩展：模块通过 registerRoutes 追加自己的页面。 */
