@@ -1,0 +1,1059 @@
+[
+ {
+  "method": "POST",
+  "path": "KeyWordMatchingRule/Create",
+  "fields": [
+   "keyWord",
+   "type",
+   "memberCateId",
+   "billsBookId",
+   "fundAccountId",
+   "memberTagIds"
+  ],
+  "body": null,
+  "ret": "RuleResp>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/UpdateSavePlanItemStatus",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "VipGroupBuy/GetByShowId",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "CheckVipEntity>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberImportBillFile/List",
+  "fields": [],
+  "body": null,
+  "ret": "List<ImportedRecords>>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberTag/Delete",
+  "fields": [
+   "tagId"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/GetBillsBookIcons",
+  "fields": [],
+  "body": null,
+  "ret": "List<BillBookIconEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/CreateBudget",
+  "fields": [
+   "billsBookId",
+   "day",
+   "money",
+   "isRemind",
+   "remindRate",
+   "carryDown",
+   "isCopy"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/PageList",
+  "fields": [
+   "updateDate",
+   "pageNum"
+  ],
+  "body": null,
+  "ret": "BillListResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/UpdateReminder",
+  "fields": [
+   "reminderId",
+   "title",
+   "contents",
+   "reminderTime",
+   "status",
+   "changeContent"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/Create",
+  "fields": [
+   "name",
+   "iconId",
+   "monthStartDate"
+  ],
+  "body": null,
+  "ret": "CreateBillBookResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/BindQQ",
+  "fields": [
+   "qqId",
+   "nickname",
+   "avatar",
+   "gender"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberTag/Update",
+  "fields": [
+   "tagId",
+   "name"
+  ],
+  "body": null,
+  "ret": "Tag>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/Join",
+  "fields": [
+   "billsBookId"
+  ],
+  "body": null,
+  "ret": "JoinBookResp>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/Update",
+  "fields": [
+   "fundAccountId",
+   "name",
+   "icon",
+   "desc",
+   "currency",
+   "balance",
+   "creditLine",
+   "repaymentDate",
+   "statementDate",
+   "isRemind",
+   "isTotalAssets",
+   "isNextBills",
+   "clientId",
+   "isCreateBill",
+   "day"
+  ],
+  "body": null,
+  "ret": "AssetsResp>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/UpdateSavePlanStatus",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "List<String>>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/GetByPlanId",
+  "fields": [
+   "planId"
+  ],
+  "body": null,
+  "ret": "InstallmentPlanResp>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/Delete",
+  "fields": [
+   "billsBookId"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/LoginByWechat",
+  "fields": [
+   "openid",
+   "unionId",
+   "nickname",
+   "avatar",
+   "gender"
+  ],
+  "body": null,
+  "ret": "User>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/LoginByQQ",
+  "fields": [
+   "qqId",
+   "nickname",
+   "avatar",
+   "gender"
+  ],
+  "body": null,
+  "ret": "User>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/Update",
+  "fields": [],
+  "body": "Items<BillItem>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/AllPlan",
+  "fields": [],
+  "body": null,
+  "ret": "List<InstallmentPlanResp>>"
+ },
+ {
+  "method": "POST",
+  "path": "Order/CheckStatus",
+  "fields": [
+   "orderId"
+  ],
+  "body": null,
+  "ret": "OrderResult>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/Create",
+  "fields": [],
+  "body": "Items<BillItem>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/GetSavePlansByType",
+  "fields": [
+   "type"
+  ],
+  "body": null,
+  "ret": "List<SaveMoneyPlan>>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/GetYearlyBudgets",
+  "fields": [
+   "year"
+  ],
+  "body": null,
+  "ret": "List<BudgetResp>>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberImportBillFile/Delete",
+  "fields": [
+   "id"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Config/GetV2",
+  "fields": [
+   "appVersion",
+   "brand",
+   "rom",
+   "romVersion",
+   "channel",
+   "reChannel",
+   "discountType",
+   "androidVersion",
+   "registrationTime",
+   "memberId"
+  ],
+  "body": null,
+  "ret": "ServerConfig>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/Create",
+  "fields": [],
+  "body": "InstallmentPlanReq",
+  "ret": "CreateInstallmentResp>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberTag/Create",
+  "fields": [
+   "BillBookId",
+   "name"
+  ],
+  "body": null,
+  "ret": "Tag>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/CreateSavePlanItem",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "DepositBill>"
+ },
+ {
+  "method": "POST",
+  "path": "Order/v2/CreateOrder",
+  "fields": [
+   "addFreeId",
+   "money",
+   "method",
+   "type",
+   "productId",
+   "orderSource",
+   "useRedEnvelope"
+  ],
+  "body": null,
+  "ret": "CreateOrderEntity>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/GetIOU",
+  "fields": [
+   "status"
+  ],
+  "body": null,
+  "ret": "String>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/Exit",
+  "fields": [
+   "billsBookId"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/GetBudget",
+  "fields": [
+   "billsBookId",
+   "day"
+  ],
+  "body": null,
+  "ret": "BudgetDataResp>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/Update",
+  "fields": [
+   "billsBookId",
+   "name",
+   "iconId",
+   "monthStartDate"
+  ],
+  "body": null,
+  "ret": "BillBookResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/BillsCountOfHasPic",
+  "fields": [],
+  "body": null,
+  "ret": "Integer>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/Create",
+  "fields": [
+   "fundAccountId",
+   "typeId",
+   "name",
+   "icon",
+   "desc",
+   "currency",
+   "balance",
+   "creditLine",
+   "repaymentDate",
+   "statementDate",
+   "isRemind",
+   "isTotalAssets",
+   "isNextBills",
+   "clientId",
+   "type",
+   "day"
+  ],
+  "body": null,
+  "ret": "AssetsResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/GetSetting",
+  "fields": [],
+  "body": null,
+  "ret": "UserSetting>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/RemoveMember",
+  "fields": [
+   "memberId",
+   "billsBookId"
+  ],
+  "body": null,
+  "ret": "BookRemoveMemberResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/BindPhone",
+  "fields": [
+   "phone",
+   "code",
+   "oldPhone"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/UpdateSavePlan",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/DeleteBudget",
+  "fields": [
+   "billsBookId",
+   "day"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/GetCateIcons",
+  "fields": [],
+  "body": null,
+  "ret": "List<CateIconEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "KeyWordMatchingRule/List",
+  "fields": [],
+  "body": null,
+  "ret": "List<RuleResp>>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/InitSSOldUserInfo",
+  "fields": [],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/Update",
+  "fields": [
+   "id",
+   "cateId",
+   "title",
+   "type",
+   "iconId"
+  ],
+  "body": null,
+  "ret": "Category>"
+ },
+ {
+  "method": "POST",
+  "path": "Upload/UploadImages",
+  "fields": [],
+  "body": "MultipartBody",
+  "ret": "List<String>>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/GetInfoByCode",
+  "fields": [
+   "code"
+  ],
+  "body": null,
+  "ret": "BillBookResp>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/GetByClientId",
+  "fields": [
+   "clientId"
+  ],
+  "body": null,
+  "ret": "InstallmentPlanResp>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/UpdateStatus",
+  "fields": [
+   "id",
+   "status"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Behavior/Add",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/Delete",
+  "fields": [],
+  "body": "Items<BillDelInfo>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/Unbind",
+  "fields": [],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "BillRefund/Update",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "RefundBillResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/UpdateNickname",
+  "fields": [
+   "nickname"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/PayOff",
+  "fields": [
+   "planId",
+   "formFundAccountId",
+   "remainingInterest",
+   "desc"
+  ],
+  "body": null,
+  "ret": "CreateInstallmentResp>"
+ },
+ {
+  "method": "GET",
+  "path": "SavePlan/Wishes",
+  "fields": [],
+  "body": null,
+  "ret": "List<String>>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/AutoBillsCallBack",
+  "fields": [
+   "type"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/Create",
+  "fields": [
+   "title",
+   "type",
+   "iconId"
+  ],
+  "body": null,
+  "ret": "Category>"
+ },
+ {
+  "method": "POST",
+  "path": "Operation/GetDialog",
+  "fields": [],
+  "body": null,
+  "ret": "OperateInfo>"
+ },
+ {
+  "method": "POST",
+  "path": "MemberTag/UpdateSort",
+  "fields": [],
+  "body": "List<Tag>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/DeleteBudgetCate",
+  "fields": [
+   "billsBookId",
+   "day",
+   "cateId"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/CreateReminder",
+  "fields": [
+   "title",
+   "contents",
+   "reminderTime",
+   "status"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "BillRefund/Delete",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Order/GetRechargeDiscountConfig",
+  "fields": [],
+  "body": null,
+  "ret": "DiscountConfig>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/UpdateBudgetCate",
+  "fields": [
+   "billsBookId",
+   "day",
+   "cateId",
+   "money"
+  ],
+  "body": null,
+  "ret": "BudgetDataResp>"
+ },
+ {
+  "method": "GET",
+  "path": "VipGroupBuy/List",
+  "fields": [],
+  "body": null,
+  "ret": "List<GroupVipEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/UpdateBudget",
+  "fields": [
+   "billsBookId",
+   "day",
+   "money",
+   "acfMoney",
+   "isRemind",
+   "remindRate",
+   "carryDown",
+   "isCopy"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "ConsumptionInstallment/Delete",
+  "fields": [
+   "planId",
+   "isSaveBill"
+  ],
+  "body": null,
+  "ret": "Items<String>>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/Delete",
+  "fields": [
+   "id"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Budget/CreateBudgetCate",
+  "fields": [
+   "billsBookId",
+   "day",
+   "cateId",
+   "money"
+  ],
+  "body": null,
+  "ret": "BudgetDataResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Operation/GetUpdateRemind",
+  "fields": [],
+  "body": null,
+  "ret": "UpdateEntity>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/GetFundAccountTypes",
+  "fields": [],
+  "body": null,
+  "ret": "List<AssetsTypeResp>>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/UpdateSavePlanItem",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/DeleteFixedBill",
+  "fields": [
+   "id"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/ImportBills",
+  "fields": [],
+  "body": "ImportBillsReq",
+  "ret": "ImportBIllsResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/BindWechat",
+  "fields": [
+   "openid",
+   "unionId",
+   "nickname",
+   "avatar",
+   "gender"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/UpdateFixedBill",
+  "fields": [
+   "id",
+   "money",
+   "billBookId",
+   "memberCateId",
+   "billType",
+   "fromFundAccountId",
+   "toFundAccountId",
+   "interest",
+   "interestReckonType",
+   "notInBudget",
+   "currency",
+   "tagIds",
+   "fixedType",
+   "fixedDay",
+   "desc",
+   "startDate",
+   "endDate"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/RefreshToken",
+  "fields": [
+   "gtCid"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/GetFixedBills",
+  "fields": [],
+  "body": null,
+  "ret": "RegularBillsResp>"
+ },
+ {
+  "method": "POST",
+  "path": "KeyWordMatchingRule/Update",
+  "fields": [
+   "id",
+   "keyWord",
+   "type",
+   "memberCateId",
+   "billsBookId",
+   "fundAccountId",
+   "memberTagIds"
+  ],
+  "body": null,
+  "ret": "RuleResp>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/GetSavePlansByQuery",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "List<SaveMoneyPlan>>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/MemberReminderList",
+  "fields": [],
+  "body": null,
+  "ret": "List<RemindEntity>>"
+ },
+ {
+  "method": "GET",
+  "path": "SavePlan/GetFileSavePlans",
+  "fields": [],
+  "body": null,
+  "ret": "List<SaveMoneyPlan>>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/GetList",
+  "fields": [],
+  "body": null,
+  "ret": "List<BillBookResp>>"
+ },
+ {
+  "method": "GET",
+  "path": "Member/GetMemberContractInfo",
+  "fields": [],
+  "body": null,
+  "ret": "UserContractEntity>"
+ },
+ {
+  "method": "POST",
+  "path": "KeyWordMatchingRule/Delete",
+  "fields": [
+   "id"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/GetInfo",
+  "fields": [],
+  "body": null,
+  "ret": "User>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/CreateSavePlan",
+  "fields": [],
+  "body": "CreatePlanEntity",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Member/UpdateSetting",
+  "fields": [
+   "key",
+   "value"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "GET",
+  "path": "Budget/GetBudgetList",
+  "fields": [],
+  "body": null,
+  "ret": "List<BudgetDataResp>>"
+ },
+ {
+  "method": "POST",
+  "path": "Upload/UploadImg",
+  "fields": [
+   "imgType"
+  ],
+  "body": null,
+  "ret": "OssConfig>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/LoginByDevice",
+  "fields": [],
+  "body": null,
+  "ret": "User>"
+ },
+ {
+  "method": "POST",
+  "path": "BillRefund/Create",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "RefundBillResp>"
+ },
+ {
+  "method": "POST",
+  "path": "FundAccount/Delete",
+  "fields": [
+   "id",
+   "isSaveBill"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "GET",
+  "path": "PersonCenter/GetPersonCenterIcons",
+  "fields": [],
+  "body": null,
+  "ret": "List<PersonCenterEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/SendCode",
+  "fields": [
+   "phone"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/UpdateExtend",
+  "fields": [],
+  "body": "Items<CateUpdateExtendEntity>",
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "BillsBook/CreateInviteCode",
+  "fields": [
+   "billsBookId"
+  ],
+  "body": null,
+  "ret": "String>"
+ },
+ {
+  "method": "GET",
+  "path": "SavePlan/GetSavePlans",
+  "fields": [],
+  "body": null,
+  "ret": "List<SaveMoneyPlan>>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/ActivateV3",
+  "fields": [
+   "distinctId"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "GET",
+  "path": "SavePlan/GetIcon",
+  "fields": [],
+  "body": null,
+  "ret": "List<PlanCoverEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "VipGroupBuy/Bind",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "List<GroupVipEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "Upload/UploadBills",
+  "fields": [],
+  "body": "MultipartBody",
+  "ret": "ImportBillResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/CreateFixedBill",
+  "fields": [
+   "memberId",
+   "money",
+   "billBookId",
+   "memberCateId",
+   "billType",
+   "fromFundAccountId",
+   "toFundAccountId",
+   "interest",
+   "interestReckonType",
+   "notInBudget",
+   "currency",
+   "tagIds",
+   "fixedType",
+   "fixedDay",
+   "desc",
+   "startDate",
+   "endDate"
+  ],
+  "body": null,
+  "ret": "Object>"
+ },
+ {
+  "method": "POST",
+  "path": "Order/AlipayUnSign",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "Object>"
+ },
+ {
+  "method": "GET",
+  "path": "SavePlan/GetSavePlanType",
+  "fields": [],
+  "body": null,
+  "ret": "List<PlanTypeEntity>>"
+ },
+ {
+  "method": "POST",
+  "path": "Order/v2/VipConfigs",
+  "fields": [],
+  "body": null,
+  "ret": "OrderConfigEntity>"
+ },
+ {
+  "method": "POST",
+  "path": "SavePlan/SavePlanItemsById",
+  "fields": [],
+  "body": "Map<String, Object>",
+  "ret": "SaveMoneyPlan>"
+ },
+ {
+  "method": "POST",
+  "path": "Bills/ImportBills",
+  "fields": [],
+  "body": "ImportOcrBillsReq",
+  "ret": "ImportBIllsResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Cate/GetMainCates",
+  "fields": [],
+  "body": null,
+  "ret": "BillCateResp>"
+ },
+ {
+  "method": "POST",
+  "path": "Account/LoginByPhone",
+  "fields": [
+   "phone",
+   "code"
+  ],
+  "body": null,
+  "ret": "User>"
+ }
+]
