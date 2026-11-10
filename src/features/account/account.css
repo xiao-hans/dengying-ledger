@@ -1,0 +1,15 @@
+.account-hero { display: flex; flex-direction: column; gap: 4px; }
+.account-hero .name { font-size: var(--fs-title); font-weight: 700; }
+.account-hero .sub { color: var(--text-secondary); font-size: var(--fs-caption); }
+.vip-price { display: flex; align-items: baseline; gap: 8px; }
+.vip-price .now { font-size: var(--fs-display, 28px); font-weight: 700; }
+.vip-price .old { color: var(--text-secondary); text-decoration: line-through; font-size: var(--fs-caption); }
+.account-note { color: var(--text-secondary); font-size: var(--fs-caption); line-height: 1.5; }
+.ad-slot {
+  border: 1px dashed var(--divider);
+  border-radius: var(--radius-card, 16px);
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--chip-fill);
+}

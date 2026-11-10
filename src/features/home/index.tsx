@@ -11,6 +11,9 @@ import type { PageProps } from '../../app/App';
 import { useState, useMemo } from 'react';
 import { api, type Dict } from '../common/api';
 import { useAsync } from '../common/hooks';
+import { get } from '../../db/client';
+import { LOCAL_MEMBER_ID } from '../../db/schema';
+import { useRefresh } from '../../app/useRefresh';
 import { N, S, dayText, dayMonth, cateName, cateIcon, cateMap } from '../common/format';
 import { summarize } from '../stats/stats';
 
@@ -227,6 +230,12 @@ export function AutoHome(_: PageProps) {
 export function MineHome(_: PageProps) {
   const nav = useNav();
   const { mode, setMode, isDark } = useTheme();
+  const refresh = useRefresh();
+  const { data: member } = useAsync(() => get<Record<string, unknown>>('member', LOCAL_MEMBER_ID), [refresh.version]);
+  const phone = String(member?.phone ?? '');
+  const nick = String(member?.nickname ?? '');
+  const signedIn = Boolean(phone || nick);
+  const vip = Number(member?.vip ?? 0) === 1;
   return (
     <div className="page">
       <TopBar title="我的" brand right={<button className="icon-btn" aria-label="设置" onClick={() => nav.push('Settings')}><Icon name="settings" /></button>} />
@@ -236,10 +245,10 @@ export function MineHome(_: PageProps) {
             <div className="row">
               <span className="brand-mark" style={{ width: 46, height: 46, borderRadius: 16 }}><Icon name="mine" size={24} /></span>
               <div className="grow">
-                <div className="t-body-large t-semi">本地账本</div>
-                <div className="t-label-medium t-secondary">数据保存在此设备 · 未登录也可完整使用</div>
+                <div className="t-body-large t-semi">{signedIn ? (nick || '已登录') : '本地账本'}</div>
+                <div className="t-label-medium t-secondary">{signedIn ? `${phone || '未绑定手机'}${vip ? ' · 会员' : ''}` : '数据保存在此设备 · 未登录也可完整使用'}</div>
               </div>
-              <button className="btn btn-ghost" style={{ padding: '8px 14px' }} onClick={() => nav.push('AccountLogin')}>登录</button>
+              <button className="btn btn-ghost" style={{ padding: '8px 14px' }} onClick={() => nav.push('AccountLogin')}>{signedIn ? '账号' : '登录'}</button>
             </div>
           </GlassCard>
 

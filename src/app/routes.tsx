@@ -36,6 +36,9 @@ import { FixedBillList, FixedBillEdit, ReminderList } from '../features/manage/F
 import { InstallmentList, InstallmentEdit, InstallmentDetail } from '../features/manage/Installment';
 import { ImportHome, ImportPaste, ImportOcr, ImportHistory } from '../features/manage/Import';
 import { WidgetHome, WidgetEdit } from '../features/manage/Widget';
+import { AccountLogin, BindPhone, NicknameEdit } from '../features/account/Account';
+import { VipHome, OrderList, GroupVip, AdSlots } from '../features/account/Vip';
+import { Settings, HelpHome, Legal, About } from '../features/account/Settings';
 
 const registry: Record<string, ComponentType<PageProps>> = {
   BillsHome, StatsHome, AutoHome, MineHome,
@@ -50,6 +53,9 @@ const registry: Record<string, ComponentType<PageProps>> = {
   InstallmentList, InstallmentEdit, InstallmentDetail,
   ImportHome, ImportPaste, ImportOcr, ImportHistory,
   WidgetHome, WidgetEdit,
+  AccountLogin, BindPhone, NicknameEdit,
+  VipHome, OrderList, GroupVip, AdSlots,
+  Settings, HelpHome, Legal, About,
 };
 
 /** 动态扩展：模块通过 registerRoutes 追加自己的页面。 */
