@@ -39,13 +39,13 @@ export function ExportBills(_: PageProps) {
       (N(r.money) / 100).toFixed(2), S(r.desc), S(r.book_id), S(r.from_assets_id),
       S(r.tag_ids), S(r.source), S(r.client_id),
     ].map(esc).join(','));
-    download(`灯影账单_${period}_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.csv`,
+    download(`喵啊账单_${period}_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.csv`,
       '﻿' + [header, ...lines].join('\r\n'), 'text/csv;charset=utf-8');
     toast.show(`已导出 ${rows.length} 笔账单`);
   }
   async function exportJson() {
     const all = await api.exportAll();
-    download('灯影记账_完整备份.json', JSON.stringify({ app: '灯影记账', version: '1.8.1', exportedAt: new Date().toISOString(), data: all }, null, 2), 'application/json');
+    download('喵啊记账_完整备份.json', JSON.stringify({ app: '喵啊记账', version: '1.8.1', exportedAt: new Date().toISOString(), data: all }, null, 2), 'application/json');
     toast.show('完整备份已导出');
   }
 

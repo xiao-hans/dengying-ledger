@@ -1,6 +1,6 @@
 /**
  * 四个 Tab 首页：账单/统计已接真实数据（M4），自动记账/我的在后续里程碑接入。
- * 视觉全部走灯影玻璃组件与主题变量，没有硬编码颜色。
+ * 视觉全部走灯影设计 token 的玻璃组件（外部 UI 基准）与主题变量，没有硬编码颜色。
  */
 import { Icon } from '../../components/Icon';
 import { TopBar, SearchPill, ChipRow, GlassCard, EmptyState, SectionTitle, ListRow, Switch, formatMoney } from '../../components/ui';
@@ -58,7 +58,7 @@ export function BillsHome(_: PageProps) {
   return (
     <div className="page">
       <BrandHead
-        title="灯影记账"
+        title="喵啊记账"
         right={<button className="icon-btn" aria-label="刷新" onClick={reload}><Icon name="refresh" /></button>}
       />
       <SearchPill value={q} onChange={setQ} placeholder="搜索账单、分类、标签" onFocus={() => nav.push('GlobalSearch')} />
@@ -93,7 +93,7 @@ export function BillsHome(_: PageProps) {
             <div className="card">
               <EmptyState
                 icon="receipt" title={q ? '没有匹配的账单' : '还没有账单'}
-                hint={q ? '清空搜索或换个关键词' : '记下第一笔，或开启自动记账让灯影帮你记'}
+                hint={q ? '清空搜索或换个关键词' : '记下第一笔，或开启自动记账让喵啊记账帮你记'}
                 actionLabel={q ? '清空搜索' : '去记一笔'} onAction={() => q ? setQ('') : nav.push('BillEdit', { mode: 'create' })}
               />
             </div>
@@ -218,7 +218,7 @@ export function AutoHome(_: PageProps) {
             <ListRow icon="refresh" title="保活设置" subtitle="保证后台持续监听" onClick={() => nav.push('KeepAlive')} />
           </div>
           <div className="t-label-medium t-secondary" style={{ padding: '14px 4px', lineHeight: 1.8 }}>
-            灯影不会在未经你确认的情况下写入任何账单；Web 版以粘贴文本等价覆盖三路识别链路，不申请系统级权限。
+            喵啊记账不会在未经你确认的情况下写入任何账单；Web 版以粘贴文本等价覆盖三路识别链路，不申请系统级权限。
           </div>
         </div>
       </div>
@@ -292,7 +292,7 @@ export function MineHome(_: PageProps) {
             <ListRow icon="info" title="权限说明" onClick={() => nav.push('PermissionExplain')} />
             <ListRow icon="bell" title="消息推送" subtitle="本复刻不接收推送" onClick={() => nav.push('PushSetting')} />
             <ListRow icon="settings" title="远程开关" subtitle="24 项服务端配置" onClick={() => nav.push('RemoteSwitches')} />
-            <ListRow icon="info" title="关于灯影记账" right="v1.8.1" onClick={() => nav.push('About')} chevron={false} />
+            <ListRow icon="info" title="关于喵啊记账" right="v1.8.1" onClick={() => nav.push('About')} chevron={false} />
           </div>
         </div>
       </div>

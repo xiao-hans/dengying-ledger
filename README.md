@@ -1,6 +1,6 @@
-# 灯影记账 · 自动记账 App 复刻
+# 喵啊记账 · 自动记账 App 复刻
 
-> 对齐 `com.android.miaoa.achai` v1.8.1 的全量功能面与 112 个业务接口，UI 采用「灯影」设计语言。
+> 对齐 `com.android.miaoa.achai` v1.8.1 的全量功能面与 112 个业务接口，UI 采用「灯影」设计语言的配色与玻璃质感（灯影为外部 UI 基准）。
 > 工程宪法见 [AGENTS.md](AGENTS.md)。
 
 ## 这是什么
@@ -10,7 +10,7 @@
 - **功能**：21 个模块逐项覆盖（见 [spec/features.md](spec/features.md)）
 - **接口**：`spec/endpoints.json` 是从 `jadx_out/sources/com/android/miaoa/achai/api/a.java` 机器提取的权威清单（112 个 `@POST`/`@GET` + 2 个动态 `@Url`），全部在 `src/api/mock/` 有同路径、同字段名的实现
 - **数据**：IndexedDB 本地优先，表结构对齐 `spec/ddl.sql`（Room 20+ 表，`client_id` 幂等）
-- **UI**：`src/theme/` 直接移植灯影 `Color.kt` / `Glass.kt` / `Theme.kt` 的 token；胶囊控件、玻璃卡、底部 Dock、深浅色三态
+- **UI**：`src/theme/` 直接移植外部 UI 基准灯影的 `Color.kt` / `Glass.kt` / `Theme.kt` 的 token；胶囊控件、玻璃卡、底部 Dock、深浅色三态
 
 ## 运行
 
@@ -25,7 +25,7 @@ npm run build      # 生产构建（提交前必跑）
 ```
 spec/   endpoints.json（接口权威清单）· ddl.sql · features.md（功能矩阵）
 docs/   接口实现对照表 · 风格对照
-src/theme/   灯影配色 / 玻璃 / 字阶 token
+src/theme/   灯影配色（外部 UI 基准） / 玻璃 / 字阶 token
 src/db/      IndexedDB DAO（20+ 表）
 src/api/     client（统一 fetch 契约）+ mock（112 端点）
 src/features/ 21 个业务模块
@@ -56,4 +56,4 @@ src/app/     导航与根布局
 
 ## 远端
 
-`https://github.com/xiao-hans/dengying-ledger`（public）
+`https://github.com/xiao-hans/meow-ledger`（public）

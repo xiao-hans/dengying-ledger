@@ -192,7 +192,7 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
   },
 
   'Upload/UploadImg': async (ctx) => ok({
-    imgType: int(ctx, 'imgType'), provider: 'local', bucket: 'dengying-local',
+    imgType: int(ctx, 'imgType'), provider: 'local', bucket: 'meow-ledger-local',
     accessKeyId: '', policy: '', signature: '', key: `img/${newClientId()}.png`,
     host: '', expire: nowSec() + 3600,
   }),

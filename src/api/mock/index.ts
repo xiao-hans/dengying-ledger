@@ -8,7 +8,7 @@
  *
  * 所有处理器写本地 IndexedDB；返回统一信封 {code,message,data,trace_id}。
  */
-import { registerAll, ok, type Handler, type RequestCtx, type ApiEnvelope } from '../client';
+import { hasHandler, registerAll, ok, type Handler, type RequestCtx, type ApiEnvelope } from '../client';
 import type { LocalHandler } from './helpers';
 import { handlers as accountHandlers } from './account';
 import { handlers as billsHandlers } from './bills';
@@ -48,12 +48,11 @@ const dynamicHandlers: Record<string, Handler> = {
   }),
 };
 
-let installed = false;
-
-/** 幂等安装：可重复调用（HMR / 测试）。 */
+/** 幂等安装：可重复调用（HMR / 测试）。
+ *  用「处理器是否已在册」判断，而不是模块级标记：Vite 的 HMR 会替换本模块，
+ *  但 api/client.ts 里的注册表是活的，模块级标记一丢就会把 112 个端点重复注册而抛错。 */
 export function installMockBackend(): { count: number; paths: string[] } {
-  if (installed) return { count: 0, paths: [] };
-  installed = true;
+  if (Object.keys(accountHandlers).some((p) => hasHandler(p))) return { count: 0, paths: [] };
   const all = {
     ...wrapAll(accountHandlers),
     ...wrapAll(billsHandlers),

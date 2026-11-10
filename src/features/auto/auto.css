@@ -1,4 +1,4 @@
-/* 自动记账专属样式：全部复用灯影变量，玻璃高亮选中态，不出现墨色实底。 */
+/* 自动记账专属样式：全部复用灯影设计 token 变量（外部 UI 基准），玻璃高亮选中态，不出现墨色实底。 */
 .guide-progress { display: flex; gap: 8px; padding: 4px 2px 18px; }
 .guide-dot { flex: 1; height: 4px; border-radius: 999px; background: var(--divider); transition: background .2s; }
 .guide-dot.on { background: var(--chip-selected-fill); box-shadow: 0 1px 8px var(--glass-shadow); }

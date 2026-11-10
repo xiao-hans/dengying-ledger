@@ -4,7 +4,7 @@
  * - 二级页 push 到当前栈，pop 返回；栈空时回到 Dock 首页。
  * - 表单草稿由 DraftProvider 单独持久化，返回/切 Tab 不丢（交互纪律 §6.2）。
  */
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 export type TabKey = 'bills' | 'stats' | 'auto' | 'mine';
 
@@ -43,6 +43,16 @@ export function NavProvider({ children }: { children: ReactNode }) {
   const stack = stacks[tab];
   const current = stack[stack.length - 1];
 
+  // 仅供模拟器验收深链：/?goto=页面名。日常导航不产生这个参数。
+  useEffect(() => {
+    const target = new URLSearchParams(window.location.search).get('goto');
+    if (!target) return;
+    const owner = (Object.keys(TAB_ROOT) as TabKey[]).find((k) => TAB_ROOT[k] === target);
+    if (owner) { setTab(owner); return; }
+    setTab('mine');
+    setStacks((s) => ({ ...s, mine: [{ name: TAB_ROOT.mine }, { name: target }] }));
+  }, []);
+
   const push = useCallback((name: string, params?: Route['params']) => {
     setStacks((s) => ({ ...s, [tab]: [...s[tab], { name, params }] }));
   }, [tab]);
@@ -79,7 +89,7 @@ export function useNav(): NavValue {
 
 /* ---------------- 表单草稿（切页不丢） ---------------- */
 type DraftMap = Record<string, Record<string, unknown>>;
-const DRAFT_KEY = 'dengying_drafts_v1';
+const DRAFT_KEY = 'meow_ledger_drafts_v1';
 const DraftCtx = createContext<{
   get: <T extends Record<string, unknown>>(key: string, fallback: T) => T;
   set: (key: string, patch: Record<string, unknown>) => void;

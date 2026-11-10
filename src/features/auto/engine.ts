@@ -35,7 +35,7 @@ export const WATCH_APPS = [
 
 /** 引导页 5 步（对齐 GuideAutoBillActivity 的权限漏斗）。 */
 export const GUIDE_STEPS = [
-  { title: '认识自动记账', icon: 'info', body: '灯影只在支付发生后读取你主动提供的通知、页面或截图文本，提取金额与商户；不会替你付款，也不会读取通讯录。' },
+  { title: '认识自动记账', icon: 'info', body: '喵啊记账只在支付发生后读取你主动提供的通知、页面或截图文本，提取金额与商户；不会替你付款，也不会读取通讯录。' },
   { title: '选择识别方式', icon: 'bell', body: '通知识别、无障碍文本、截屏 OCR 三路可单独开关；不需要全部开启，也可以随时关闭。' },
   { title: '选择监听的 App', icon: 'grid', body: '默认列出支付宝、微信、QQ、云闪付、银行与快手。白名单之外的文本不会被识别。' },
   { title: '设置匹配规则', icon: 'note', body: '按商户关键词自动带入分类、账户与标签；没有命中规则时，由你在确认页手动选择。' },

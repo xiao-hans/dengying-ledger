@@ -122,7 +122,7 @@ export function Legal({ route }: PageProps) {
         <p className="account-note">
           {privacy
             ? '账单、账本和资产默认只存在这台浏览器的 IndexedDB 里。登录、会员和验证码都是本地模拟，不会把手机号发到真实短信网关，也不会接入原 App 的服务器。'
-            : '这是灯影记账的本地复刻，用来对齐样本 App 的功能面。协议文本为自行撰写，不使用原 App 文案。继续使用表示你知道数据留在本机。'}
+            : '这是喵啊记账的本地复刻，用来对齐样本 App 的功能面。协议文本为自行撰写，不使用原 App 文案。继续使用表示你知道数据留在本机。'}
         </p>
       </GlassCard>
     </div>
@@ -138,10 +138,10 @@ export function About(_props: PageProps) {
       <TopBar title="关于" onBack={() => nav.pop()} />
       <GlassCard>
         <div className="account-hero">
-          <div className="name">灯影记账</div>
+          <div className="name">喵啊记账</div>
           <div className="sub">本地复刻 · 配置版本 {S(cfg.latest_version) || '1.8.1'}</div>
         </div>
-        <p className="account-note">功能对齐自动记账样本，界面用灯影的配色和玻璃底栏。广告、推送、埋点均为空实现。</p>
+        <p className="account-note">功能对齐自动记账样本，界面复用外部 UI 基准灯影的配色和玻璃底栏。广告、推送、埋点均为空实现。</p>
       </GlassCard>
       <ListRow title="最低可用版本" subtitle={S(cfg.min_version) || '1.0.0'} />
       <ListRow title="广告开关" subtitle={cfg.ad_enabled === '1' ? '开' : '关（默认）'} />

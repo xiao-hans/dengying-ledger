@@ -1,9 +1,9 @@
 {
-  "name": "dengying-ledger",
+  "name": "meow-ledger",
   "private": true,
   "version": "1.8.1",
   "type": "module",
-  "description": "灯影记账 · 自动记账 App 复刻实现（对齐 com.android.miaoa.achai v1.8.1）",
+  "description": "喵啊记账 · 自动记账 App 复刻实现（对齐 com.android.miaoa.achai v1.8.1）",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

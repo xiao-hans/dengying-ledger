@@ -1,4 +1,4 @@
-/* 账本 / 分类 / 资产 模块：灯影玻璃风格，选中态用更亮更实的玻璃面。 */
+/* 账本 / 分类 / 资产 模块：灯影设计 token 的玻璃风格（外部 UI 基准），选中态用更亮更实的玻璃面。 */
 .manage-icon {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 42px; height: 42px; border-radius: 14px;

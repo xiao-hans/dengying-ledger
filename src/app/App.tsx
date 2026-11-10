@@ -65,6 +65,27 @@ function Shell() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    // 验收期调试入口：让模拟器探针读出元素位置、触发点击、并确认输入是否真正入值。
+    const w = window as unknown as { __dy?: Record<string, unknown> };
+    w.__dy = {
+      go: (name: string, params?: Record<string, string | number | boolean | undefined>) => nav.push(name, params),
+      back: () => nav.pop(),
+      tab: (name: string) => nav.switchTab(name as never),
+      where: () => ({ name: nav.current.name, depth: nav.depth, tab: nav.tab }),
+      boxes: () => [...document.querySelectorAll('input,button,.list-row,.topbar-title')].map((el) => {
+        const r = el.getBoundingClientRect();
+        return { tag: el.tagName, text: (el.textContent || '').trim().slice(0, 24), ph: (el as HTMLInputElement).placeholder || '', value: (el as HTMLInputElement).value || '', x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      }),
+      clickAt: (x: number, y: number) => {
+        const el = document.elementFromPoint(x, y);
+        (el as HTMLElement | null)?.click?.();
+        return el ? `${el.tagName}.${el.className} "${(el.textContent || '').trim().slice(0, 20)}"` : 'none';
+      },
+    };
+    return () => { delete w.__dy; };
+  });
+
   const Page: PageComponent | undefined = pageRoutes[nav.current.name];
 
   const onQuickAdd = () => nav.push('BillEdit', { mode: 'create' });
@@ -102,7 +123,7 @@ function Splash() {
   return (
     <div className="splash fade-up">
       <div className="splash-logo"><Icon name="receipt" size={40} strokeWidth={1.6} /></div>
-      <div className="t-title-large brand-name">灯影记账</div>
+      <div className="t-title-large brand-name">喵啊记账</div>
       <div className="t-label-medium t-secondary splash-tip">本地优先 · 自动记账 · 数据在你手里</div>
     </div>
   );

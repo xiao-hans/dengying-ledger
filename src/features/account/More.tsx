@@ -78,16 +78,16 @@ export function ContractInfo(_props: PageProps) {
       {!signed && (
         <GlassCard>
           <SectionTitle>记一条模拟签约</SectionTitle>
-          <label className="field">产品名称
+          <label className="field"><span>产品名称</span>
             <input value={draft.value.productName} placeholder="例如 年度会员" onChange={(e) => draft.patch({ productName: e.target.value })} />
           </label>
-          <label className="field">签约方
+          <label className="field"><span>签约方</span>
             <input value={draft.value.contractProvider} placeholder="留空则记为本地模拟" onChange={(e) => draft.patch({ contractProvider: e.target.value })} />
           </label>
-          <label className="field">每期金额（元）
+          <label className="field"><span>每期金额（元）</span>
             <input inputMode="decimal" value={draft.value.money} placeholder="12.8" onChange={(e) => draft.patch({ money: e.target.value })} />
           </label>
-          <label className="field">下次扣款日期
+          <label className="field"><span>下次扣款日期</span>
             <input value={draft.value.nextContractDate} placeholder="2026-12-01" onChange={(e) => draft.patch({ nextContractDate: e.target.value })} />
           </label>
           <button className="btn btn-primary" onClick={sign}>保存签约</button>
@@ -160,16 +160,16 @@ export function ChangePhone(_props: PageProps) {
           <GlassCard>
             <p className="account-note">当前手机号 {current}。换绑需要旧号和新号各一次验证码，都只在本机生成。</p>
             <div className="row">
-              <label className="field grow">旧号验证码
+              <label className="field grow"><span>旧号验证码</span>
                 <input inputMode="numeric" value={draft.value.oldCode} onChange={(e) => draft.patch({ oldCode: e.target.value })} />
               </label>
               <button className="btn btn-ghost" disabled={sending === 'old'} onClick={() => send('old')}>发送</button>
             </div>
-            <label className="field">新手机号
+            <label className="field"><span>新手机号</span>
               <input inputMode="numeric" maxLength={11} value={draft.value.phone} onChange={(e) => draft.patch({ phone: e.target.value })} />
             </label>
             <div className="row">
-              <label className="field grow">新号验证码
+              <label className="field grow"><span>新号验证码</span>
                 <input inputMode="numeric" value={draft.value.code} onChange={(e) => draft.patch({ code: e.target.value })} />
               </label>
               <button className="btn btn-ghost" disabled={sending === 'new'} onClick={() => send('new')}>发送</button>
@@ -293,10 +293,10 @@ export function Feedback(_props: PageProps) {
     <div className="page">
       <TopBar title="意见反馈" onBack={() => nav.pop()} />
       <GlassCard>
-        <label className="field">想说的内容
+        <label className="field"><span>想说的内容</span>
           <textarea rows={4} maxLength={500} value={draft.value.content} placeholder="说明遇到的问题或建议" onChange={(e) => draft.patch({ content: e.target.value })} />
         </label>
-        <label className="field">联系方式（可留空）
+        <label className="field"><span>联系方式（可留空）</span>
           <input value={draft.value.contact} placeholder="邮箱或手机号，只留在本机" onChange={(e) => draft.patch({ contact: e.target.value })} />
         </label>
         <button className="btn btn-primary" onClick={submit}>提交</button>
@@ -363,17 +363,17 @@ export function PushSetting(_props: PageProps) {
 
 /* ---------------- 远程开关（Config/GetV2 的服务端配置） ---------------- */
 
-interface SwitchDef { key: string; label: string; hint: string; numeric?: boolean; }
+interface SwitchDef { key: string; label: string; hint: string; numeric?: boolean; toggle?: boolean; }
 
 const REMOTE_SWITCHES: SwitchDef[] = [
-  { key: 'ad_enabled', label: '广告总开关', hint: '关闭后不展示任何广告位' },
-  { key: 'dialog_enabled', label: '运营弹窗', hint: '启动时是否弹出运营内容' },
-  { key: 'force_update', label: '强制更新', hint: '低于最低版本时要求更新' },
-  { key: 'popupBackgroundEnable', label: '后台弹窗', hint: '切到后台时是否允许弹窗' },
-  { key: 'isInterceptStartActivity', label: '拦截启动页', hint: '自动记账是否拦截对方启动页' },
-  { key: 'memberServiceAgreementDialog', label: '会员协议弹窗', hint: '开通会员前是否弹出协议' },
-  { key: 'autoBillBgWhiteState', label: '后台白名单模式', hint: '只识别白名单里的应用' },
-  { key: 'yearlyReport', label: '年度报告', hint: '是否展示年度报告入口' },
+  { key: 'ad_enabled', label: '广告总开关', hint: '关闭后不展示任何广告位', toggle: true },
+  { key: 'dialog_enabled', label: '运营弹窗', hint: '启动时是否弹出运营内容', toggle: true },
+  { key: 'force_update', label: '强制更新', hint: '低于最低版本时要求更新', toggle: true },
+  { key: 'popupBackgroundEnable', label: '后台弹窗', hint: '切到后台时是否允许弹窗', toggle: true },
+  { key: 'isInterceptStartActivity', label: '拦截启动页', hint: '自动记账是否拦截对方启动页', toggle: true },
+  { key: 'memberServiceAgreementDialog', label: '会员协议弹窗', hint: '开通会员前是否弹出协议', toggle: true },
+  { key: 'autoBillBgWhiteState', label: '后台白名单模式', hint: '只识别白名单里的应用', toggle: true },
+  { key: 'yearlyReport', label: '年度报告', hint: '是否展示年度报告入口', toggle: true },
   { key: 'autoBillRemindCount', label: '自动记账提醒次数', hint: '未开启时的提醒上限', numeric: true },
   { key: 'autoBillShowNotificationDelay', label: '通知延迟（秒）', hint: '识别通知前等待的时间', numeric: true },
   { key: 'autoBookkeepingFreeCount', label: '免费自动记账次数', hint: '非会员可用次数', numeric: true },
@@ -415,10 +415,9 @@ export function RemoteSwitches(_props: PageProps) {
       </GlassCard>
       {REMOTE_SWITCHES.map((item) => {
         const value = S(cfg[item.key]);
-        const binary = value === '0' || value === '1';
         return (
           <div key={item.key}>
-            {binary && !item.numeric
+            {item.toggle
               ? (
                 <ListRow
                   title={item.label}
@@ -434,7 +433,7 @@ export function RemoteSwitches(_props: PageProps) {
               )}
             {editing === item.key && (
               <GlassCard>
-                <label className="field">{item.label}
+                <label className="field"><span>{item.label}</span>
                   <input inputMode={item.numeric ? 'numeric' : 'text'} value={text} onChange={(e) => setText(e.target.value)} />
                 </label>
                 <div className="row">

@@ -1,5 +1,5 @@
 /**
- * 灯影设计 token —— 唯一来源。
+ * 灯影设计 token（外部 UI 基准）—— 本工程唯一来源。
  * 直接移植自 D:\workspace\dengY\DengYing\ui\src\commonMain\kotlin\com\dengying\player\ui\theme\
  *   Color.kt (LightPalette / DarkPalette)
  *   Glass.kt (LightGlass / DarkGlass)
@@ -88,7 +88,7 @@ export const DarkGlass: GlassScheme = {
 
 /** 字号体系对齐 Theme.kt AppTypography，行高 1.35 倍（中文在 1.2 倍下显挤）。 */
 export const TypeScale = {
-  titleLarge: { size: 20, line: 27, weight: 700 },  // 品牌字「灯影」
+  titleLarge: { size: 20, line: 27, weight: 700 },  // 品牌字（沿用灯影 titleLarge 字阶）
   titleMedium: { size: 18, line: 24, weight: 700 }, // 页面标题
   titleSmall: { size: 17, line: 23, weight: 700 },  // 详情标题
   bodyLarge: { size: 15, line: 20, weight: 400 },   // 列表条目名

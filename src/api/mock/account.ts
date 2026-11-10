@@ -41,7 +41,14 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
   'Account/LoginByQQ': async (ctx) => loginThird(ctx, 'qq'),
   'Account/BindPhone': async (ctx) => {
     const phone = str(ctx, 'phone'), code = str(ctx, 'code');
-    return bindThird(phone, code, 'phone');
+    if (!/^1\d{10}$/.test(phone)) return fail(400, '请输入正确的手机号');
+    const rec = await get<{ code: string; expires: number }>('sms_code', phone);
+    if (!rec || rec.code !== code || rec.expires < nowMs()) return fail(400, '验证码错误或已过期');
+    const u = await currentUser();
+    const user = { ...u, phone, bind_type: 'phone', bind_id: phone, bind_time: nowSec() };
+    await save('member', { id: LOCAL_MEMBER_ID, ...user });
+    await remove('sms_code', phone);
+    return ok(user);
   },
   'Account/BindWechat': async (ctx) => bindThird(str(ctx, 'openid'), str(ctx, 'unionId'), 'wechat'),
   'Account/BindQQ': async (ctx) => bindThird(str(ctx, 'qqId'), str(ctx, 'nickname'), 'qq'),

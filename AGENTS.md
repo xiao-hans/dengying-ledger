@@ -1,4 +1,4 @@
-# AGENTS.md — 灯影记账 · 自动记账 App 复刻工程
+# AGENTS.md — 喵啊记账 · 自动记账 App 复刻工程
 
 > 本文件是所有在本仓库工作的 Agent 的**唯一入口约定**。任何模型开始动手前先读完本文件。
 > 用户全局约定见 `C:\Users\HANXIAO\.claude\CLAUDE.md`、`RTK.md`；本仓库的 `CLAUDE.md` 直接 `@AGENTS.md`。
@@ -30,7 +30,7 @@
 
 1. **功能完整，不落接口**：覆盖 21 个模块的全部功能面；`03` §3 的所有业务端点必须逐一实现，字段名与样本一致。若发现逆向出的接口不完整，**再次使用 REA MCP（自行配置）** 回到 `base.apk` 补取。
 2. **UI 风格与灯影一致**：配色、玻璃质感、字阶、圆角、胶囊控件、底栏交互全部对齐 `Color.kt` / `Glass.kt` / `Theme.kt` 与 `screens/screen.png`。交互逻辑也要一致，**不得出现反人类逻辑**（例如：删除要有二次确认、金额输入不吞键盘、返回不丢草稿、空态要有下一步出口、切换账本不静默清空筛选）。
-3. **Git + 远程仓库**：本地 `git init`，用 `gh` 创建 **public** 远程仓库（已创建：`xiao-hans/dengying-ledger`），每完成一个你认为的里程碑就 `commit` + `push`。
+3. **Git + 远程仓库**：本地 `git init`，用 `gh` 创建 **public** 远程仓库（已创建：`xiao-hans/meow-ledger`），每完成一个你认为的里程碑就 `commit` + `push`。
 4. **开始实现前先写 `AGENTS.md` 和 `CLAUDE.md`**，`CLAUDE.md` 内容直接 `@AGENTS.md`。
 5. `AGENTS.md` 除工程约定外，还必须写明 **skill 调度** 与 **MCP 调度**，让后续模型知道何时用哪个 skill / MCP。
 
@@ -148,7 +148,7 @@ works/
 | 会话恢复 / 继续上次未完成工作 | `mcp__plugin_context-mode_context-mode__ctx_resume` | 会话开始先看有没有历史 |
 | 查用户偏好/以往决策/环境事实 | `mcp__hermes-memory__memory_search`；保存耐久事实用 `memory_add` | 与 Pi agent 共用记忆库 |
 | 查库/框架/SDK/CLI 的**当前**文档（React/Vite/TS/IndexedDB…） | `mcp__context7__resolve-library-id` → `mcp__context7__query-docs` | 训练数据可能过时，必须用当前文档；优先于 WebSearch |
-| 查 GitHub 仓库/PR/issue、创建远端 | `gh` CLI（已登录 `xiao-hans`） | 本仓库远端 `xiao-hans/dengying-ledger` |
+| 查 GitHub 仓库/PR/issue、创建远端 | `gh` CLI（已登录 `xiao-hans`） | 本仓库远端 `xiao-hans/meow-ledger` |
 | 需要联网查非文档类资料 | `WebFetch` / `WebSearch`（经 ToolSearch 加载） | 库文档类优先 context7 |
 | 上下文过长需要压缩 | `mcp__bili__compress` / `decompress` / `search_context` / `acp_status` | 保留 112 端点清单与决策理由，压缩已消费的输出 |
 | 后台命令/等待外部状态 | `Monitor`（ToolSearch 加载） | 不用前台 sleep 轮询 |
