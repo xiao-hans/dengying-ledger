@@ -43,11 +43,11 @@ export interface RequestCtx {
   raw?: ArrayBuffer | Blob;
 }
 
-export type Handler = (ctx: RequestCtx) => Promise<unknown> | unknown;
+export type Handler = (ctx: RequestCtx) => Promise<ApiEnvelope<unknown>> | ApiEnvelope<unknown>;
 
 export interface Transport {
-  /** 返回业务 data（不含信封）；抛错则由 call 转成非 0 code。 */
-  send(ctx: RequestCtx): Promise<unknown>;
+  /** 返回统一信封 {code,message,data,trace_id}；业务失败用 code != 0 表达，不抛错。 */
+  send(ctx: RequestCtx): Promise<ApiEnvelope<unknown>>;
 }
 
 /** 超时常量（对齐 d0/a.java OkHttp 配置）。 */
@@ -58,7 +58,7 @@ export const TIMEOUTS = {
 /* ---------------- 真实 HTTP 传输（可插拔） ---------------- */
 export class HttpTransport implements Transport {
   constructor(private base = MAIN_BASE, private configBase = CONFIG_BASE) {}
-  async send(ctx: RequestCtx): Promise<unknown> {
+  async send(ctx: RequestCtx): Promise<ApiEnvelope<unknown>> {
     const base = ctx.urlType === 'configManage' ? this.configBase : this.base;
     const url = ctx.url || new URL(ctx.path.replace(/^\//, ''), base).toString();
     const controller = new AbortController();
@@ -76,8 +76,9 @@ export class HttpTransport implements Transport {
       }
       const res = await fetch(url, init);
       const json = await res.json() as ApiEnvelope<unknown>;
-      if (json.code !== 0) throw new Error(json.message || `服务端错误 ${json.code}`);
-      return json.data;
+      return json.code === 0 ? json : fail(json.code, json.message || `服务端错误 ${json.code}`);
+    } catch (e) {
+      return fail(-1, e instanceof Error ? e.message : String(e));
     } finally { clearTimeout(timer); }
   }
 }
@@ -104,13 +105,14 @@ export function hasHandler(path: string): boolean { return handlers.has(path); }
 
 /** 前端 mock 后端：优先用注册表，未注册时回退真实传输（若已配置）。 */
 export class LocalTransport implements Transport {
-  async send(ctx: RequestCtx): Promise<unknown> {
+  async send(ctx: RequestCtx): Promise<ApiEnvelope<unknown>> {
     const h = handlers.get(ctx.path);
     if (!h) {
       if (transport && !(transport instanceof LocalTransport)) return transport.send(ctx);
-      throw new Error(`端点未实现：${ctx.path}`);
+      return fail(404, `端点未实现：${ctx.path}`);
     }
-    return h(ctx);
+    try { return await h(ctx); }
+    catch (e) { return fail(500, e instanceof Error ? e.message : String(e)); }
   }
 }
 
@@ -137,15 +139,17 @@ export async function call<T = unknown>(method: 'GET' | 'POST', path: string, op
   };
   const t = transport ?? new LocalTransport();
   try {
-    const data = await t.send(ctx);
-    return data as T;
+    const env = await t.send(ctx);
+    if (env.code !== 0) throw new ApiError(path, env.message || `code ${env.code}`, env.code);
+    return env.data as T;
   } catch (e) {
+    if (e instanceof ApiError) throw e;
     throw new ApiError(path, e instanceof Error ? e.message : String(e));
   }
 }
 
 export class ApiError extends Error {
-  constructor(public path: string, message: string) {
+  constructor(public path: string, message: string, public code = -1) {
     super(`${path}: ${message}`);
     this.name = 'ApiError';
   }
