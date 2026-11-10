@@ -90,20 +90,35 @@ export function Settings(_props: PageProps) {
   );
 }
 
-export function HelpHome(_props: PageProps) {
+const ARTICLES: { id: string; title: string; body: string[] }[] = [
+  { id: 'start', title: '怎么用', body: ['记一笔在首页。自动记账的识别结果进待确认，通过后才入账。金额以分存储，页面按元显示。', '删除、退出账本、清空数据都会再问一次。返回上一页不会丢掉还没提交的草稿。'] },
+  { id: 'import', title: '导入教程', body: ['每行一条，用逗号或空格隔开说明和金额，例如「午饭,28.5」。解析后可以给每行选账户和分类，跳过的行不会写入。', '确认前先看成功、失败、重复三列。重复用「说明 + 金额（分）+ 日期」判断，再次导入不会覆盖已有账单。', '要发给别人：点导入历史里的记录，或把 CSV 文本直接复制出去。本页不跳外部链接。'] },
+  { id: 'auto', title: '自动记账', body: ['通知、无障碍、截屏三路采集的结果都进待确认队列。去重键是来源应用、金额、发生时间（按分钟）和商户。', '批量通过或逐条修改后才写账，不会静默入账。'] },
+  { id: 'refund', title: '退款', body: ['账单详情里登记退款，金额不能超过原账单。报表和预算按实付计算，实付 = 原金额 − 已退。撤销退款会把金额加回去。'] },
+];
+
+/** 帮助文章容器：本地多篇文章切换，不跳外部 WebView。 */
+export function HelpHome({ route }: PageProps) {
   const nav = useNav();
+  const wanted = S(route.params?.article);
+  const [current, setCurrent] = useState(ARTICLES.some((a) => a.id === wanted) ? wanted : ARTICLES[0].id);
+  const article = ARTICLES.find((a) => a.id === current) ?? ARTICLES[0];
   const { data } = useAsync(() => api.personIcons(), []);
   const icons = (Array.isArray(data) ? data : []) as { id?: number; title?: string; icon?: string }[];
   return (
     <div className="page">
       <TopBar title="帮助" onBack={() => nav.pop()} />
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        {ARTICLES.map((a) => (
+          <button key={a.id} className={a.id === article.id ? 'chip chip-on' : 'chip'} onClick={() => setCurrent(a.id)}>{a.title}</button>
+        ))}
+      </div>
       <GlassCard>
-        <SectionTitle>怎么用</SectionTitle>
-        <p className="account-note">记一笔在首页。自动记账的识别结果进待确认，通过后才入账。金额以分存储，页面按元显示。</p>
-        <p className="account-note">删除、退出账本、清空数据都会再问一次。返回上一页不会丢掉还没提交的草稿。</p>
+        <SectionTitle>{article.title}</SectionTitle>
+        {article.body.map((p) => <p key={p} className="account-note">{p}</p>)}
       </GlassCard>
       {icons.map((item) => (
-        <ListRow key={N(item.id)} title={S(item.title) || '入口'} subtitle="本页说明，不跳外部链接" />
+        <ListRow key={N(item.id)} title={S(item.title) || '入口'} subtitle="本页说明，不跳外部链接" onClick={() => setCurrent('start')} />
       ))}
       <ListRow title="用户协议" onClick={() => nav.push('Legal', { kind: 'terms' })} />
       <ListRow title="隐私说明" onClick={() => nav.push('Legal', { kind: 'privacy' })} />

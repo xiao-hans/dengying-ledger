@@ -9,13 +9,13 @@ import { useToast } from '../../app/useToast';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { PageProps } from '../../app/App';
 import { useState, useMemo } from 'react';
-import { api, type Dict } from '../common/api';
+import { api, local, type Dict } from '../common/api';
 import { useAsync } from '../common/hooks';
 import { get } from '../../db/client';
 import { LOCAL_MEMBER_ID } from '../../db/schema';
 import { useRefresh } from '../../app/useRefresh';
 import { N, S, dayText, dayMonth, cateName, cateIcon, cateMap } from '../common/format';
-import { summarize } from '../stats/stats';
+import { summarize, refundByBill, netMoney } from '../stats/stats';
 
 const BrandHead = ({ title, right }: { title: string; right?: React.ReactNode }) => (
   <div className="brand-head">
@@ -31,19 +31,21 @@ export function BillsHome(_: PageProps) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 1 | 2 | 3>('all');
   const { data, loading, error, reload } = useAsync(async () => {
-    const [page, cates] = await Promise.all([api.billsPage(1), api.mainCates()]);
+    const [page, cates, refunds] = await Promise.all([api.billsPage(1), api.mainCates(), local.refunds()]);
     return {
       rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
       cates: [...(cates.expense || []), ...(cates.income || [])],
+      refunds: refundByBill(refunds),
     };
   }); // 写操作后由全局版本号触发刷新
   const cmap = useMemo(() => cateMap(data?.cates || []), [data?.cates]);
   const rows = data?.rows || [];
   const thisMonth = new Date();
   const ym = thisMonth.getFullYear() * 100 + thisMonth.getMonth() + 1;
+  const refunds = data?.refunds ?? new Map<string, number>();
   const monthRows = rows.filter((r) => dayMonth(r.day) === ym);
-  const expense = monthRows.filter((r) => N(r.type, 1) === 1).reduce((s, r) => s + N(r.money), 0);
-  const income = monthRows.filter((r) => N(r.type, 1) === 2).reduce((s, r) => s + N(r.money), 0);
+  const expense = monthRows.filter((r) => N(r.type, 1) === 1).reduce((s, r) => s + netMoney(r, refunds), 0);
+  const income = monthRows.filter((r) => N(r.type, 1) === 2).reduce((s, r) => s + netMoney(r, refunds), 0);
   const recent = rows.filter((r) => {
     if (filter !== 'all' && N(r.type, 1) !== filter) return false;
     if (q.trim()) return `${S(r.desc)} ${cateName(cmap, r.member_cate_id)}`.toLowerCase().includes(q.trim().toLowerCase());
@@ -62,6 +64,11 @@ export function BillsHome(_: PageProps) {
         right={<button className="icon-btn" aria-label="刷新" onClick={reload}><Icon name="refresh" /></button>}
       />
       <SearchPill value={q} onChange={setQ} placeholder="搜索账单、分类、标签" onFocus={() => nav.push('GlobalSearch')} />
+      <button className="quick-tile" onClick={() => nav.push('BillEdit', { mode: 'quick' })}>
+        <Icon name="plus" size={16} />
+        <span className="t-body-medium t-semi">快捷记账</span>
+        <span className="t-label-medium t-secondary">一键记下，金额和分类可后补</span>
+      </button>
       <ChipRow
         value={filter}
         onChange={(v) => setFilter(v as typeof filter)}
@@ -104,7 +111,7 @@ export function BillsHome(_: PageProps) {
                 {list.map((r) => (
                   <ListRow key={S(r.client_id)}
                     icon={cateIcon(cmap, r.member_cate_id) as 'wallet'}
-                    title={<span className="row-between"><span>{cateName(cmap, r.member_cate_id)}</span><span className={N(r.type) === 2 ? 't-semi' : ''}>{N(r.type) === 2 ? '+' : N(r.type) === 1 ? '-' : ''}¥{formatMoney(N(r.money))}</span></span>}
+                    title={<span className="row-between"><span>{cateName(cmap, r.member_cate_id)}</span><span className={N(r.type) === 2 ? 't-semi' : ''}>{N(r.type) === 2 ? '+' : N(r.type) === 1 ? '-' : ''}¥{formatMoney(netMoney(r, refunds))}</span></span>}
                     subtitle={[S(r.desc), S(r.tag_ids) && '含标签'].filter(Boolean).join(' · ') || '无备注'}
                     chevron={false}
                     onClick={() => nav.push('BillDetail', { clientId: S(r.client_id) })} />
@@ -123,17 +130,18 @@ export function StatsHome(_: PageProps) {
   const nav = useNav();
   const [period, setPeriod] = useState<'month' | 'year'>('month');
   const { data } = useAsync(async () => {
-    const [page, cates, budgets] = await Promise.all([api.billsPage(1), api.mainCates(), api.budgetList()]);
+    const [page, cates, budgets, refunds] = await Promise.all([api.billsPage(1), api.mainCates(), api.budgetList(), local.refunds()]);
     return {
       rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
       cates: [...(cates.expense || []), ...(cates.income || [])], budgets,
+      refunds: refundByBill(refunds),
     };
   });
   const cmap = useMemo(() => cateMap(data?.cates || []), [data?.cates]);
   const now = new Date();
   const key = now.getFullYear() * 100 + now.getMonth() + 1;
   const scoped = (data?.rows || []).filter((r) => period === 'year' ? S(r.day).slice(0, 4) === String(now.getFullYear()) : Number(S(r.day).slice(0, 6)) === key);
-  const stats = useMemo(() => summarize(scoped, 1, (id) => cateName(cmap, id)), [scoped, cmap]);
+  const stats = useMemo(() => summarize(scoped, 1, (id) => cateName(cmap, id), data?.refunds), [scoped, cmap, data?.refunds]);
   const budget = (data?.budgets || []).find((b) => N(b.day) === key);
   return (
     <div className="page">

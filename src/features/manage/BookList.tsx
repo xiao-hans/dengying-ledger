@@ -38,6 +38,7 @@ export function BookList(_: PageProps) {
         <div className="page-pad">
           <GlassCard strong><div className="t-body-large t-semi">共 {books.length} 本账</div><div className="t-label-medium t-secondary" style={{ marginTop: 6, lineHeight: 1.8 }}>默认账本「日常账本」不可删除；月起始日影响每月统计区间。</div></GlassCard>
           <SectionTitle action={<button onClick={() => setJoin(true)}>加入账本 ›</button>}>我的账本</SectionTitle>
+          <ListRow icon="scan" title="扫码加入账本" subtitle="没有相机，粘贴邀请码等价扫码" onClick={() => nav.push('ScanJoin')} />
           {books.length === 0 ? <div className="card"><EmptyState icon="book" title="还没有账本" hint="新建一本账本开始记账" actionLabel="新建账本" onAction={() => nav.push('BookEdit')} /></div> : (
             <div className="card">{books.map((b: Dict) => (
               <ListRow key={S(b.id)} icon="book" title={<span className="row" style={{ gap: 8 }}>{S(b.name)} {N(b.id) === 1 ? <span className="badge">默认</span> : null}</span>}
@@ -61,6 +62,50 @@ export function BookList(_: PageProps) {
         <button className="btn btn-primary" style={{ width: '100%', marginTop: 12 }} onClick={joinBook}>加入账本</button>
       </BottomSheet>
       <ConfirmDialog open={!!confirm} title={`删除账本「${S(confirm?.name)}」？`} message="账本内账单不会自动删除，但将不再出现在账本列表里。" onConfirm={del} onCancel={() => setConfirm(null)} />
+    </div>
+  );
+}
+
+/** 扫码加入账本。浏览器读不到相机，用粘贴邀请码等价，走同一条加入链路。 */
+export function ScanJoin(_: PageProps) {
+  const nav = useNav();
+  const toast = useToast();
+  const refresh = useRefresh();
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function join() {
+    const c = code.trim();
+    if (!c) return toast.show('请输入邀请码');
+    setBusy(true);
+    try {
+      const info = await api.bookInfoByCode(c);
+      const id = N(info.id);
+      if (!id) return toast.show('邀请码无效');
+      await api.bookJoin(id);
+      toast.show(`已加入「${S(info.name) || '共享账本'}」`);
+      refresh.bump();
+      nav.pop();
+    } catch (e) {
+      toast.show(`加入失败：${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="page">
+      <TopBar title="扫码加入" subtitle="粘贴邀请码等价扫码" onBack={nav.pop} />
+      <div className="page-scroll">
+        <div className="page-pad">
+          <GlassCard>
+            <SectionTitle>邀请码</SectionTitle>
+            <p className="t-label-medium t-secondary">网页不能调用相机。把对方分享的邀请码粘贴到下面，校验通过后加入，和扫码是同一条链路。</p>
+            <input className="field" style={{ marginTop: 10 }} value={code} onChange={(e) => setCode(e.target.value)} placeholder="例如 DY1ABC23" aria-label="邀请码" />
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: 12 }} disabled={busy} onClick={join}>{busy ? '加入中…' : '加入账本'}</button>
+          </GlassCard>
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   TopBar, GlassCard, SectionTitle, ListRow, EmptyState, ConfirmDialog, formatMoney,
 } from '../../components/ui';
 import { useAsync } from '../common/hooks';
-import { api, type Dict } from '../common/api';
+import { api, local, type Dict } from '../common/api';
 import { N, S, toCents } from '../common/format';
 import './manage.css';
 
@@ -19,6 +19,8 @@ interface Draft {
   money: string;
   day: string;
   skip: boolean;
+  accountId: string;
+  cateId: string;
 }
 
 function today(): string {
@@ -43,11 +45,13 @@ function parseLines(text: string): Draft[] {
         desc = line.slice(0, m.index).trim() || '导入账单';
       }
     }
-    return { key: `${i}-${desc}`, desc: desc || '导入账单', money, day: today(), skip: false };
+    return { key: `${i}-${desc}`, desc: desc || '导入账单', money, day: today(), skip: false, accountId: '', cateId: '' };
   });
 }
 
-function ConfirmList({ drafts, setDrafts }: { drafts: Draft[]; setDrafts: (d: Draft[]) => void }) {
+function ConfirmList({ drafts, setDrafts, accounts, cates }: {
+  drafts: Draft[]; setDrafts: (d: Draft[]) => void; accounts: Dict[]; cates: Dict[];
+}) {
   if (drafts.length === 0) return null;
   return (
     <div className="card" style={{ marginTop: 12 }}>
@@ -57,6 +61,16 @@ function ConfirmList({ drafts, setDrafts }: { drafts: Draft[]; setDrafts: (d: Dr
             onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, desc: e.target.value } : x))} />
           <input className="field" style={{ flex: 1 }} inputMode="decimal" value={d.money} aria-label="金额（元）"
             onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, money: e.target.value } : x))} />
+          <select className="field" style={{ flex: 1 }} aria-label="账户" value={d.accountId}
+            onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, accountId: e.target.value } : x))}>
+            <option value="">账户</option>
+            {accounts.map((a) => <option key={S(a.id)} value={S(a.id)}>{S(a.name, '账户')}</option>)}
+          </select>
+          <select className="field" style={{ flex: 1 }} aria-label="分类" value={d.cateId}
+            onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, cateId: e.target.value } : x))}>
+            <option value="">分类</option>
+            {cates.map((c) => <option key={S(c.cate_id ?? c.id)} value={S(c.cate_id ?? c.id)}>{S(c.title, '分类')}</option>)}
+          </select>
           <button className="btn btn-ghost" style={{ padding: '4px 8px' }} onClick={() => setDrafts(drafts.map((x, j) => j === i ? { ...x, skip: !x.skip } : x))}>{d.skip ? '恢复' : '跳过'}</button>
         </div>
       ))}
@@ -76,6 +90,7 @@ export function ImportHome(_: PageProps) {
             <ListRow icon="receipt" title="OCR 文本确认" subtitle="把识别出的文字贴进来逐条核对" onClick={() => nav.push('ImportOcr')} />
             <ListRow icon="folder" title="导入历史" subtitle="查看或删除某次导入" onClick={() => nav.push('ImportHistory')} />
             <ListRow icon="download" title="导出 CSV" subtitle="已有导出页" onClick={() => nav.push('ExportBills')} />
+            <ListRow icon="help" title="导入教程" subtitle="格式说明与分享步骤" onClick={() => nav.push('HelpHome', { article: 'import' })} />
           </div>
           <p className="t-label-medium t-secondary manage-note">
             重复判断用「说明 + 金额（分）+ 日期」。同一行再次导入会计入重复，不会覆盖已有账单。Web 端不读取相册，OCR 用粘贴文本等价。
@@ -93,7 +108,11 @@ function useImportCommit(kind: 'paste' | 'ocr') {
   return async (drafts: Draft[]) => {
     const items = drafts.filter((d) => !d.skip).map((d) => {
       const cents = toCents(d.money);
-      return { desc: d.desc.trim() || '导入账单', money: cents, day: d.day, billType: 1 };
+      return {
+        desc: d.desc.trim() || '导入账单', money: cents, day: d.day, billType: 1,
+        fromFundAccountId: N(d.accountId) || undefined,
+        memberCateId: N(d.cateId) || undefined,
+      };
     }).filter((d) => d.money !== 0);
     if (items.length === 0) return toast.show('没有可导入的行');
     try {
@@ -107,11 +126,19 @@ function useImportCommit(kind: 'paste' | 'ocr') {
   };
 }
 
+function useMatchOptions() {
+  return useAsync(async () => {
+    const [assets, cates] = await Promise.all([local.assets(), api.mainCates()]);
+    return { accounts: assets, cates: [...(cates.expense || []), ...(cates.income || [])] };
+  });
+}
+
 export function ImportPaste(_: PageProps) {
   const nav = useNav();
   const [text, setText] = useState('');
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const commit = useImportCommit('paste');
+  const opts = useMatchOptions();
   return (
     <div className="page">
       <TopBar title="粘贴导入" onBack={nav.pop} />
@@ -120,7 +147,7 @@ export function ImportPaste(_: PageProps) {
           <SectionTitle>每行一条</SectionTitle>
           <textarea className="field" rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'午饭,28.5\n地铁 4'} />
           <button className="btn btn-ghost" style={{ marginTop: 10, width: '100%' }} onClick={() => setDrafts(parseLines(text))}>解析预览</button>
-          <ConfirmList drafts={drafts} setDrafts={setDrafts} />
+          <ConfirmList drafts={drafts} setDrafts={setDrafts} accounts={opts.data?.accounts || []} cates={opts.data?.cates || []} />
           {drafts.length > 0 && (
             <button className="btn btn-primary" style={{ marginTop: 12, width: '100%' }} onClick={() => commit(drafts)}>确认导入</button>
           )}
@@ -135,6 +162,7 @@ export function ImportOcr(_: PageProps) {
   const [text, setText] = useState('');
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const commit = useImportCommit('ocr');
+  const opts = useMatchOptions();
   return (
     <div className="page">
       <TopBar title="OCR 确认" subtitle="识别结果需逐条核对" onBack={nav.pop} />
@@ -143,7 +171,7 @@ export function ImportOcr(_: PageProps) {
           <p className="t-label-medium t-secondary">Web 不能直接读相册。把识别出的文字贴在下面，核对金额后再写入。</p>
           <textarea className="field" style={{ marginTop: 10 }} rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="识别文本，每行一笔" />
           <button className="btn btn-ghost" style={{ marginTop: 10, width: '100%' }} onClick={() => setDrafts(parseLines(text))}>生成待确认</button>
-          <ConfirmList drafts={drafts} setDrafts={setDrafts} />
+          <ConfirmList drafts={drafts} setDrafts={setDrafts} accounts={opts.data?.accounts || []} cates={opts.data?.cates || []} />
           {drafts.length > 0 && (
             <button className="btn btn-primary" style={{ marginTop: 12, width: '100%' }} onClick={() => commit(drafts)}>确认写入</button>
           )}

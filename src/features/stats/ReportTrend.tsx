@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 import type { PageProps } from '../../app/App';
 import { useNav } from '../../app/navigation';
 import { TopBar, ChipRow, GlassCard, EmptyState, SectionTitle, formatMoney } from '../../components/ui';
-import { api, type Dict } from '../common/api';
+import { api, local, type Dict } from '../common/api';
 import { useAsync } from '../common/hooks';
-import { N, S } from '../common/format';
-import { periodKey, periodLabel } from './stats';
+import { N } from '../common/format';
+import { periodKey, periodLabel, refundByBill, netMoney } from './stats';
 import './stats.css';
 
 type Group = { key: number; expense: number; income: number };
@@ -14,20 +14,24 @@ type Group = { key: number; expense: number; income: number };
 export function ReportTrend(_: PageProps) {
   const nav = useNav();
   const { data, loading } = useAsync(async () => {
-    const page = await api.billsPage(1);
-    return (page.bills as Dict[]) || (page.items as Dict[]) || [];
+    const [page, refunds] = await Promise.all([api.billsPage(1), local.refunds()]);
+    return {
+      rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
+      refunds: refundByBill(refunds),
+    };
   });
   const [period, setPeriod] = useState<'month' | 'year'>('month');
   const [kind, setKind] = useState<'both' | 'expense' | 'income'>('both');
   const groups = useMemo<Group[]>(() => {
     const m = new Map<number, Group>();
-    for (const r of data || []) {
+    const refunds = data?.refunds ?? new Map();
+    for (const r of data?.rows || []) {
       const k = periodKey(r.day, period);
       if (!k) continue;
       if (!m.has(k)) m.set(k, { key: k, expense: 0, income: 0 });
       const g = m.get(k)!;
-      if (N(r.type, 1) === 1) g.expense += N(r.money);
-      if (N(r.type, 1) === 2) g.income += N(r.money);
+      if (N(r.type, 1) === 1) g.expense += netMoney(r, refunds);
+      if (N(r.type, 1) === 2) g.income += netMoney(r, refunds);
     }
     return [...m.values()].sort((a, b) => a.key - b.key).slice(-12);
   }, [data, period]);

@@ -63,10 +63,10 @@ export function VipHome(_props: PageProps) {
       const checked = (await api.checkOrder(id)) as { status?: number };
       if (N(checked.status) === 1) {
         await api.activate('local');
-        toast.show('已开通（本地模拟，未发生真实扣款）');
         refresh.bump();
+        nav.push('PayResult', { orderId: id, ok: '1' });
       } else {
-        toast.show('订单未支付');
+        nav.push('PayResult', { orderId: id, ok: '0' });
       }
     } catch (e) {
       toast.show(errText(e));
@@ -191,6 +191,25 @@ export function AdSlots(_props: PageProps) {
       <div className="ad-slot">激励 · 空实现</div>
       <GlassCard>
         <p className="account-note">广告、推送和埋点保持可插拔的空实现。表还在（ad_data、ad_info、ad_config、ad_event），但不会加载任何广告 SDK，也不会上报。</p>
+      </GlassCard>
+    </div>
+  );
+}
+
+/** 支付结果引导。只展示本地模拟订单的结果，不接真实支付渠道。 */
+export function PayResult({ route }: PageProps) {
+  const nav = useNav();
+  const id = S(route.params?.orderId);
+  const ok = S(route.params?.ok) !== '0';
+  return (
+    <div className="page">
+      <TopBar title="支付结果" onBack={() => nav.pop()} />
+      <GlassCard>
+        <SectionTitle>{ok ? '开通成功' : '未完成支付'}</SectionTitle>
+        <p className="account-note">{ok ? '会员已在本机生效。没有发生真实扣款，也没有跳转支付宝或微信。' : '订单还是未支付。可以回到会员页重试。'}</p>
+        {id && <p className="account-note">订单号 {id}</p>}
+        <button type="button" className="btn primary" onClick={() => nav.push('BillEdit')}>去记一笔</button>
+        <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => nav.pop()}>返回</button>
       </GlassCard>
     </div>
   );

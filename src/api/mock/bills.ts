@@ -64,7 +64,8 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
     for (const item of list) {
       const key = billKey(clientOf(item));
       const old = await get('bill', key);
-      await save('bill', { ...toBill(item), ...(old || {}), local_update_time: nowSec() });
+      // 新值覆盖旧值：put 是整行替换，顺序反了会把批量修改的分类写丢。
+      await save('bill', { ...(old || {}), ...toBill(item), local_update_time: nowSec() });
     }
     return ok({ count: list.length });
   },

@@ -4,7 +4,7 @@
  * 可在浏览器 DevTools 里 `await window.__apiSelfTest()`，也可作为 CI 冒烟测试入口。
  */
 import { call } from '../client';
-import { verifyEndpoints } from './index';
+import { DYNAMIC_PATHS, verifyEndpoints } from './index';
 import { bootstrap, selfTest } from '../../db/bootstrap';
 
 export interface EndpointTestResult {
@@ -29,7 +29,10 @@ export async function apiSelfTest(endpoints: { path: string; method: string }[])
     }
   }
   for (const p of missing) failures.push({ path: p, error: '缺少处理器' });
-  for (const p of extra) failures.push({ path: p, error: '多余处理器（不在 spec/endpoints.json）' });
+  // 2 个动态 @Url 没有静态路径，对照表明确不计入 112，不算多余
+  for (const p of extra) {
+    if (!DYNAMIC_PATHS.includes(p)) failures.push({ path: p, error: '多余处理器（不在 spec/endpoints.json）' });
+  }
   return {
     total: endpoints.length,
     passed: endpoints.length - failures.length,

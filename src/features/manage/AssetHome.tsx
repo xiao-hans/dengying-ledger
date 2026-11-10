@@ -4,10 +4,11 @@ import { useNav } from '../../app/navigation';
 import { useRefresh } from '../../app/useRefresh';
 import { useToast } from '../../app/useToast';
 import { Icon } from '../../components/Icon';
-import { TopBar, GlassCard, SectionTitle, ListRow, EmptyState, formatMoney } from '../../components/ui';
+import { TopBar, GlassCard, SectionTitle, ListRow, EmptyState, formatMoney, BottomSheet, ConfirmDialog } from '../../components/ui';
 import { useAsync } from '../common/hooks';
 import { api, local, type Dict } from '../common/api';
-import { N, S } from '../common/format';
+import { N, S, toCents } from '../common/format';
+import { useState } from 'react';
 import { safeIcon } from './common';
 import './manage.css';
 
@@ -19,9 +20,31 @@ export function AssetHome(_: PageProps) {
     const [assets, types, iou] = await Promise.all([local.assets(), api.assetTypes(), api.iou()]);
     return { assets, types, iou: S(iou) };
   }, [refresh.version]);
+  const [sheet, setSheet] = useState(false);
+  const [name, setName] = useState('');
+  const [money, setMoney] = useState('');
+  const [dropId, setDropId] = useState<number | null>(null);
   const rows = (data?.assets || []).filter((a) => N(a.status, 1) !== 0);
+  const ious = (data?.assets || []).filter((a) => N(a.type) === 6 && N(a.status, 1) !== 0);
   const total = rows.filter((a) => N(a.is_total_assets, 1) === 1 && N(a.type) !== 3).reduce((s, a) => s + N(a.balance_cents), 0);
   const debt = rows.filter((a) => N(a.type) === 3 || N(a.balance_cents) < 0).reduce((s, a) => s + Math.abs(Math.min(0, N(a.balance_cents))), 0);
+  async function addIou() {
+    const cents = toCents(money);
+    if (!name.trim()) return toast.show('请填写对方姓名');
+    if (cents === null || cents <= 0) return toast.show('请输入有效金额');
+    try {
+      await api.saveAsset({ name: name.trim(), type: 6, balanceCents: cents, isTotalAssets: 0 }, false);
+      setSheet(false); setName(''); setMoney('');
+      toast.show('已记下这笔借款');
+      reload(); refresh.bump();
+    } catch (e) { toast.show(`保存失败：${e instanceof Error ? e.message : String(e)}`); }
+  }
+  async function repay() {
+    const id = dropId; setDropId(null);
+    if (id === null) return;
+    try { await api.assetStatus(id, 0); toast.show('已记为还清'); reload(); refresh.bump(); }
+    catch (e) { toast.show(`操作失败：${e instanceof Error ? e.message : String(e)}`); }
+  }
   async function toggleHidden(a: Dict) {
     try { await api.assetStatus(N(a.id), N(a.status, 1) === 0 ? 1 : 0); toast.show('账户状态已更新'); reload(); refresh.bump(); }
     catch (e) { toast.show(`更新失败：${e instanceof Error ? e.message : String(e)}`); }
@@ -46,9 +69,13 @@ export function AssetHome(_: PageProps) {
                 right={`¥${formatMoney(N(a.balance_cents))}`} onClick={() => nav.push('AssetDetail', { assetId: N(a.id) })} />
             ))}</div>
           )}
-          <SectionTitle>借据与转账</SectionTitle>
+          <SectionTitle action={<button onClick={() => setSheet(true)}>记一笔借款 ›</button>}>借款与还款</SectionTitle>
           <div className="card">
-            <ListRow icon="receipt" title="借据名单" subtitle={data?.iou ? data.iou : '暂无借据'} chevron={false} />
+            {ious.length === 0 && <EmptyState icon="receipt" title="还没有借款" hint="记下借出或借入的钱，还清后从列表移除" actionLabel="记一笔借款" onAction={() => setSheet(true)} />}
+            {ious.map((a) => (
+              <ListRow key={`iou${S(a.id)}`} icon="receipt" title={S(a.name, '未命名')} subtitle="待还"
+                right={`¥${formatMoney(N(a.balance_cents))}`} onClick={() => setDropId(N(a.id))} />
+            ))}
             <ListRow icon="transfer" title="记一笔转账" subtitle="从账户 A 转到账户 B" onClick={() => nav.push('BillEdit', { mode: 'create', type: 3 })} />
           </div>
           <SectionTitle>隐藏 / 恢复账户</SectionTitle>
@@ -59,6 +86,17 @@ export function AssetHome(_: PageProps) {
           <div className="t-label-medium t-secondary manage-note">余额以整数分存储，避免浮点误差；信用卡负债单独列出，不与现金资产混算。</div>
         </div>
       </div>
+      <BottomSheet open={sheet} title="记一笔借款" onClose={() => setSheet(false)}>
+        <div className="t-label-medium t-secondary">对方</div>
+        <input className="field" style={{ marginTop: 8 }} placeholder="姓名" value={name} onChange={(e) => setName(e.target.value)} aria-label="对方姓名" />
+        <div className="t-label-medium t-secondary" style={{ marginTop: 14 }}>金额（元）</div>
+        <input className="field" style={{ marginTop: 8 }} inputMode="decimal" placeholder="0.00" value={money} onChange={(e) => setMoney(e.target.value)} aria-label="借款金额" />
+        <div className="row" style={{ marginTop: 14 }}>
+          <button className="btn btn-ghost" onClick={() => setSheet(false)}>取消</button>
+          <button className="btn btn-primary grow" onClick={addIou}>保存</button>
+        </div>
+      </BottomSheet>
+      <ConfirmDialog open={dropId !== null} title="这笔已经还清？" message="确认后从借款列表移除，账户本身保留为隐藏状态。" onConfirm={repay} onCancel={() => setDropId(null)} />
     </div>
   );
 }

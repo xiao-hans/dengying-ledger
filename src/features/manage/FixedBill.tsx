@@ -175,6 +175,8 @@ export function ReminderList({ route }: PageProps) {
   const [title, setTitle] = useState('');
   const [day, setDay] = useState('1');
   const [hour, setHour] = useState('9');
+  const now = new Date();
+  const due = rows.filter((r) => N(r.status, 1) === 1 && N(r.day) > 0 && N(r.day) <= now.getDate() && N(r.hour, 0) <= now.getHours());
 
   async function add() {
     const t = title.trim();
@@ -204,6 +206,15 @@ export function ReminderList({ route }: PageProps) {
             <span className="t-body-medium t-secondary">时</span>
           </div>
           <button className="btn btn-primary" style={{ marginTop: 12, width: '100%' }} onClick={add}>保存提醒</button>
+          {due.length > 0 && (
+            <div className="card" style={{ marginTop: 12 }}>
+              <SectionTitle>本月已到点</SectionTitle>
+              {due.map((r) => (
+                <ListRow key={`due-${S(r.id)}`} icon="bell" title={S(r.title) || '提醒'} subtitle="只提醒，点这里去记一笔" chevron
+                  onClick={() => nav.push('BillEdit', { desc: S(r.title) })} />
+              ))}
+            </div>
+          )}
           <SectionTitle>已有提醒</SectionTitle>
           {loading && <div className="t-body-medium t-secondary">加载中…</div>}
           {error && <div className="card"><EmptyState icon="warning" title="加载失败" hint={error} actionLabel="重试" onAction={reload} /></div>}
@@ -215,7 +226,7 @@ export function ReminderList({ route }: PageProps) {
               <ListRow key={S(r.id)} icon="bell" title={S(r.title) || '提醒'} subtitle={`每月 ${N(r.day, 1)} 日 ${N(r.hour, 9)} 时`} chevron={false} />
             ))}</div>
           )}
-          <p className="t-label-medium t-secondary manage-note">Web 端用本地记录等价系统定时：打开应用时若已到提醒日，仍需你确认后才会写账。</p>
+          <p className="t-label-medium t-secondary manage-note">Web 端没有系统闹钟。打开这一页时，已到「日 + 时」的提醒会列在「本月已到点」，点进去才记一笔，不会自动入账。</p>
         </div>
       </div>
     </div>

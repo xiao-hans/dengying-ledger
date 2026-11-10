@@ -11,3 +11,5 @@ spec/.eps_sorted.tmp
 !.env.example
 coverage/
 *.tsbuildinfo
+.verify/
+public/probe*.html

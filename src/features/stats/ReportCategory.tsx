@@ -3,19 +3,20 @@ import { useMemo, useState } from 'react';
 import type { PageProps } from '../../app/App';
 import { useNav } from '../../app/navigation';
 import { TopBar, ChipRow, GlassCard, EmptyState, SectionTitle, formatMoney, ListRow } from '../../components/ui';
-import { api, type Dict } from '../common/api';
+import { api, local, type Dict } from '../common/api';
 import { useAsync } from '../common/hooks';
 import { N, S, cateMap, cateName } from '../common/format';
-import { summarize, periodKey, periodLabel } from './stats';
+import { summarize, periodKey, periodLabel, refundByBill, netMoney } from './stats';
 import './stats.css';
 
 export function ReportCategory(_: PageProps) {
   const nav = useNav();
   const { data, loading } = useAsync(async () => {
-    const [page, cates] = await Promise.all([api.billsPage(1), api.mainCates()]);
+    const [page, cates, refunds] = await Promise.all([api.billsPage(1), api.mainCates(), local.refunds()]);
     return {
       rows: (page.bills as Dict[]) || (page.items as Dict[]) || [],
       cates: [...(cates.expense || []), ...(cates.income || [])],
+      refunds: refundByBill(refunds),
     };
   });
   const [type, setType] = useState<1 | 2>(1);
@@ -26,7 +27,7 @@ export function ReportCategory(_: PageProps) {
   const now = new Date();
   const key = now.getFullYear() * 100 + now.getMonth() + 1;
   const scoped = rows.filter((r) => period === 'all' ? true : period === 'year' ? periodKey(r.day, 'year') === now.getFullYear() : periodKey(r.day, 'month') === key);
-  const sum = summarize(scoped, type, (id) => cateName(cmap, id));
+  const sum = summarize(scoped, type, (id) => cateName(cmap, id), data?.refunds);
   const detail = selected === null ? [] : scoped.filter((r) => N(r.type, 1) === type && N(r.member_cate_id, 9) === selected).sort((a, b) => S(b.day).localeCompare(S(a.day)));
 
   return (
@@ -63,7 +64,7 @@ export function ReportCategory(_: PageProps) {
                 {detail.length === 0 && <EmptyState icon="file" title="没有明细" />}
                 {detail.map((r) => (
                   <ListRow key={S(r.client_id)} icon="receipt" title={S(r.desc) || '无备注'}
-                    subtitle={S(r.day)} right={`¥${formatMoney(N(r.money))}`} chevron={false}
+                    subtitle={S(r.day)} right={`¥${formatMoney(netMoney(r, data?.refunds ?? new Map()))}`} chevron={false}
                     onClick={() => nav.push('BillDetail', { clientId: S(r.client_id) })} />
                 ))}
               </div>

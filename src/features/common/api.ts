@@ -16,6 +16,8 @@ export const local = {
   tags: async (): Promise<Dict[]> => { await ready; return all<Dict>('tag'); },
   assets: async (): Promise<Dict[]> => { await ready; return all<Dict>('assets'); },
   bookList: async (): Promise<Dict[]> => { await ready; return all<Dict>('bill_book'); },
+  refunds: async (): Promise<Dict[]> => { await ready; return all<Dict>('refund_bill'); },
+  reminders: async (): Promise<Dict[]> => { await ready; return all<Dict>('bill_remind'); },
 };
 
 export const api = {

@@ -5,9 +5,10 @@ import { useNav } from '../../app/navigation';
 import { useToast } from '../../app/useToast';
 import { Icon } from '../../components/Icon';
 import { TopBar, GlassCard, SectionTitle, ListRow, EmptyState, BottomSheet, ConfirmDialog, ChipRow, formatMoney } from '../../components/ui';
-import { api, type Dict } from '../common/api';
+import { api, local, type Dict } from '../common/api';
 import { useAsync } from '../common/hooks';
 import { N, S, cateName, cateMap, dayMonth } from '../common/format';
+import { netMoney, refundByBill } from './stats';
 import { toCents } from '../common/format';
 import './stats.css';
 
@@ -19,8 +20,8 @@ export function BudgetList(_: PageProps) {
   const nav = useNav();
   const toast = useToast();
   const { data, loading, reload } = useAsync(async () => {
-    const [list, page, cates] = await Promise.all([api.budgetList(), api.billsPage(1), api.mainCates()]);
-    return { budgets: list, rows: (page.bills as Dict[]) || (page.items as Dict[]) || [], cates: cates.expense || [] };
+    const [list, page, cates, refunds] = await Promise.all([api.budgetList(), api.billsPage(1), api.mainCates(), local.refunds()]);
+    return { budgets: list, rows: (page.bills as Dict[]) || (page.items as Dict[]) || [], cates: cates.expense || [], refunds: refundByBill(refunds) };
   });
   const [sheet, setSheet] = useState(false);
   const [money, setMoney] = useState('');
@@ -29,16 +30,20 @@ export function BudgetList(_: PageProps) {
   const [confirm, setConfirm] = useState<Dict | null>(null);
   const cmap = useMemo(() => cateMap(data?.cates || []), [data?.cates]);
   const month = currentMonth();
-  const spent = (data?.rows || []).filter((r) => N(r.type, 1) === 1 && dayMonth(r.day) === month).reduce((s, r) => s + N(r.money), 0);
+  const spent = (data?.rows || []).filter((r) => N(r.type, 1) === 1 && dayMonth(r.day) === month).reduce((s, r) => s + netMoney(r, data?.refunds || new Map()), 0);
   const total = (data?.budgets || []).find((b) => N(b.day) === month);
-  const pct = total && N(total.money) > 0 ? Math.min(1, spent / N(total.money)) : 0;
+  const prev = (data?.budgets || []).find((b) => N(b.day) === prevMonth(month));
+  const carry = prev ? Math.max(0, N(prev.money) - N(prev.used)) : 0;
+  const limit = N(total?.money) + carry;
+  const pct = limit > 0 ? Math.min(1, spent / limit) : 0;
+  const over = Math.max(0, spent - limit);
 
   async function save() {
     const cents = toCents(money);
     if (cents === null || cents <= 0) return toast.show('请输入有效预算金额');
     try {
       if (cate === 'all') {
-        await api.saveBudget({ billsBookId: 1, day: month, money: cents, isRemind: remind ? 1 : 0, remindRate: 80 }, !!total);
+        await api.saveBudget({ billsBookId: 1, day: month, money: cents, used: spent, isRemind: remind ? 1 : 0, remindRate: 80, carryDown: carry }, !!total);
       } else {
         await api.saveCateBudget({ billsBookId: 1, day: month, cateId: cate, money: cents }, false);
       }
@@ -62,12 +67,14 @@ export function BudgetList(_: PageProps) {
         <div className="page-pad">
           <GlassCard strong>
             <div className="row-between">
-              <div><div className="t-label-medium t-secondary">本月总预算</div><div className="t-title-large" style={{ marginTop: 4 }}>¥ {formatMoney(N(total?.money))}</div></div>
+              <div><div className="t-label-medium t-secondary">本月总预算{carry > 0 ? `（含结转 ¥${formatMoney(carry)}）` : ''}</div><div className="t-title-large" style={{ marginTop: 4 }}>¥ {formatMoney(limit)}</div></div>
               <div style={{ textAlign: 'right' }}><div className="t-label-medium t-secondary">已支出</div><div className="t-body-large t-semi" style={{ marginTop: 8 }}>¥ {formatMoney(spent)}</div></div>
             </div>
             <div className="bar-track"><div className="bar-fill" style={{ width: `${pct * 100}%`, background: pct >= 1 ? 'var(--danger)' : 'var(--brand-secondary)' }} /></div>
             <div className="t-label-medium t-secondary" style={{ marginTop: 8 }}>
-              {total ? `剩余 ¥${formatMoney(Math.max(0, N(total.money) - spent))} · 已用 ${(pct * 100).toFixed(1)}%` : '还没有设置本月预算'}
+              {!total && '还没有设置本月预算'}
+              {total && over > 0 && `已超支 ¥${formatMoney(over)} · 已用 ${(spent / limit * 100).toFixed(1)}%`}
+              {total && over === 0 && `剩余 ¥${formatMoney(limit - spent)} · 已用 ${(pct * 100).toFixed(1)}%`}
             </div>
           </GlassCard>
 
@@ -106,4 +113,11 @@ export function BudgetList(_: PageProps) {
         onConfirm={remove} onCancel={() => setConfirm(null)} />
     </div>
   );
+}
+
+/** 上个月，形如 202601 的前一月是 202512。 */
+function prevMonth(month: number): number {
+  const y = Math.trunc(month / 100);
+  const m = month % 100;
+  return m === 1 ? (y - 1) * 100 + 12 : y * 100 + (m - 1);
 }

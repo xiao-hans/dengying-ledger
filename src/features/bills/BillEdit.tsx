@@ -32,9 +32,10 @@ export function BillEdit({ route }: PageProps) {
   const { bump } = useRefresh();
   const clientId = S(route.params?.clientId);
   const isEdit = !!clientId;
+  const quick = !isEdit && S(route.params?.mode) === 'quick';
   const fallback: Draft = {
     money: '', type: '1', cateId: '1', accountId: '1', bookId: '1',
-    day: String(todayDay()), desc: '', tagIds: '', images: '', source: '0',
+    day: String(todayDay()), desc: S(route.params?.desc), tagIds: '', images: '', source: '0',
   };
   const { value: d, patch, reset } = useFormDraft<Draft>(`bill-edit:${clientId || 'new'}`, fallback);
   const { data, loading } = useAsync(async () => {
@@ -115,7 +116,8 @@ export function BillEdit({ route }: PageProps) {
   return (
     <div className="page">
       <TopBar
-        title={isEdit ? '编辑账单' : '记一笔'}
+        title={isEdit ? '编辑账单' : quick ? '快捷记账' : '记一笔'}
+        subtitle={quick ? '只填金额就能记下，分类和备注可后补' : undefined}
         onBack={nav.pop}
         right={isEdit ? <button className="icon-btn" aria-label="删除" onClick={() => setConfirm(true)}><Icon name="trash" /></button> : undefined}
       />
@@ -138,7 +140,13 @@ export function BillEdit({ route }: PageProps) {
             <div className="t-label-medium t-secondary">{INCOME_HINT}</div>
           </GlassCard>
 
-          <SectionTitle>账单信息</SectionTitle>
+          {quick && (
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: 12 }} disabled={saving || loading} onClick={submit}>
+              {saving ? '保存中…' : '一键记下'}
+            </button>
+          )}
+
+          <SectionTitle>{quick ? '可选补充' : '账单信息'}</SectionTitle>
           <div className="card">
             <ListRow icon="grid" title="分类" right={cateName(cmap, d.cateId)} onClick={() => setSheet('cate')} />
             <ListRow icon="wallet" title="账户" right={S((data?.assets || []).find((a) => String(a.id) === d.accountId)?.name ?? '现金')} onClick={() => setSheet('account')} />

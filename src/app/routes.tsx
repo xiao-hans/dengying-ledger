@@ -24,7 +24,7 @@ import { KeepAlive } from '../features/auto/pages/KeepAlive';
 import { CategoryManage } from '../features/manage/CategoryManage';
 import { CateEdit } from '../features/manage/CateEdit';
 import { TagList } from '../features/manage/TagList';
-import { BookList } from '../features/manage/BookList';
+import { BookList, ScanJoin } from '../features/manage/BookList';
 import { BookEdit } from '../features/manage/BookEdit';
 import { BookDetail } from '../features/manage/BookDetail';
 import { BookMemberList } from '../features/manage/BookMemberList';
@@ -37,7 +37,7 @@ import { InstallmentList, InstallmentEdit, InstallmentDetail } from '../features
 import { ImportHome, ImportPaste, ImportOcr, ImportHistory } from '../features/manage/Import';
 import { WidgetHome, WidgetEdit } from '../features/manage/Widget';
 import { AccountLogin, BindPhone, NicknameEdit } from '../features/account/Account';
-import { VipHome, OrderList, GroupVip, AdSlots } from '../features/account/Vip';
+import { VipHome, OrderList, GroupVip, AdSlots, PayResult } from '../features/account/Vip';
 import { Settings, HelpHome, Legal, About } from '../features/account/Settings';
 import { ContractInfo, ChangePhone, AppLock, Feedback, PermissionExplain, PushSetting, RemoteSwitches } from '../features/account/More';
 
@@ -47,7 +47,7 @@ const registry: Record<string, ComponentType<PageProps>> = {
   ReportCategory, ReportTrend, BudgetList, ExportBills,
   GuideAutoBill, AutoBillSetting, AppList, AutoBillData, BillIdentified, RuleList, KeepAlive,
   CategoryManage, CateEdit, TagList,
-  BookList, BookEdit, BookDetail, BookMemberList,
+  BookList, BookEdit, BookDetail, BookMemberList, ScanJoin,
   AssetHome, AssetEdit, AssetDetail,
   SavePlanList, SavePlanEdit, SavePlanDetail,
   FixedBillList, FixedBillEdit, ReminderList,
@@ -55,7 +55,7 @@ const registry: Record<string, ComponentType<PageProps>> = {
   ImportHome, ImportPaste, ImportOcr, ImportHistory,
   WidgetHome, WidgetEdit,
   AccountLogin, BindPhone, NicknameEdit,
-  VipHome, OrderList, GroupVip, AdSlots,
+  VipHome, OrderList, GroupVip, AdSlots, PayResult,
   Settings, HelpHome, Legal, About,
   ContractInfo, ChangePhone, AppLock, Feedback, PermissionExplain, PushSetting, RemoteSwitches,
 };
