@@ -39,6 +39,7 @@ import { WidgetHome, WidgetEdit } from '../features/manage/Widget';
 import { AccountLogin, BindPhone, NicknameEdit } from '../features/account/Account';
 import { VipHome, OrderList, GroupVip, AdSlots } from '../features/account/Vip';
 import { Settings, HelpHome, Legal, About } from '../features/account/Settings';
+import { ContractInfo, ChangePhone, AppLock, Feedback, PermissionExplain, PushSetting, RemoteSwitches } from '../features/account/More';
 
 const registry: Record<string, ComponentType<PageProps>> = {
   BillsHome, StatsHome, AutoHome, MineHome,
@@ -56,6 +57,7 @@ const registry: Record<string, ComponentType<PageProps>> = {
   AccountLogin, BindPhone, NicknameEdit,
   VipHome, OrderList, GroupVip, AdSlots,
   Settings, HelpHome, Legal, About,
+  ContractInfo, ChangePhone, AppLock, Feedback, PermissionExplain, PushSetting, RemoteSwitches,
 };
 
 /** 动态扩展：模块通过 registerRoutes 追加自己的页面。 */

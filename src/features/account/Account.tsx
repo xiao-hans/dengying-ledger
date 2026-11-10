@@ -131,6 +131,7 @@ export function AccountLogin(_props: PageProps) {
       {logged && (
         <>
           <ListRow title="绑定手机" subtitle={member.phone || '未绑定'} onClick={() => nav.push('BindPhone')} />
+          {member.phone && <ListRow title="换绑手机" subtitle="旧号和新号都要验证" onClick={() => nav.push('ChangePhone')} />}
           <ListRow title="修改昵称" subtitle={S(member.nickname)} onClick={() => nav.push('NicknameEdit')} />
           <ListRow title="会员" subtitle={member.vip ? '已开通' : '未开通'} onClick={() => nav.push('VipHome')} />
           {member.bind_type && (

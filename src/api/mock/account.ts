@@ -71,7 +71,12 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
     return empty();
   },
   'Member/RefreshToken': async (ctx) => ok({ token: `local_${newClientId()}`, gtCid: str(ctx, 'gtCid'), expireIn: 7200 }),
-  'Member/InitSSOldUserInfo': async () => ok({ migrated: 1, memberId: LOCAL_MEMBER_ID }),
+  'Member/InitSSOldUserInfo': async () => {
+    const member = await get<Record<string, unknown>>('member', LOCAL_MEMBER_ID);
+    const already = member?.migrated === 1;
+    if (member && !already) await save('member', { ...member, migrated: 1, migrate_time: nowSec() });
+    return ok({ migrated: 1, already: already ? 1 : 0, memberId: LOCAL_MEMBER_ID });
+  },
   'Member/GetMemberContractInfo': async () => ok((await all('contract_info'))[0] || {}),
   'Member/CreateReminder': async (ctx) => {
     const id = newClientId();
@@ -103,7 +108,8 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
   'Behavior/Add': async (ctx) => {
     const b = params(ctx);
     await put('behavior_event', {
-      id: newClientId(), event: str(ctx, 'event', String(b.action ?? b.event ?? 'unknown')),
+      id: newClientId(), event: str(ctx, 'event', String(b.action ?? b.event ?? b.kind ?? 'unknown')),
+      kind: b.kind ?? '', content: b.content ?? '', contact: b.contact ?? '',
       params: JSON.stringify(b), create_time: nowSec(), reported: 1,
     });
     return empty();

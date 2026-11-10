@@ -114,6 +114,7 @@ export const api = {
   updateNickname: (nickname: string) => post('Member/UpdateNickname', { nickname }),
   refreshToken: (gtCid = '') => post<Dict>('Member/RefreshToken', { gtCid }),
   contractInfo: () => get<Dict>('Member/GetMemberContractInfo'),
+  migrateOldUser: () => post<Dict>('Member/InitSSOldUserInfo'),
   reminders: () => post<Dict[]>('Member/MemberReminderList'),
   saveReminder: (fields: Dict, update = false) => post(update ? 'Member/UpdateReminder' : 'Member/CreateReminder', fields),
   serverConfig: (fields: Dict) => post<Dict>('Config/GetV2', fields, { urlType: 'configManage' }),

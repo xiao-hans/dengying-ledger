@@ -286,6 +286,12 @@ export function MineHome(_: PageProps) {
             <ListRow icon="gift" title="会员与订单" onClick={() => nav.push('VipHome')} />
             <ListRow icon="users" title="账本成员" onClick={() => nav.push('BookMemberList')} />
             <ListRow icon="folder" title="协议与帮助" onClick={() => nav.push('HelpHome')} />
+            <ListRow icon="shield" title="合约与解签" subtitle="自动续费 / 老用户迁移" onClick={() => nav.push('ContractInfo')} />
+            <ListRow icon="lock" title="应用锁" onClick={() => nav.push('AppLock')} />
+            <ListRow icon="note" title="意见反馈" onClick={() => nav.push('Feedback')} />
+            <ListRow icon="info" title="权限说明" onClick={() => nav.push('PermissionExplain')} />
+            <ListRow icon="bell" title="消息推送" subtitle="本复刻不接收推送" onClick={() => nav.push('PushSetting')} />
+            <ListRow icon="settings" title="远程开关" subtitle="24 项服务端配置" onClick={() => nav.push('RemoteSwitches')} />
             <ListRow icon="info" title="关于灯影记账" right="v1.8.1" onClick={() => nav.push('About')} chevron={false} />
           </div>
         </div>

@@ -5,6 +5,15 @@
 .vip-price .now { font-size: var(--fs-display, 28px); font-weight: 700; }
 .vip-price .old { color: var(--text-secondary); text-decoration: line-through; font-size: var(--fs-caption); }
 .account-note { color: var(--text-secondary); font-size: var(--fs-caption); line-height: 1.5; }
+/* 登录页把 .field 套在 label 上，覆盖全局的单行内边距，让标签在上、输入框在下 */
+label.field { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding: 0; background: transparent; border: 0; }
+label.field > span { color: var(--text-secondary); font-size: var(--fs-label-medium); }
+label.field > input, label.field > textarea { width: 100%; padding: 12px 14px; border-radius: 14px; background: var(--search-bg); border: 1px solid var(--divider); font-size: var(--fs-body-medium); color: var(--text-primary); resize: vertical; }
+.pin-dots { display: flex; gap: 14px; justify-content: center; margin: 16px 0; }
+.pin-dots > span { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--text-secondary); }
+.pin-dots > span.on { background: var(--brand); border-color: var(--brand); }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.pin-key { padding: 14px 0; border-radius: 14px; background: var(--chip-fill); border: 1px solid var(--divider); color: var(--text-primary); font-size: var(--fs-body-large); }
 .ad-slot {
   border: 1px dashed var(--divider);
   border-radius: var(--radius-card, 16px);

@@ -10,7 +10,7 @@ function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (ev) => {
       const db = req.result;
       for (const def of STORES) {
         if (db.objectStoreNames.contains(def.name)) continue;
@@ -22,7 +22,10 @@ function openDB(): Promise<IDBDatabase> {
           store.createIndex(idx.name, idx.keyPath, { unique: idx.unique ?? false });
         }
       }
-      void seedDefaults(db);
+      // 必须复用升级事务本身。在 onupgradeneeded 里另开 transaction() 会让
+      // 版本变更事务被中止（WebView / 部分浏览器抛 Version change transaction was aborted）。
+      const upgradeTx = (ev.target as IDBOpenDBRequest).transaction;
+      if (upgradeTx) seedDefaults(upgradeTx);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -31,13 +34,9 @@ function openDB(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-/** 首次启动写入内置字典（默认账本 / 分类 / 账户），对齐样本首次启动行为。 */
-function seedDefaults(db: IDBDatabase): void {
-  const tx = db.transaction([
-    'bill_book', 'category', 'assets', 'member', 'assets_type', 'icon_dict',
-    'plan_type', 'plan_cover', 'wish', 'person_center_icon', 'contract_info',
-    'order_config', 'discount_config', 'user_setting', 'remote_config',
-  ], 'readwrite');
+/** 首次启动写入内置字典（默认账本 / 分类 / 账户），对齐样本首次启动行为。
+ *  传入的 tx 必须是 onupgradeneeded 的升级事务，不能在其内部另开事务。 */
+function seedDefaults(tx: IDBTransaction): void {
   const now = Date.now();
   tx.objectStore('bill_book').put({
     id: 1, name: '日常账本', icon_id: 1, icon: 'book', tag: '默认',
@@ -97,7 +96,10 @@ function seedDefaults(db: IDBDatabase): void {
   ].entries()) {
     tx.objectStore('person_center_icon').put({ id: i + 1, title: item[0], icon: item[1], route: item[1], sort: i + 1 });
   }
-  tx.objectStore('contract_info').put({ id: 1, title: '用户协议与隐私政策', version: '1.8.1', agreed: 0 });
+  tx.objectStore('contract_info').put({
+    id: 1, contractProvider: '', money: 0, nextContractDate: '',
+    productId: '', productName: '', signed: 0,
+  });
   tx.objectStore('order_config').put({ id: 1, vip_price_cents: 12800, original_price_cents: 19800, days: 365 });
   tx.objectStore('discount_config').put({ id: 1, rate: 100, label: '无折扣', enabled: 0 });
   for (const [key, value] of Object.entries({
@@ -112,6 +114,17 @@ function seedDefaults(db: IDBDatabase): void {
     latest_version: '1.8.1', dialog_enabled: '0',
     api_base: 'https://puppy-api.cqmiaoa.com/api/',
     config_base: 'https://meow-config.aiyouaiyou.cn/api/',
+    aboutUs: '', assetBookkeepingPopupCycle: '0', autoBillBgWhiteState: '0',
+    autoBillBgWhitelist: '', autoBillIdentifyConfig: '', autoBillRemindCount: '3',
+    autoBillShowNotificationDelay: '0', autoBookkeepingFreeCount: '0',
+    autoBookkeepingPopupCycle: '0', autoBookkeepingSupportApps: '',
+    evaluateDay: '0', homeActivityBanner: '', homeActivityReceiptBt: '',
+    hotSplashAdInterval: '0', importBillsMaxCount: '10', importBillsMaxRow: '5000',
+    importBillsMaxSize: '10', interceptBlacklist: '', interceptWhitelist: '',
+    isInterceptStartActivity: '0', memberServiceAgreementDialog: '0',
+    ocrUpdateCount: '3', popupBackgroundEnable: '0', splashAdReqTime: '0',
+    userFeedback: '', vipExpirationPopNum: '0', vipExpirationPopTime: '0',
+    vipGroupBuyQA: '', vipServiceDesc: '', yearlyReport: '0', yearlyReportConfig: '',
   })) {
     tx.objectStore('remote_config').put({ key, value });
   }

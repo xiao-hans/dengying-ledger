@@ -152,7 +152,15 @@ export const handlers: Record<string, (ctx: RequestCtx) => Promise<unknown> | un
     return ok(row || { orderId: str(ctx, 'orderId'), status: 0, paid: 0 });
   },
   'Order/GetRechargeDiscountConfig': async () => ok((await all('discount_config'))[0] || {}),
-  'Order/AlipayUnSign': async () => empty(),
+  'Order/AlipayUnSign': async () => {
+    const row = await get<Record<string, unknown>>('contract_info', 1);
+    if (!row || row.signed !== 1) return fail(4001, '当前没有生效中的自动续费');
+    await save('contract_info', {
+      ...row, signed: 0, contractProvider: '', money: 0,
+      nextContractDate: '', productId: '', productName: '', unsigned_time: nowSec(),
+    });
+    return empty();
+  },
 
   /* ---------------- VipGroupBuy ---------------- */
   'VipGroupBuy/List': async () => ok(sortBy(await all('group_vip'), 'id')),

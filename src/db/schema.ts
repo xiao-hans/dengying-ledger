@@ -15,7 +15,9 @@ export interface StoreDef {
 }
 
 export const DB_NAME = 'dengying_ledger';
-export const DB_VERSION = 1;
+// v2：修复 onupgradeneeded 内另开事务导致版本变更事务被中止的问题，种子数据改走升级事务。
+// v3：合约信息改为签约实体字段，远程配置补齐服务端开关默认值。
+export const DB_VERSION = 3;
 
 /** 当前本地成员（未登录时为 0，对齐 member_id 默认 0 的离线语义）。 */
 export const LOCAL_MEMBER_ID = 0;
