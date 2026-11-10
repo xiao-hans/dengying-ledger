@@ -1,0 +1,112 @@
+POST Account/ActivateV3 | distinctId |  | Object>
+POST Account/BindPhone | phone,code,oldPhone |  | Object>
+POST Account/BindQQ | qqId,nickname,avatar,gender |  | Object>
+POST Account/BindWechat | openid,unionId,nickname,avatar,gender |  | Object>
+POST Account/LoginByDevice |  |  | User>
+POST Account/LoginByPhone | phone,code |  | User>
+POST Account/LoginByQQ | qqId,nickname,avatar,gender |  | User>
+POST Account/LoginByWechat | openid,unionId,nickname,avatar,gender |  | User>
+POST Account/SendCode | phone |  | Object>
+POST Account/Unbind |  |  | Object>
+POST Behavior/Add |  | Map<String, Object> | Object>
+POST BillRefund/Create |  | Map<String, Object> | RefundBillResp>
+POST BillRefund/Delete |  | Map<String, Object> | Object>
+POST BillRefund/Update |  | Map<String, Object> | RefundBillResp>
+POST Bills/AutoBillsCallBack | type |  | Object>
+POST Bills/BillsCountOfHasPic |  |  | Integer>
+POST Bills/Create |  | Items<BillItem> | Object>
+POST Bills/CreateFixedBill | memberId,money,billBookId,memberCateId,billType,fromFundAccountId,toFundAccountId,interest,interestReckonType,notInBudget,currency,tagIds,fixedType,fixedDay,desc,startDate,endDate |  | Object>
+POST Bills/Delete |  | Items<BillDelInfo> | Object>
+POST Bills/DeleteFixedBill | id |  | Object>
+POST Bills/GetFixedBills |  |  | RegularBillsResp>
+POST Bills/ImportBills |  | ImportBillsReq | ImportBIllsResp>
+POST Bills/ImportBills |  | ImportOcrBillsReq | ImportBIllsResp>
+POST Bills/PageList | updateDate,pageNum |  | BillListResp>
+POST Bills/Update |  | Items<BillItem> | Object>
+POST Bills/UpdateFixedBill | id,money,billBookId,memberCateId,billType,fromFundAccountId,toFundAccountId,interest,interestReckonType,notInBudget,currency,tagIds,fixedType,fixedDay,desc,startDate,endDate |  | Object>
+POST BillsBook/Create | name,iconId,monthStartDate |  | CreateBillBookResp>
+POST BillsBook/CreateInviteCode | billsBookId |  | String>
+POST BillsBook/Delete | billsBookId |  | Object>
+POST BillsBook/Exit | billsBookId |  | Object>
+POST BillsBook/GetBillsBookIcons |  |  | List<BillBookIconEntity>>
+POST BillsBook/GetInfoByCode | code |  | BillBookResp>
+POST BillsBook/GetList |  |  | List<BillBookResp>>
+POST BillsBook/Join | billsBookId |  | JoinBookResp>
+POST BillsBook/RemoveMember | memberId,billsBookId |  | BookRemoveMemberResp>
+POST BillsBook/Update | billsBookId,name,iconId,monthStartDate |  | BillBookResp>
+POST Budget/CreateBudget | billsBookId,day,money,isRemind,remindRate,carryDown,isCopy |  | Object>
+POST Budget/CreateBudgetCate | billsBookId,day,cateId,money |  | BudgetDataResp>
+POST Budget/DeleteBudget | billsBookId,day |  | Object>
+POST Budget/DeleteBudgetCate | billsBookId,day,cateId |  | Object>
+POST Budget/GetBudget | billsBookId,day |  | BudgetDataResp>
+GET Budget/GetBudgetList |  |  | List<BudgetDataResp>>
+POST Budget/GetYearlyBudgets | year |  | List<BudgetResp>>
+POST Budget/UpdateBudget | billsBookId,day,money,acfMoney,isRemind,remindRate,carryDown,isCopy |  | Object>
+POST Budget/UpdateBudgetCate | billsBookId,day,cateId,money |  | BudgetDataResp>
+POST Cate/Create | title,type,iconId |  | Category>
+POST Cate/Delete | id |  | Object>
+POST Cate/GetCateIcons |  |  | List<CateIconEntity>>
+POST Cate/GetMainCates |  |  | BillCateResp>
+POST Cate/Update | id,cateId,title,type,iconId |  | Category>
+POST Cate/UpdateExtend |  | Items<CateUpdateExtendEntity> | Object>
+POST Config/GetV2 | appVersion,brand,rom,romVersion,channel,reChannel,discountType,androidVersion,registrationTime,memberId |  | ServerConfig>
+POST ConsumptionInstallment/AllPlan |  |  | List<InstallmentPlanResp>>
+POST ConsumptionInstallment/Create |  | InstallmentPlanReq | CreateInstallmentResp>
+POST ConsumptionInstallment/Delete | planId,isSaveBill |  | Items<String>>
+POST ConsumptionInstallment/GetByClientId | clientId |  | InstallmentPlanResp>
+POST ConsumptionInstallment/GetByPlanId | planId |  | InstallmentPlanResp>
+POST ConsumptionInstallment/PayOff | planId,formFundAccountId,remainingInterest,desc |  | CreateInstallmentResp>
+POST FundAccount/Create | fundAccountId,typeId,name,icon,desc,currency,balance,creditLine,repaymentDate,statementDate,isRemind,isTotalAssets,isNextBills,clientId,type,day |  | AssetsResp>
+POST FundAccount/Delete | id,isSaveBill |  | Object>
+POST FundAccount/GetFundAccountTypes |  |  | List<AssetsTypeResp>>
+POST FundAccount/GetIOU | status |  | String>
+POST FundAccount/Update | fundAccountId,name,icon,desc,currency,balance,creditLine,repaymentDate,statementDate,isRemind,isTotalAssets,isNextBills,clientId,isCreateBill,day |  | AssetsResp>
+POST FundAccount/UpdateStatus | id,status |  | Object>
+POST KeyWordMatchingRule/Create | keyWord,type,memberCateId,billsBookId,fundAccountId,memberTagIds |  | RuleResp>
+POST KeyWordMatchingRule/Delete | id |  | Object>
+POST KeyWordMatchingRule/List |  |  | List<RuleResp>>
+POST KeyWordMatchingRule/Update | id,keyWord,type,memberCateId,billsBookId,fundAccountId,memberTagIds |  | RuleResp>
+POST Member/CreateReminder | title,contents,reminderTime,status |  | Object>
+POST Member/GetInfo |  |  | User>
+GET Member/GetMemberContractInfo |  |  | UserContractEntity>
+POST Member/GetSetting |  |  | UserSetting>
+POST Member/InitSSOldUserInfo |  |  | Object>
+POST Member/MemberReminderList |  |  | List<RemindEntity>>
+POST Member/RefreshToken | gtCid |  | Object>
+POST Member/UpdateNickname | nickname |  | Object>
+POST Member/UpdateReminder | reminderId,title,contents,reminderTime,status,changeContent |  | Object>
+POST Member/UpdateSetting | key,value |  | Object>
+POST MemberImportBillFile/Delete | id |  | Object>
+POST MemberImportBillFile/List |  |  | List<ImportedRecords>>
+POST MemberTag/Create | BillBookId,name |  | Tag>
+POST MemberTag/Delete | tagId |  | Object>
+POST MemberTag/Update | tagId,name |  | Tag>
+POST MemberTag/UpdateSort |  | List<Tag> | Object>
+POST Operation/GetDialog |  |  | OperateInfo>
+POST Operation/GetUpdateRemind |  |  | UpdateEntity>
+POST Order/AlipayUnSign |  | Map<String, Object> | Object>
+POST Order/CheckStatus | orderId |  | OrderResult>
+POST Order/GetRechargeDiscountConfig |  |  | DiscountConfig>
+POST Order/v2/CreateOrder | addFreeId,money,method,type,productId,orderSource,useRedEnvelope |  | CreateOrderEntity>
+POST Order/v2/VipConfigs |  |  | OrderConfigEntity>
+GET PersonCenter/GetPersonCenterIcons |  |  | List<PersonCenterEntity>>
+POST SavePlan/CreateSavePlan |  | CreatePlanEntity | Object>
+POST SavePlan/CreateSavePlanItem |  | Map<String, Object> | DepositBill>
+GET SavePlan/GetFileSavePlans |  |  | List<SaveMoneyPlan>>
+GET SavePlan/GetIcon |  |  | List<PlanCoverEntity>>
+GET SavePlan/GetSavePlans |  |  | List<SaveMoneyPlan>>
+POST SavePlan/GetSavePlansByQuery |  | Map<String, Object> | List<SaveMoneyPlan>>
+POST SavePlan/GetSavePlansByType | type |  | List<SaveMoneyPlan>>
+GET SavePlan/GetSavePlanType |  |  | List<PlanTypeEntity>>
+POST SavePlan/SavePlanItemsById |  | Map<String, Object> | SaveMoneyPlan>
+POST SavePlan/UpdateSavePlan |  | Map<String, Object> | Object>
+POST SavePlan/UpdateSavePlanItem |  | Map<String, Object> | Object>
+POST SavePlan/UpdateSavePlanItemStatus |  | Map<String, Object> | Object>
+POST SavePlan/UpdateSavePlanStatus |  | Map<String, Object> | List<String>>
+GET SavePlan/Wishes |  |  | List<String>>
+POST Upload/UploadBills |  | MultipartBody | ImportBillResp>
+POST Upload/UploadImages |  | MultipartBody | List<String>>
+POST Upload/UploadImg | imgType |  | OssConfig>
+POST VipGroupBuy/Bind |  | Map<String, Object> | List<GroupVipEntity>>
+POST VipGroupBuy/GetByShowId |  | Map<String, Object> | CheckVipEntity>
+GET VipGroupBuy/List |  |  | List<GroupVipEntity>>
