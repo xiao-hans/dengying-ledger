@@ -2,7 +2,7 @@
  * 本地优先同步队列 —— 对齐 02 业务架构：所有写先落本地，云端不可达不阻塞 UI。
  * 每个端点写入成功后把 (path, fields/body) 入队；有网时按序回放，成功出队。
  */
-import { call, getTransport, HttpTransport, LocalTransport } from './client';
+import { call, getTransport, setTransport, HttpTransport, LocalTransport } from './client';
 import { put, all, remove, newClientId, nowSec, type Entity } from '../db/client';
 
 export interface SyncTask extends Entity {
