@@ -13,3 +13,7 @@ coverage/
 *.tsbuildinfo
 .verify/
 public/probe*.html
+android-shell/.gradle/
+android-shell/build/
+android-shell/app/build/
+android-shell/app/src/main/assets/

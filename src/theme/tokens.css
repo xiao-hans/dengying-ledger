@@ -149,5 +149,8 @@ a { color: inherit; }
   position: relative; overflow: hidden;
   background: var(--app-bg);
   display: flex; flex-direction: column;
+  /* 真机 WebView 全屏时让出状态栏与手势条，桌面浏览器这两项为 0 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .app-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 96px; }
