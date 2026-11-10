@@ -1,0 +1,74 @@
+/* Dock + 应用外壳 */
+.dock {
+  position: absolute; bottom: 14px; left: 14px; right: 14px;
+  height: 68px; border-radius: 24px; z-index: 40;
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 6px;
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+}
+.dock::after { border-radius: 24px; }
+.dock-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; color: var(--text-secondary); min-width: 0;
+  transition: color .18s, transform .12s;
+}
+.dock-item:active { transform: scale(.92); }
+.dock-item.active { color: var(--text-primary); }
+.dock-item.active .t-label-small { font-weight: 700; }
+.dock-icon {
+  width: 38px; height: 28px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .18s, box-shadow .18s;
+}
+.dock-item.active .dock-icon {
+  background: var(--dock-highlight);
+  box-shadow: 0 2px 10px var(--glass-shadow);
+}
+.dock-plus {
+  width: 52px; height: 52px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand); color: var(--card-bg);
+  box-shadow: 0 6px 18px var(--glass-shadow);
+  margin: -20px 4px 0; transition: transform .14s;
+}
+.dock-plus:active { transform: scale(.9); }
+
+/* 主内容区：Tab 切换淡入 */
+.tab-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.page { display: flex; flex-direction: column; flex: 1; min-height: 0; animation: fadeUp .2s ease-out; }
+.page-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 104px; }
+.page-fixed-bottom {
+  position: absolute; bottom: 96px; left: 18px; right: 18px; z-index: 30;
+}
+
+/* 品牌头（对齐截图：胶囊搜索 + 品牌字） */
+.brand-head { display: flex; align-items: center; gap: 10px; padding: 6px 18px 0; }
+.brand-mark {
+  width: 30px; height: 30px; border-radius: 10px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand); color: var(--card-bg);
+}
+.brand-name { letter-spacing: .12em; }
+
+/* 悬浮宠物 */
+.pet-fab {
+  position: absolute; right: 16px; bottom: 96px; z-index: 35;
+  width: 48px; height: 48px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary);
+}
+.pet-fab:active { transform: scale(.9); }
+
+/* Splash */
+.splash {
+  position: absolute; inset: 0; z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: var(--app-bg);
+}
+.splash-logo {
+  width: 84px; height: 84px; border-radius: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand); color: var(--card-bg);
+}
+.splash-tip { margin-top: 24px; }

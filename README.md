@@ -38,7 +38,7 @@ src/app/     导航与根布局
 | # | 内容 | 状态 |
 |---|---|---|
 | M0 | AGENTS.md / CLAUDE.md / spec / git + public 远端 | ✅ |
-| M1 | 工程骨架 + 灯影主题 token + 玻璃组件 + Dock 导航 | ⏳ |
+| M1 | 工程骨架 + 灯影主题 token + 玻璃组件 + Dock 导航 | ✅ |
 | M2 | IndexedDB 全表 DAO + 统一 API 契约层 | ⏳ |
 | M3 | 112 端点 mock 后端 + 接口实现对照表 | ⏳ |
 | M4 | 账单 / 分类 / 账本 / 预算 / 统计（P0 地基） | ⏳ |
