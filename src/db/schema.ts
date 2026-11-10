@@ -71,7 +71,23 @@ export const STORES: StoreDef[] = [
   { name: 'order', keyPath: 'id' },
   { name: 'behavior_event', keyPath: 'id' },
   { name: 'remote_config', keyPath: 'key' },
-  { name: 'sync_queue', keyPath: 'id', autoIncrement: true, indexes: [{ name: 'idx_created', keyPath: 'create_time' }] },
+  { name: 'sync_queue', keyPath: 'id', indexes: [{ name: 'idx_created', keyPath: 'create_time' }] },
+  /* ---- 纯配置/无主键字典表（对齐 Account、Config、PersonCenter 等返回实体） ---- */
+  { name: 'sms_code', keyPath: 'phone' },
+  { name: 'user_setting', keyPath: 'key' },
+  { name: 'reminder', keyPath: 'id' },
+  { name: 'icon_dict', keyPath: 'id' },
+  { name: 'assets_type', keyPath: 'id' },
+  { name: 'plan_cover', keyPath: 'id' },
+  { name: 'plan_type', keyPath: 'id' },
+  { name: 'wish', keyPath: 'id' },
+  { name: 'group_vip', keyPath: 'id' },
+  { name: 'order_config', keyPath: 'id' },
+  { name: 'discount_config', keyPath: 'id' },
+  { name: 'person_center_icon', keyPath: 'id' },
+  { name: 'contract_info', keyPath: 'id' },
+  { name: 'operate_dialog', keyPath: 'id' },
+  { name: 'update_remind', keyPath: 'id' },
 ];
 
 export const STORE_NAMES = STORES.map((s) => s.name) as string[];

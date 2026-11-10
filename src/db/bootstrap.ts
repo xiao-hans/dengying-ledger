@@ -5,6 +5,7 @@
 import { count, all } from './client';
 import { STORE_NAMES, LOCAL_MEMBER_ID } from './schema';
 import { LocalTransport, setTransport } from '../api/client';
+import { installMockBackend } from '../api/mock';
 
 export interface DbDiagnostics {
   ready: boolean;
@@ -22,6 +23,7 @@ let bootPromise: Promise<DbDiagnostics> | null = null;
 export function bootstrap(): Promise<DbDiagnostics> {
   if (bootPromise) return bootPromise;
   bootPromise = (async () => {
+    installMockBackend();
     setTransport(new LocalTransport());
     try {
       // 触发 onupgradeneeded（首次）并确认内置字典已写入

@@ -33,7 +33,11 @@ function openDB(): Promise<IDBDatabase> {
 
 /** 首次启动写入内置字典（默认账本 / 分类 / 账户），对齐样本首次启动行为。 */
 function seedDefaults(db: IDBDatabase): void {
-  const tx = db.transaction(['bill_book', 'category', 'assets', 'member'], 'readwrite');
+  const tx = db.transaction([
+    'bill_book', 'category', 'assets', 'member', 'assets_type', 'icon_dict',
+    'plan_type', 'plan_cover', 'wish', 'person_center_icon', 'contract_info',
+    'order_config', 'discount_config', 'user_setting', 'remote_config',
+  ], 'readwrite');
   const now = Date.now();
   tx.objectStore('bill_book').put({
     id: 1, name: '日常账本', icon_id: 1, icon: 'book', tag: '默认',
@@ -64,6 +68,53 @@ function seedDefaults(db: IDBDatabase): void {
     id: LOCAL_MEMBER_ID, name: '本地用户', nickname: '本地用户',
     phone: '', avatar: '', vip: 0, create_time: now,
   });
+  const assetTypes: [number, string, string][] = [
+    [1, 'cash', '现金'], [2, 'bank', '银行卡'], [3, 'credit', '信用卡'],
+    [4, 'alipay', '支付宝'], [5, 'wechat', '微信'], [6, 'iou', '借条'],
+  ];
+  for (const [id, key, title] of assetTypes) {
+    tx.objectStore('assets_type').put({ id, key, title, icon: 'wallet', sort: id });
+  }
+  for (const [id, name, icon] of [
+    [1, 'book', 'book'], [2, 'wallet', 'wallet'], [3, 'food', 'wallet'],
+  ] as [number, string, string][]) {
+    tx.objectStore('icon_dict').put({ id, name, icon, type: 'book' });
+  }
+  for (const [id, name] of [['目标计划', 'goal'], ['定额储蓄', 'fixed'], ['自由储蓄', 'free']].entries()) {
+    tx.objectStore('plan_type').put({ id: id + 1, name: name[0], key: name[1] });
+  }
+  for (let i = 1; i <= 6; i++) {
+    tx.objectStore('plan_cover').put({ id: i, name: `封面${i}`, icon: 'star', url: '' });
+  }
+  for (const [i, w] of ['旅行', '买电脑', '换新手机', '应急基金'].entries()) {
+    tx.objectStore('wish').put({ id: i + 1, name: w });
+  }
+  for (const [i, item] of [
+    ['账本管理', 'book'], ['资产与账户', 'wallet'], ['分类与标签', 'tag'],
+    ['存钱计划', 'star'], ['周期账与提醒', 'cycle'], ['消费分期', 'receipt'],
+    ['导入账单', 'upload'], ['桌面小组件', 'widget'], ['会员中心', 'gift'],
+    ['设置', 'settings'], ['帮助与反馈', 'help'], ['关于', 'info'],
+  ].entries()) {
+    tx.objectStore('person_center_icon').put({ id: i + 1, title: item[0], icon: item[1], route: item[1], sort: i + 1 });
+  }
+  tx.objectStore('contract_info').put({ id: 1, title: '用户协议与隐私政策', version: '1.8.1', agreed: 0 });
+  tx.objectStore('order_config').put({ id: 1, vip_price_cents: 12800, original_price_cents: 19800, days: 365 });
+  tx.objectStore('discount_config').put({ id: 1, rate: 100, label: '无折扣', enabled: 0 });
+  for (const [key, value] of Object.entries({
+    auto_bill: '0', notification_capture: '0', accessibility_capture: '0',
+    screenshot_ocr: '0', auto_confirm: '0', gesture_password: '0',
+    currency: 'CNY', month_start_date: '1',
+  })) {
+    tx.objectStore('user_setting').put({ key, value });
+  }
+  for (const [key, value] of Object.entries({
+    ad_enabled: '0', force_update: '0', min_version: '1.0.0',
+    latest_version: '1.8.1', dialog_enabled: '0',
+    api_base: 'https://puppy-api.cqmiaoa.com/api/',
+    config_base: 'https://meow-config.aiyouaiyou.cn/api/',
+  })) {
+    tx.objectStore('remote_config').put({ key, value });
+  }
 }
 
 function reqToPromise<T>(req: IDBRequest<T>): Promise<T> {

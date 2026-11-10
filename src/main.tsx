@@ -4,6 +4,9 @@ import { App } from './app/App';
 import './theme/tokens.css';
 import './components/components.css';
 
+// 本地优先：先安装 mock 后端并初始化传输，再挂载 UI（对齐 Application.onCreate）。
+void import('./db/bootstrap').then((m) => m.bootstrap());
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
