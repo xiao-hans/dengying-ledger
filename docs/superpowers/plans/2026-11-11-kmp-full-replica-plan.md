@@ -31,7 +31,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 状态：未开始。
 
-1. 在 `AndroidManifest.xml` 声明启动页、主界面、WebView 容器、扫码页、票据页、权限基类、微信回调 Activity、快捷磁贴服务、悬浮宠物服务、闹钟 Receiver 和开机 Receiver。
+1. 在 `AndroidManifest.xml` 声明 `01` §1 的入口组件，包括 Activity、TileService、前台服务、闹钟 Receiver 和开机 Receiver。
 2. 声明 `POST_NOTIFICATIONS`、`READ_MEDIA_IMAGES`、`CAMERA`、`USE_BIOMETRIC`、`SCHEDULE_EXACT_ALARM`、`WAKE_LOCK`、`FOREGROUND_SERVICE` 等权限。
 3. 实现动态权限申请、拒绝回退和用途说明页。
 4. 实现启动页、主界面、WebView 容器、扫码页和票据页的路由。
@@ -48,7 +48,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 1. 补齐 `bill`、`bill_tag`、`bill_remark`、`cate_extend`、`tag`、`bill_book`、`member_book` 的表和迁移。
 2. 实现 `Bills` 12 个、`Cate` 6 个、`MemberTag` 4 个、`BillsBook` 10 个契约方法。
-3. 实现记一笔、详情、退款详情、退款编辑、批量修改、搜索、分类、标签、标签账单、账本、扫码加入、邀请和成员页。
+3. 实现账单编辑、退款、批量修改、搜索、分类标签、账本扫码加入、邀请和成员页。
 4. 实现 `client_id` 幂等写、`sync_queue` 重试和本地优先刷新。
 5. 实现删除二次确认、草稿保留、金额输入和筛选状态。
 6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。
@@ -151,7 +151,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 | 切片 | 提交号 | 构建结果 | 真机结果 | 差距表状态 |
 | --- | --- | --- | --- | --- |
-| S0 | 待记录 | 待记录 | 不必 | 执行中 |
+| S0 | `b756323` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 执行中 |
 | S1 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S2 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S3 | 待记录 | 待记录 | 待记录 | 未开始 |

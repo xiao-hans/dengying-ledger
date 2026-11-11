@@ -1,79 +1,64 @@
 # 喵啊记账 · 自动记账 App 复刻
 
-> 对齐 `com.android.miaoa.achai` v1.8.1 的全量功能面与 112 个业务接口，UI 采用「灯影」设计语言的配色与玻璃质感（灯影为外部 UI 基准）。
-> 工程宪法见 [AGENTS.md](AGENTS.md)。
+> 以 `kmp/` 单基座物理复刻 `com.android.miaoa.achai` v1.8.1 的 21 个功能模块、约 100 个业务页面与 112 个业务接口，App 保持无广告。UI 采用「灯影」设计语言（灯影为外部 UI 基准）。
+> 工程宪法见 [AGENTS.md](AGENTS.md)；当前状态见 [功能差距表](docs/功能差距表.md)。
 
 ## 这是什么
 
-上一级目录 `D:\workspace\recordAccount\` 是对一个自动记账 Android APK 的完整逆向交付（6 份文档 + jadx/apktool 产物 + REA evidence）。本仓库按 `04-复刻实现蓝图.md` 从零复刻：
+上一级目录 `D:\workspace\recordAccount\` 是对一个自动记账 Android APK 的完整逆向交付（6 份文档 + jadx/apktool 产物 + REA evidence）。本工程以 `kmp/` 为交付形态：
 
-- **功能**：21 个模块逐项覆盖（见 [spec/features.md](spec/features.md)）
-- **接口**：`spec/endpoints.json` 是从 `jadx_out/sources/com/android/miaoa/achai/api/a.java` 机器提取的权威清单（112 个 `@POST`/`@GET` + 2 个动态 `@Url`），全部在 `src/api/mock/` 有同路径、同字段名的实现
-- **数据**：IndexedDB 本地优先，表结构对齐 `spec/ddl.sql`（Room 20+ 表，`client_id` 幂等）
-- **UI**：`src/theme/` 直接移植外部 UI 基准灯影的 `Color.kt` / `Glass.kt` / `Theme.kt` 的 token；胶囊控件、玻璃卡、底部 Dock、深浅色三态
+- **范围**：`01` 的 21 个模块、约 100 个业务页面、`03` 的 112 个业务端点；逐项状态见 [功能差距表](docs/功能差距表.md)
+- **架构**：`:app` 装配 Android 系统组件，`:shared` 承载 SQLDelight、契约层与业务规则，`:ui` 承载 Compose 页面
+- **数据**：本地优先写入，按 `client_id` 幂等，再由 `sync_queue` 同步
+- **UI**：灯影配色、玻璃质感、胶囊控件、底部 Dock 与深浅色三态
+- **无广告**：不接入广告 SDK，不调用广告请求端点，广告开关固定关闭
 
-## 三套实现
+## 工程目录
 
-本仓库同时保留三套实现。Web 版实现全量 112 个业务端点；两套 Android 形态不实现网络接口。
+| 目录 | 用途 |
+|---|---|
+| `kmp/` | 交付物：Android App、三模块 KMP 源码与测试 |
+| `spec/` | 端点、DDL 与功能矩阵 |
+| `docs/` | 设计、实施计划、接口对照、页面对照、风格与差距表 |
+| `src/` + `public/` | Web 规格参考 |
+| `android-shell/` | WebView 规格参考 |
 
-| 目录 | 形态 | 数据层 | 接口 |
-|---|---|---|---|
-| `src/` + `public/` | Vite + React SPA | IndexedDB | `src/api/mock/` 实现 112 个端点 |
-| `android-shell/` | Java WebView 壳，加载 `dist/` 产物 | 复用 Web 版 IndexedDB | 复用 Web 版 mock 后端 |
-| `kmp/` | Kotlin Multiplatform + Compose 原生页面 | SQLDelight 本地库 | 无网络层，账号、订单、推送均为本地模拟 |
-
-`android-shell/` 的包名是 `com.meow.ledger`，版本是 `1.8.7`。它把 `npm run build` 的产物复制到 `android-shell/app/src/main/assets/`，再从 `https://appassets.androidplatform.net/index.html` 加载，使 IndexedDB 在安全上下文中可用。
-
-`kmp/` 的版本是 `1.8.8`，包含 `:app`、`:shared`、`:ui` 三个模块。它用本地数据库覆盖账单、统计、自动记账和「我的」各页面，不访问服务端。`kmp/` 的页面数量少于 Web 版，也不替代 `src/api/mock/` 的端点实现。
+完整设计见 [设计文档](docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md)，切片顺序见 [实施计划](docs/superpowers/plans/2026-11-11-kmp-full-replica-plan.md)。
 
 ## 运行
 
+构建交付物 `kmp/` 时，在 `kmp/` 目录用 Gradle 8.11.1 和 JDK 17 以上运行 `:app:assembleDebug :shared:jvmTest`。本机没有 `gradlew` 脚本，需指定已安装的 Gradle 与 JBR 路径。`kmp/.gradle-java.properties`、`kmp/local.properties` 和 `kmp/app/src/androidTest/` 只存本机配置，不进仓库。
+
+Web 规格参考用以下命令构建：
+
 ```bash
 npm install
-npm run dev        # 本地开发
-npm run build      # 生产构建（提交前必跑）
-```
-
-构建 `android-shell/` 时，先执行 `npm run build`，再复制 `dist/` 到 `android-shell/app/src/main/assets/`。
-
-构建 `kmp/` 时，在 `kmp/` 目录用 Gradle 8.11.1 和 JDK 17 以上运行 `:app:assembleDebug :shared:jvmTest`。本机没有 `gradlew` 脚本，需指定已安装的 Gradle 与 JBR 路径。`kmp/.gradle-java.properties`、`kmp/local.properties` 和 `kmp/app/src/androidTest/` 只存本机配置，不进仓库。
-
-## 目录
-
-```
-spec/          endpoints.json（接口权威清单）· ddl.sql · features.md（功能矩阵）
-docs/          接口实现对照表 · 风格对照
-src/theme/     灯影配色（外部 UI 基准） / 玻璃 / 字阶 token
-src/db/        IndexedDB DAO（20+ 表）
-src/api/       client（统一 fetch 契约）+ mock（112 端点）
-src/features/  21 个业务模块
-src/components/ 玻璃卡 / 胶囊 chip / Dock / 对话框
-src/app/       导航与根布局
-android-shell/  WebView 壳，加载 dist/ 产物
-kmp/           Kotlin Multiplatform + Compose 页面与 SQLDelight 本地库
+npm run build
 ```
 
 ## 里程碑
 
-| # | 内容 | 状态 |
+| 切片 | 内容 | 状态 |
 |---|---|---|
-| M0 | AGENTS.md / CLAUDE.md / spec / git + public 远端 | ✅ |
-| M1 | 工程骨架 + 灯影主题 token + 玻璃组件 + Dock 导航 | ✅ |
-| M2 | IndexedDB 全表 DAO + 统一 API 契约层 | ✅ |
-| M3 | 112 端点 mock 后端 + 接口实现对照表 | ✅ |
-| M4 | 账单（记一笔/列表/详情/编辑/删除/搜索）+ 统计（分类报表/趋势/预算/导出） | ✅ |
-| M5 | 自动记账三路采集 + 规则引擎 + 去重 + 确认队列 | ✅ |
-| M6 | 分类标签 / 账本 / 资产 / 存钱 / 周期 / 分期 / 导入 / 小组件 | ✅ |
-| M7 | 账号 / VIP / 订单 / 运营 / 配置 / 设置 / 商业化 no-op | ✅ |
-| M8 | 全量核对（功能矩阵 + 接口对照表）+ 构建验证 + 推送 | ✅ |
-| M9 | WebView 壳与 KMP 本地页面、数据库迁移、测试 | ✅（本地功能） |
+| S0 | 全量依据、差距表、工程约定与验收口径 | 执行中 |
+| S1 | 应用框架、Android 组件与动态权限 | 未开始 |
+| S2 | 账单、分类标签、账本协作与本地优先同步 | 未开始 |
+| S3 | 预算、统计报表与下钻 | 未开始 |
+| S4 | 自动记账三路采集、OCR、导入导出 | 未开始 |
+| S5 | 资产、存钱、周期、分期与桌面小组件 | 未开始 |
+| S6 | 账号安全、VIP 与支付回调 | 未开始 |
+| S7 | 推送保活、埋点、远程配置与反馈 | 未开始 |
+| S8 | 无广检查与全量回归 | 未开始 |
+
+每个切片的 Definition of Done 见 [AGENTS.md §11](AGENTS.md#11-definition-of-done-每个里程碑)。
 
 ## 证据与限制
 
-- 接口数量以 `api/a.java` 为准（112 注解路径 + 2 动态 `@Url`）；`03-接口文档.md` 写「约 130」含第三方 SDK URL，二者口径不同，见 `docs/接口实现对照表.md`。
-- KMP 版不实现网络接口。112 端点实现只在 Web 版 `src/api/mock/`；`android-shell/` 复用 Web 版产物。边界见 `docs/接口实现对照表.md` 的「实现边界」。
-- 不复现 `DataNative` 私有加密与密钥，按 `04` §5 明文 JSON 契约等价实现。
-- 广告/推送/埋点 SDK 按 `04` §7 裁剪为可插拔 no-op，接口与数据模型保留。
+- 接口数量以 `api/a.java` 为准（112 注解路径 + 2 动态 `@Url`）；`03-接口文档.md` 写「约 130」含第三方 SDK URL，二者口径不同。
+- 样本 `data=` 私有加密与密钥不复现；KMP 契约层发送明文 JSON，保留样本字段名与统一响应封装。
+- 6 家广告 ADN 与自有 ADX 不接入；广告请求端点不调用，广告开关固定关闭。
+- 推送、埋点、支付与运营商一键登录使用可替换网关；真实商户资质缺失时，测试环境使用沙箱。
+- 服务端真实响应与鉴权续期缺少动态抓包证据。开放差异见 [设计文档 §8](docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md)。
 - 协议文本、图标、教程素材自撰自绘，不复制原 App 资产。
 
 ## 远端
