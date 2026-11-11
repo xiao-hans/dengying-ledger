@@ -215,6 +215,22 @@ class AccountRepository(private val db: MeowDatabase) {
 
     fun feedback(): List<Behavior_event> = db.accountQueries.selectEvents(FEEDBACK_KIND).executeAsList()
 
+    /** 通用埋点：写 behavior_event，kind 前缀 ac_ 对齐样本事件命名。 */
+    fun track(kind: String, content: String): Behavior_event {
+        val now = currentTimeMillis()
+        val row = Behavior_event(
+            id = "b$now${(0..999).random()}",
+            kind = kind,
+            content = content.take(500),
+            contact = "",
+            create_time = now,
+        )
+        db.accountQueries.upsertEvent(row)
+        return row
+    }
+
+    fun events(kind: String): List<Behavior_event> = db.accountQueries.selectEvents(kind).executeAsList()
+
     /** 内容少于 5 个字时不收。 */
     fun addFeedback(content: String, contact: String = ""): Behavior_event? {
         val text = content.trim()

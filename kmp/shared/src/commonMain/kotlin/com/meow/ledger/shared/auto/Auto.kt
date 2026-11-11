@@ -208,6 +208,7 @@ class AutoRepository(private val db: MeowDatabase) {
                 ),
             )
             created++
+            track("ac_auto_capture", "${full.merchant}|${full.money}|$source")
         }
         return CaptureResult(created, duplicate, unsupported)
     }
@@ -251,7 +252,22 @@ class AutoRepository(private val db: MeowDatabase) {
                 create_time = now,
             ),
         )
+        track("ac_auto_capture", "${full.merchant}|${full.money}|$source")
         return CaptureResult(1, 0, 0)
+    }
+
+    /** 埋点：与 AccountRepository.track 同表，AutoRepository 只拿得到 db，就地写。 */
+    private fun track(kind: String, content: String) {
+        val now = currentTimeMillis()
+        db.accountQueries.upsertEvent(
+            com.meow.ledger.shared.db.Behavior_event(
+                id = "b$now${(0..999).random()}",
+                kind = kind,
+                content = content.take(500),
+                contact = "",
+                create_time = now,
+            ),
+        )
     }
 
     /** 确认入账：写一笔账单，再把事件标成已入账。 */
@@ -291,6 +307,7 @@ class AutoRepository(private val db: MeowDatabase) {
         )
         db.billQueries.upsert(bill)
         db.autoQueries.upsert(event.copy(status = 1))
+        track("ac_auto_confirm", "${event.desc}|${event.money}")
         return bill
     }
 

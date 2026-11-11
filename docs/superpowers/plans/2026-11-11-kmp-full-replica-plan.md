@@ -159,4 +159,4 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 | S5 | 契约 29/29 + 余额联动/存钱单期/分期公式/小组件渲染/提醒闹钟（模拟器 reboot 实证 2026-12-01 09:00） | 116 tests 0 fail + widget 桌面放置真机待验 | 1dbf13b 后 S5 commit | 部分完成 |
 | S6 | 契约 28/28 + Account/Group 业务层已齐（VIP 页/订单列表/拼团页已有 UI） | 契约测试 33 全绿 | 09558c5 后 S6 commit | 部分完成 |
 | S7 | 平台契约 5/5（Operation/Behavior/Config/PersonCenter） | catalog 112 断言绿 | 同 S6 commit | 部分完成（业务接线待 S8） |
-| S8 | 待记录 | 待记录 | 待记录 | 未开始 |
+| S8 | 埋点三类落库 + 契约 112/112 全量 + 全量验收 | 118 tests 0 fail | 8e921db 后 S8 commit | 部分完成 |

@@ -58,6 +58,21 @@ class BillsRepository(private val db: MeowDatabase) {
     fun saveWithBalance(bill: Bill) {
         db.billQueries.upsert(bill)
         applyBalance(bill)
+        track("ac_add_bill", "${bill.client_id}|${bill.money}|${bill.type}")
+    }
+
+    /** 埋点：与 AccountRepository.track 同表，就地写避免循环依赖。 */
+    private fun track(kind: String, content: String) {
+        val nowMillis = now()
+        db.accountQueries.upsertEvent(
+            com.meow.ledger.shared.db.Behavior_event(
+                id = "b$nowMillis${(0..999).random()}",
+                kind = kind,
+                content = content.take(500),
+                contact = "",
+                create_time = nowMillis,
+            ),
+        )
     }
 
     /** 删一笔并回滚资产余额，与 [saveWithBalance] 对称。 */
