@@ -128,6 +128,9 @@ SELECT * FROM image_info WHERE client_id = :clientId ORDER BY create_date;
 upsertImage:
 INSERT OR REPLACE INTO image_info(id, client_id, path, url, source, create_date) VALUES ?;
 
+countPending:
+SELECT count(*) FROM sync_queue WHERE status = 0;
+
 selectPendingSync:
 SELECT * FROM sync_queue WHERE status = 0 AND next_attempt <= :now ORDER BY create_time LIMIT :limitAmount;
 

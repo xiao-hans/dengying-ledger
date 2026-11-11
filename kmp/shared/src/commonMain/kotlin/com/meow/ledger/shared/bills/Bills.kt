@@ -57,7 +57,59 @@ class BillsRepository(private val db: MeowDatabase) {
     fun delete(memberId: Long, clientId: String) {
         db.billQueries.deleteOne(memberId, clientId)
     }
+
+    /** 批量改分类。返回实际改动条数。 */
+    fun batchUpdate(memberId: Long, clientIds: List<String>, cateId: Long): Int =
+        clientIds.count { clientId ->
+            val bill = db.billQueries.selectOne(memberId, clientId).executeAsOneOrNull()
+            if (bill == null) false else {
+                db.billQueries.upsert(bill.copy(member_cate_id = cateId, local_update_time = now()))
+                true
+            }
+        }
+
+    /** 按备注关键字搜账单，bookId 为 0 时不限账本。 */
+    fun search(keyword: String, bookId: Long = 0): List<Bill> =
+        db.billQueries.selectAll().executeAsList()
+            .filter { bill -> bookId == 0L || bill.book_id == bookId }
+            .filter { bill -> bill.desc.contains(keyword) }
+            .sortedByDescending { it.local_create_time }
+
+    /** 分页取账单，page 从 1 开始。 */
+    fun page(page: Int, size: Int, bookId: Long = 0): List<Bill> =
+        search("", bookId).drop((page - 1).coerceAtLeast(0) * size).take(size)
+
+    /** 批量导入。同 member_id + client_id 再次导入会覆盖而非重复，幂等键语义。 */
+    fun importAll(bills: List<Bill>): Int {
+        bills.forEach { db.billQueries.upsert(it) }
+        return bills.size
+    }
+
+    /** 某一天的收支合计。 */
+    fun daySum(day: Long): MonthSummary {
+        val bills = db.billQueries.selectByRange(0, day, day).executeAsList()
+        return MonthSummary(
+            expense = bills.filter { it.type == TYPE_EXPENSE }.sumOf { it.money },
+            income = bills.filter { it.type == TYPE_INCOME }.sumOf { it.money },
+            count = bills.size,
+        )
+    }
+
+    /** 带图片的账单数。 */
+    fun hasPicCount(): Int =
+        db.billQueries.selectAll().executeAsList().count { it.images.isNotBlank() }
 }
+
+/** 幂等键：时间戳 + 计数，进程内唯一。 */
+private var clientIdSeq = 0L
+
+fun newClientId(): String {
+    clientIdSeq += 1
+    return "%d%03d".format(System.currentTimeMillis(), clientIdSeq % 1000)
+}
+
+internal fun now(): Long = System.currentTimeMillis()
+
 
 internal fun viewOf(bills: List<Bill>, refunded: Map<String, Long> = emptyMap()): MonthView {
     val active = bills.filter { it.status == 0L }

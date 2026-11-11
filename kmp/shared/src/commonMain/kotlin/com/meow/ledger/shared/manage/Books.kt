@@ -4,6 +4,7 @@ import com.meow.ledger.shared.db.Bill_book
 import com.meow.ledger.shared.db.MeowDatabase
 import com.meow.ledger.shared.db.Member_book
 import kotlin.math.abs
+import com.meow.ledger.shared.db.User_setting
 
 private fun currentTimeMillis(): Long = System.currentTimeMillis()
 
@@ -124,4 +125,17 @@ class BookRepository(private val db: MeowDatabase) {
     fun roleOf(bookId: Long): Long =
         db.memberQueries.selectMember(LOCAL_MEMBER_ID, bookId).executeAsOneOrNull()?.role ?: ROLE_OWNER
 
+    /** 默认账本：记账与统计页的初始账本。 */
+    fun setDefault(bookId: Long) {
+        db.configQueries.upsertSetting(User_setting("default_book_id", bookId.toString()))
+    }
+
+    fun defaultBookId(): Long =
+        db.configQueries.selectSetting("default_book_id").executeAsOneOrNull()?.toLongOrNull() ?: DEFAULT_BOOK_ID
+
+    /** 账本详情 + 当前成员角色（BillsBook/GetDetail 与 GetMembers 的本地口径）。 */
+    fun detailWithRole(bookId: Long): Pair<Bill_book, Long>? {
+        val book = book(bookId) ?: return null
+        return book to roleOf(bookId)
+    }
 }

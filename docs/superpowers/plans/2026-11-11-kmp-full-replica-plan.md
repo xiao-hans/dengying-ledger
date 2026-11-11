@@ -44,16 +44,16 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S2 · M4 账单、M5 分类标签、M6 账本协作
 
-状态：执行中。
+状态：执行中（代码与测试落地，待真机流程验证后收口）。
 
-1. 补齐 `bill`、`bill_tag`、`bill_remark`、`cate_extend`、`tag`、`bill_book`、`member_book` 的表和迁移。
-2. 实现 `Bills` 12 个、`Cate` 6 个、`MemberTag` 4 个、`BillsBook` 10 个契约方法。
-3. 实现账单编辑、退款、批量修改、搜索、分类标签、账本扫码加入、邀请和成员页。
-4. 实现 `client_id` 幂等写、`sync_queue` 重试和本地优先刷新。
-5. 实现删除二次确认、草稿保留、金额输入和筛选状态。
-6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。
-7. 在真机完成一次新增、编辑、删除、退款、批量修改、切换账本和离线写。
-8. 更新差距表和接口对照表；提交并推送。
+1. 补齐 `bill`、`bill_tag`、`bill_remark`、`cate_extend`、`tag`、`bill_book`、`member_book` 的表和迁移。已完成：`S2.sq` 9 张表 + `sync_queue` 11 列并入 `2.sqm`。
+2. 实现 `Bills` 12 个、`Cate` 6 个、`MemberTag` 4 个、`BillsBook` 10 个契约方法。已完成：`MeowApi.kt` 32 方法 + `Bills.kt`/`Categories.kt`/`Tags.kt`/`Books.kt` 业务层。
+3. 实现账单编辑、退款、批量修改、搜索、分类标签、账本扫码加入、邀请和成员页。批量修改页 `BatchPage.kt` 已挂入口；标签管理页、账本协作页待建。
+4. 实现 `client_id` 幂等写、`sync_queue` 重试和本地优先刷新。已完成：`SyncEngine`（指数退避重试，纯本地模式静默保留队列）。
+5. 实现删除二次确认、草稿保留、金额输入和筛选状态。批量修改已用 `ConfirmBox` 二次确认。
+6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。已完成 17 个新用例（BillsSyncTest/TagsTest/BooksDefaultTest/CateExtendTest/SyncQueueTest + 网络 7 个）。
+7. 在真机完成一次新增、编辑、删除、退款、批量修改、切换账本和离线写。待做。
+8. 更新差距表和接口对照表；提交并推送。对照表与差距表已更新到「部分实现」。
 
 完成依据：32 个契约方法逐项有实现位置；同名 `Bills/ImportBills` 重载按请求体字段区分；真机流程留截图或 `uiautomator` 记录。
 

@@ -10,6 +10,8 @@ CREATE TABLE tag (
 
 selectByBook:
 SELECT * FROM tag WHERE book_id = :bookId ORDER BY sort, tag_id;
+selectAllTags:
+SELECT tag.* FROM tag ORDER BY book_id, sort, tag_id;
 
 upsert:
 INSERT OR REPLACE INTO tag(tag_id, book_id, member_id, name, sort, create_date, update_date)

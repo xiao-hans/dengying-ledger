@@ -289,7 +289,7 @@ private fun TextButton(label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ConfirmBox(title: String, message: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
+internal fun ConfirmBox(title: String, message: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
     val palette = LocalPalette.current
     val card = RoundedCornerShape(18.dp)
     Box(

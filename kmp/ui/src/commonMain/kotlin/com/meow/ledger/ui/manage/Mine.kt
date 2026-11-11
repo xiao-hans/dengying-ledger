@@ -47,6 +47,7 @@ fun MineHome(profile: Member_profile, onOpen: (String) -> Unit) {
 private val entries = listOf(
     Triple("budget", "预算", "月预算和分类预算"),
     Triple("search", "搜索", "按备注、分类、金额找账单"),
+    Triple("batch", "批量修改", "选中账单一起改分类"),
     Triple("export", "导出", "复制全部账单的 CSV"),
     Triple("books", "账本", "新建、共享、成员"),
     Triple("assets", "资产", "账户余额和隐藏账户"),

@@ -28,6 +28,7 @@ import com.meow.ledger.shared.bills.BillsRepository
 import com.meow.ledger.shared.db.Rule
 import com.meow.ledger.shared.bills.CategoryRepository
 import com.meow.ledger.shared.bills.RefundRepository
+import com.meow.ledger.ui.manage.BatchPage
 import com.meow.ledger.shared.bills.RefundTooLarge
 import com.meow.ledger.shared.bills.seedCategoriesIfEmpty
 import com.meow.ledger.shared.bills.seedIfEmpty
@@ -321,6 +322,7 @@ private fun MinePages(
     when {
         page.startsWith("budget") -> BudgetPage(BudgetRepository(database), month, page, onOpen, onBack)
         page == "search" -> SearchPage(ExchangeRepository(database), onOpenBill, onBack)
+        page == "batch" -> BatchPage(onBack)
         page == "export" || page.startsWith("import") -> ExchangePage(ExchangeRepository(database), AccountRepository(database), page, onOpen, onBack)
         page.startsWith("book") -> BooksPage(BookRepository(database), page, onOpen, onBack)
         page.startsWith("asset") -> AssetsPage(AssetRepository(database), page, onOpen, onBack)
