@@ -1,5 +1,6 @@
 package com.meow.ledger.ui.manage
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.auto.KEY_APP_LOCK
@@ -25,8 +28,11 @@ import com.meow.ledger.shared.auto.THEME_LIGHT
 import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
+import com.meow.ledger.shared.db.MeowDatabase
 import com.meow.ledger.shared.manage.AccountRepository
+import com.meow.ledger.shared.manage.GroupRepository
 import com.meow.ledger.shared.manage.REMOTE_DEFAULTS
+import com.meow.ledger.shared.manage.SHOW_ID_MAX
 import com.meow.ledger.shared.manage.VIP_PLANS
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
@@ -39,6 +45,7 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun AccountPage(
     page: String,
+    database: MeowDatabase,
     account: AccountRepository,
     settings: SettingsStore,
     onTheme: (String) -> Unit,
@@ -49,7 +56,7 @@ fun AccountPage(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         when (page) {
             "account" -> AccountHome(account, onBack) { notice = it }
-            "vip" -> VipHome(account, onBack) { notice = it }
+            "vip" -> VipHome(database, account, onBack) { notice = it }
             "imports" -> ImportHome(account, onBack) { notice = it }
             "contract" -> ContractHome(account, onBack) { notice = it }
             "feedback" -> FeedbackHome(account, onBack) { notice = it }
@@ -110,11 +117,16 @@ private fun AccountHome(account: AccountRepository, onBack: () -> Unit, onNotice
 }
 
 @Composable
-private fun VipHome(account: AccountRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
+private fun VipHome(database: MeowDatabase, account: AccountRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
     val palette = LocalPalette.current
     var version by remember { mutableStateOf(0) }
+    var group by remember { mutableStateOf(false) }
     val profile = remember(version) { account.profile() }
     val orders = remember(version) { account.orders() }
+    if (group) {
+        GroupHome(GroupRepository(database), { group = false }, onNotice)
+        return
+    }
     BackHeader("会员", onBack)
     GlassCard {
         Text(if (profile.vip == 1L) "会员有效" else "还不是会员", color = palette.textPrimary)
@@ -135,6 +147,40 @@ private fun VipHome(account: AccountRepository, onBack: () -> Unit, onNotice: (S
     if (orders.isEmpty()) Empty("还没有订单", "开通后订单会列在这里")
     orders.forEach { order ->
         Text("${order.product_name} · ${centsToYuan(order.money)} 元 · ${dateOf(order.create_time)}", color = palette.textSecondary, modifier = Modifier.padding(top = 6.dp))
+    }
+    GlassCard(Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(16.dp)).clickable { group = true }.padding(14.dp)) {
+        Text("拼团", color = palette.textPrimary)
+        Text("本地模拟，不发起真实分享", color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+/** 拼团只写本地记录。点一条按展示码回查，不会跳转分享或支付。 */
+@Composable
+private fun GroupHome(group: GroupRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    val palette = LocalPalette.current
+    var version by remember { mutableStateOf(0) }
+    val rows = remember(version) { group.list() }
+    var code by remember { mutableStateOf("") }
+    BackHeader("拼团", onBack)
+    GlassCard(Modifier.fillMaxWidth().padding(14.dp)) {
+        Text("拼团只写本地记录。没有分享，没有支付渠道。", color = palette.textSecondary, fontSize = 13.sp)
+        Field("展示码", code, { if (it.length <= SHOW_ID_MAX) code = it }, "自拟一串，用来回查")
+        ActionButton("加入本地拼团", code.isNotBlank()) {
+            val showId = code.trim()
+            if (showId.isEmpty()) onNotice("先填写展示码")
+            else if (group.bind(showId) == null) onNotice("展示码不能超过 $SHOW_ID_MAX 个字")
+            else { code = ""; version += 1; onNotice("已记录") }
+        }
+    }
+    if (rows.isEmpty()) Empty("还没有拼团记录", "填一个展示码就能加入")
+    rows.forEach { row ->
+        GlassCard(Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).clickable {
+            val hit = group.check(row.show_id)
+            onNotice(if (hit.isVip == 1L) "记录在册" else "没有这条记录")
+        }.padding(14.dp)) {
+            Text(row.show_id.ifBlank { row.id }, color = palette.textPrimary)
+            Text(if (row.status == 1L) "已记录" else "未记录", color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+        }
     }
 }
 
