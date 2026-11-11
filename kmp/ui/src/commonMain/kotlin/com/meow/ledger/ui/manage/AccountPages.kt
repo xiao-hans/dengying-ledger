@@ -26,6 +26,7 @@ import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.manage.AccountRepository
+import com.meow.ledger.shared.manage.MigrationState
 import com.meow.ledger.shared.manage.REMOTE_DEFAULTS
 import com.meow.ledger.shared.manage.VIP_PLANS
 import com.meow.ledger.ui.auto.ActionButton
@@ -49,6 +50,7 @@ fun AccountPage(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         when (page) {
             "account" -> AccountHome(account, onBack) { notice = it }
+            "change-phone" -> ChangePhoneHome(account, onBack) { notice = it }
             "vip" -> VipHome(account, onBack) { notice = it }
             "imports" -> ImportHome(account, onBack) { notice = it }
             "contract" -> ContractHome(account, onBack) { notice = it }
@@ -106,6 +108,49 @@ private fun AccountHome(account: AccountRepository, onBack: () -> Unit, onNotice
             account.unbind(); confirm = false; version += 1; onNotice("已解除绑定")
         }, "解除")
         else ActionButton("解除绑定", true) { confirm = true }
+    }
+}
+
+/** 换绑：旧号和新号各验证一次，两次验证码都在本机生成。 */
+@Composable
+private fun ChangePhoneHome(account: AccountRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    val palette = LocalPalette.current
+    val current = remember { account.profile().phone }
+    var oldCode by remember { mutableStateOf("") }
+    var oldSent by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    var sent by remember { mutableStateOf("") }
+    BackHeader("换绑手机", onBack)
+    if (current.isBlank()) {
+        Empty("还没有绑定手机", "先用手机号登录，才能换绑", "去登录", onBack)
+        return
+    }
+    GlassCard {
+        Text("当前手机 $current", color = palette.textPrimary)
+        Text("旧号和新号都要验证，验证码只在本机生成", color = palette.textSecondary, modifier = Modifier.padding(top = 4.dp))
+    }
+    ActionButton("获取旧号验证码", true) {
+        val value = account.sendCode(current)
+        if (value == null) onNotice("当前手机号不可用")
+        else { oldSent = value; onNotice("旧号验证码已生成") }
+    }
+    if (oldSent.isNotEmpty()) Text("旧号验证码 $oldSent，五分钟内有效", color = palette.textSecondary)
+    Field("旧号验证码", oldCode, { oldCode = it }, "六位数字")
+    Field("新手机号", phone, { phone = it }, "11 位，不能和当前号码相同")
+    ActionButton("获取新号验证码", phone.length == 11) {
+        val value = account.sendCode(phone)
+        if (value == null) onNotice("新手机号要是 1 开头的 11 位")
+        else { sent = value; onNotice("新号验证码已生成") }
+    }
+    if (sent.isNotEmpty()) Text("新号验证码 $sent，五分钟内有效", color = palette.textSecondary)
+    Field("新号验证码", code, { code = it }, "六位数字")
+    ActionButton("确认换绑", oldCode.isNotBlank() && code.isNotBlank()) {
+        when {
+            phone == current -> onNotice("新手机号不能和当前号码相同")
+            account.changePhone(oldCode, phone, code) == null -> onNotice("验证码不对、已过期，或新手机号不符合要求")
+            else -> onNotice("已换绑到 $phone")
+        }
     }
 }
 
@@ -172,8 +217,14 @@ private fun ContractHome(account: AccountRepository, onBack: () -> Unit, onNotic
     var version by remember { mutableStateOf(0) }
     var confirm by remember { mutableStateOf(false) }
     val contract = remember(version) { account.contract() }
+    val migration = remember(version) { account.migration() }
     val plan = VIP_PLANS.first()
     BackHeader("自动续费", onBack)
+    MigrationCard(migration) {
+        val result = account.migrateOldUser()
+        version += 1
+        onNotice(if (result.already) "之前已经迁移过，没有重复写入" else "本机数据已标记为迁移完成")
+    }
     if (contract.signed == 1L) {
         GlassCard {
             Text("已签约 ${contract.product_name}", color = LocalPalette.current.textPrimary)
@@ -192,6 +243,31 @@ private fun ContractHome(account: AccountRepository, onBack: () -> Unit, onNotic
             onNotice("已签约 ${plan.name}")
         }
     }
+}
+
+/** 老用户迁移：只给本机账本打标记，不删除任何账单，重复执行不改时间。 */
+@Composable
+private fun MigrationCard(state: MigrationState, onMigrate: () -> Unit) {
+    val palette = LocalPalette.current
+    GlassCard {
+        Text("老用户数据迁移", color = palette.textPrimary)
+        Text(
+            if (state.done) "本机账本已完成迁移，再次执行不会重复写入"
+            else "把旧版本留在本机的账本标记为已迁移。不会删除任何账单",
+            color = palette.textSecondary,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        if (state.done && state.timeMillis > 0L) {
+            val time = Instant.fromEpochMilliseconds(state.timeMillis).toLocalDateTime(TimeZone.currentSystemDefault())
+            Text(
+                "迁移时间 ${time.date} ${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
+                color = palette.textSecondary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+    ActionButton(if (state.done) "已迁移" else "迁移本机数据", !state.done, onMigrate)
 }
 
 @Composable

@@ -25,6 +25,13 @@ val VIP_PLANS = listOf(
     VipPlan("year", "年卡", 4800, 365),
 )
 
+/** 老用户迁移标记，落在 user_setting 表，不改 member_profile 的列。 */
+const val KEY_MIGRATED = "member_migrated"
+const val KEY_MIGRATE_TIME = "member_migrate_time"
+
+/** 迁移结果。already 为 true 表示这次执行之前就已经迁移过。 */
+data class MigrationState(val done: Boolean, val timeMillis: Long, val already: Boolean = false)
+
 /** 远程开关的默认值。数值项存数字，开关项存 1 或 0。 */
 val REMOTE_DEFAULTS = mapOf(
     "auto_bill_enabled" to "1",
@@ -70,6 +77,40 @@ class AccountRepository(private val db: MeowDatabase) {
 
     /** 解绑：清掉绑定关系，登录态保留。 */
     fun unbind(): Member_profile = save(profile().copy(bind_type = "", bind_id = ""))
+
+    /**
+     * 换绑手机：旧号和新号各验一次验证码。
+     * 没有绑定手机、新号不合法或与旧号相同、任一个验证码不对或过期，都返回 null且不改手机号。
+     */
+    fun changePhone(oldCode: String, newPhone: String, newCode: String): Member_profile? {
+        val current = profile()
+        if (current.phone.isBlank()) return null
+        if (!newPhone.matches(Regex("^1\\d{10}$")) || newPhone == current.phone) return null
+        if (!codeMatches(current.phone, oldCode) || !codeMatches(newPhone, newCode)) return null
+        return save(current.copy(phone = newPhone, bind_type = "phone", bind_id = newPhone))
+    }
+
+    /** 老用户迁移只是一个标记，不删除任何账单。已迁移过再执行不会改写时间。 */
+    fun migration(): MigrationState {
+        val done = db.configQueries.selectSetting(KEY_MIGRATED).executeAsOneOrNull() == "1"
+        val time = db.configQueries.selectSetting(KEY_MIGRATE_TIME).executeAsOneOrNull()?.toLongOrNull() ?: 0L
+        return MigrationState(done, time)
+    }
+
+    /** 返回的 already 表示这次执行之前是否已经迁移过。 */
+    fun migrateOldUser(nowMillis: Long = currentTimeMillis()): MigrationState {
+        val already = migration().done
+        if (!already) {
+            db.configQueries.upsertSetting(com.meow.ledger.shared.db.User_setting(KEY_MIGRATED, "1"))
+            db.configQueries.upsertSetting(com.meow.ledger.shared.db.User_setting(KEY_MIGRATE_TIME, nowMillis.toString()))
+        }
+        return migration().copy(already = already)
+    }
+
+    private fun codeMatches(phone: String, code: String): Boolean {
+        val stored = db.accountQueries.selectCode(phone).executeAsOneOrNull() ?: return false
+        return stored.code == code && stored.expires >= currentTimeMillis()
+    }
 
     private fun save(row: Member_profile): Member_profile {
         db.accountQueries.upsertProfile(row)
