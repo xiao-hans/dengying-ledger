@@ -172,3 +172,46 @@ class BillsBookContracts(private val api: MeowApi) {
     suspend fun exit(billsBookId: String) =
         api.call(EndpointRequest("BillsBook/Exit", fields = mapOf("billsBookId" to billsBookId)))
 }
+
+/** Budget 9 个契约方法（字段名与 EndpointCatalog 一致）。 */
+class BudgetContracts(private val api: MeowApi) {
+    suspend fun createBudget(fields: Map<String, String>) =
+        api.call(EndpointRequest("Budget/CreateBudget", fields = fields))
+
+    suspend fun getYearlyBudgets(year: String) =
+        api.call(EndpointRequest("Budget/GetYearlyBudgets", fields = mapOf("year" to year)))
+
+    suspend fun getBudget(billsBookId: String, day: String) = api.call(
+        EndpointRequest("Budget/GetBudget", fields = mapOf("billsBookId" to billsBookId, "day" to day)),
+    )
+
+    suspend fun deleteBudget(billsBookId: String, day: String) = api.call(
+        EndpointRequest("Budget/DeleteBudget", fields = mapOf("billsBookId" to billsBookId, "day" to day)),
+    )
+
+    suspend fun deleteBudgetCate(billsBookId: String, day: String, cateId: String) = api.call(
+        EndpointRequest(
+            "Budget/DeleteBudgetCate",
+            fields = mapOf("billsBookId" to billsBookId, "day" to day, "cateId" to cateId),
+        ),
+    )
+
+    suspend fun updateBudgetCate(billsBookId: String, day: String, cateId: String, money: String) = api.call(
+        EndpointRequest(
+            "Budget/UpdateBudgetCate",
+            fields = mapOf("billsBookId" to billsBookId, "day" to day, "cateId" to cateId, "money" to money),
+        ),
+    )
+
+    suspend fun updateBudget(fields: Map<String, String>) =
+        api.call(EndpointRequest("Budget/UpdateBudget", fields = fields))
+
+    suspend fun createBudgetCate(billsBookId: String, day: String, cateId: String, money: String) = api.call(
+        EndpointRequest(
+            "Budget/CreateBudgetCate",
+            fields = mapOf("billsBookId" to billsBookId, "day" to day, "cateId" to cateId, "money" to money),
+        ),
+    )
+
+    suspend fun getBudgetList() = api.call(EndpointRequest("Budget/GetBudgetList", method = "GET"))
+}

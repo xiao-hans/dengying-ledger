@@ -42,6 +42,7 @@ import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.db.Bill
 import com.meow.ledger.shared.db.Category
+import com.meow.ledger.ui.manage.ChoiceChip
 import com.meow.ledger.ui.theme.LocalPalette
 
 private val TYPES = listOf(TYPE_EXPENSE to "支出", TYPE_INCOME to "收入", TYPE_TRANSFER to "转账")
@@ -61,6 +62,7 @@ fun BillEntry(
     var money by rememberSaveable { mutableStateOf(existing?.let { centsToYuan(it.money) } ?: "") }
     var cateId by rememberSaveable { mutableStateOf(existing?.member_cate_id ?: 1L) }
     var desc by rememberSaveable { mutableStateOf(existing?.desc ?: "") }
+    var notInBudget by rememberSaveable { mutableStateOf(existing?.not_in_budget == 1L) }
     var error by rememberSaveable { mutableStateOf("") }
 
     val visible = categories.filter { it.type == type || type == TYPE_TRANSFER }
@@ -162,6 +164,8 @@ fun BillEntry(
                 )
             }
 
+            ChoiceChip(if (notInBudget) "不计入本月预算" else "计入本月预算", notInBudget) { notInBudget = !notInBudget }
+
             if (error.isNotEmpty()) {
                 Text(error, color = palette.danger, fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
             }
@@ -185,19 +189,19 @@ fun BillEntry(
                     return@ActionButton
                 }
                 error = ""
-                onSave(newBill(today, type, cents, category.id, desc, existing))
+                onSave(newBill(today, type, cents, category.id, desc, notInBudget, existing))
             }
         }
     }
 }
 
-private fun newBill(today: Long, type: Long, cents: Long, cateId: Long, desc: String, existing: Bill?) = Bill(
+private fun newBill(today: Long, type: Long, cents: Long, cateId: Long, desc: String, notInBudget: Boolean, existing: Bill?) = Bill(
     member_id = existing?.member_id ?: 0,
     client_id = existing?.client_id ?: "manual-$today-${kotlin.random.Random.nextLong()}",
     money = cents, refund_money = existing?.refund_money ?: 0, type = type, exchange = existing?.exchange ?: 0,
     book_id = existing?.book_id ?: 1,
     member_cate_id = cateId, currency = existing?.currency ?: "CNY", day = existing?.day ?: today, desc = desc.trim(),
-    not_in_budget = existing?.not_in_budget ?: 0, images = existing?.images ?: "", update_date = today,
+    not_in_budget = if (notInBudget) 1 else 0, images = existing?.images ?: "", update_date = today,
     create_date = existing?.create_date ?: today, status = existing?.status ?: 0,
     to_assets_id = existing?.to_assets_id ?: 0, from_assets_id = existing?.from_assets_id ?: 0,
     interest = existing?.interest ?: 0, interest_reckon_type = existing?.interest_reckon_type ?: 0,

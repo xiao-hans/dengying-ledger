@@ -15,6 +15,9 @@ class RefundTooLarge(val billCents: Long, val alreadyCents: Long, val addingCent
 class RefundRepository(private val db: MeowDatabase) {
     fun ofBill(clientId: String): List<Refund_bill> = db.refundQueries.selectByBill(clientId).executeAsList()
 
+    /** 全部退款记录，按创建时间倒序。统计下钻用。 */
+    fun all(): List<Refund_bill> = db.refundQueries.selectAll().executeAsList().sortedByDescending { it.create_date }
+
     fun add(
         billClientId: String,
         billCents: Long,

@@ -34,6 +34,8 @@ import com.meow.ledger.shared.bills.seedCategoriesIfEmpty
 import com.meow.ledger.shared.bills.seedIfEmpty
 import com.meow.ledger.shared.bills.TYPE_EXPENSE
 import com.meow.ledger.shared.stats.StatsRepository
+import com.meow.ledger.shared.manage.TagRepository
+import com.meow.ledger.shared.stats.TagDrill
 import com.meow.ledger.shared.stats.TrendPeriod
 import com.meow.ledger.shared.stats.periodSpan
 import com.meow.ledger.ui.auto.AppsPage
@@ -75,6 +77,7 @@ import com.meow.ledger.ui.manage.SearchPage
 import com.meow.ledger.ui.manage.WidgetsPage
 import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
+import com.meow.ledger.ui.stats.StatsPages
 import com.meow.ledger.ui.theme.DarkPalette
 import com.meow.ledger.ui.theme.LightPalette
 import com.meow.ledger.ui.theme.LocalPalette
@@ -118,6 +121,7 @@ private fun MainApp() {
     var detailMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var statsType by rememberSaveable { mutableStateOf(TYPE_EXPENSE) }
     var statsPeriod by rememberSaveable { mutableStateOf(TrendPeriod.MONTH) }
+    var statsPage by rememberSaveable { mutableStateOf("") }
     val auto = AutoRepository(AppGraph.database)
     var autoEnabled by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_BILL, false)) }
     var autoConfirm by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_CONFIRM, false)) }
@@ -137,6 +141,20 @@ private fun MainApp() {
             }
             return@CompositionLocalProvider
         }
+        // 系统返回键：二级页回上级，根页面才交给系统退出（交互纪律 §6.9）。
+        BackButton(
+            enabled = composing || editing || openBill != null ||
+                statsPage.isNotEmpty() || autoPage.isNotEmpty() || minePage.isNotEmpty(),
+            onBack = {
+            when {
+                composing || editing -> { composing = false; editing = false }
+                openBill != null -> { openBill = null; detailMessage = null }
+                statsPage.isNotEmpty() -> statsPage = ""
+                autoPage.isNotEmpty() -> autoPage = ""
+                minePage.isNotEmpty() -> minePage = ""
+            }
+            },
+        )
         Box(
             Modifier
                 .fillMaxSize()
@@ -191,14 +209,43 @@ private fun MainApp() {
                         val stats = StatsRepository(AppGraph.database)
                         val span = periodSpan(statsPeriod, 12)
                         val names = categories.associate { it.id to it.title }
-                        StatsHome(
-                            summary = stats.summary(span.first, span.second, statsType, { id -> names[id] ?: "未分类" }),
-                            trend = stats.trend(statsPeriod),
-                            type = statsType,
-                            period = statsPeriod,
-                            onType = { statsType = it },
-                            onPeriod = { statsPeriod = it },
-                        )
+                        val month = today / 100
+                        val year = today / 10000
+                        if (statsPage.isNotEmpty()) {
+                            val drill = TagDrill(AppGraph.database)
+                            val inMonth = if (statsPage.startsWith("tag:")) {
+                                drill.billsOfTag(month * 100 + 1, month * 100 + 31, statsPage.substringAfter(':').toLongOrNull() ?: 0L, statsType)
+                            } else {
+                                stats.billsOfPeriod(month * 100 + 1, month * 100 + 31, statsType)
+                            }
+                            StatsPages(
+                                page = statsPage,
+                                month = month,
+                                year = year,
+                                type = statsType,
+                                names = names,
+                                bills = inMonth,
+                                refunds = RefundRepository(AppGraph.database).all(),
+                                tags = TagRepository(AppGraph.database).list(1),
+                                months = stats.monthsOfYear(year),
+                                onOpenPage = { statsPage = it },
+                                onOpenBill = { openBill = it; detailMessage = null },
+                                onBack = { statsPage = "" },
+                            )
+                        } else {
+                            StatsHome(
+                                summary = stats.summary(span.first, span.second, statsType, { id -> names[id] ?: "未分类" }),
+                                trend = stats.trend(statsPeriod),
+                                type = statsType,
+                                period = statsPeriod,
+                                onType = { statsType = it },
+                                onPeriod = { statsPeriod = it },
+                                onOpenCate = { statsPage = "cate:$it" },
+                                onOpenTags = { statsPage = "tags" },
+                                onOpenType = { statsPage = "type" },
+                                onOpenReport = { statsPage = "report" },
+                            )
+                        }
                     }
                     2 -> if (autoPage.isNotEmpty()) {
                         AutoPages(

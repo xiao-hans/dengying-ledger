@@ -38,3 +38,6 @@ SELECT * FROM cate_budget WHERE book_id = :bookId AND day = :day;
 
 upsertCate:
 INSERT OR REPLACE INTO cate_budget(book_id, day, member_cate_id, money, acf_money) VALUES ?;
+
+deleteCateOne:
+DELETE FROM cate_budget WHERE book_id = :bookId AND day = :day AND member_cate_id = :memberCateId;

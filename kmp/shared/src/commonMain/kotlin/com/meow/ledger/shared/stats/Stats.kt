@@ -61,6 +61,42 @@ class StatsRepository(private val db: MeowDatabase) {
         val refunds = db.refundQueries.selectByRange(from, to).executeAsList()
         return trendOf(bills, refundByBill(refunds), period, count)
     }
+
+    /** 指定期间某类型的全部账单，按日期倒序。下钻页与标签页共用。 */
+    fun billsOfPeriod(fromDay: Long, toDay: Long, type: Long, bookId: Long = 0): List<Bill> =
+        db.billQueries.selectByRange(bookId, fromDay, toDay).executeAsList()
+            .filter { it.status == 0L && it.type == type }
+            .sortedByDescending { it.day }
+
+    /** 一个分类下指定期间的账单，净额、按日期倒序。 */
+    fun billsOfCategory(
+        fromDay: Long,
+        toDay: Long,
+        cateId: Long,
+        type: Long,
+        bookId: Long = 0,
+    ): List<Bill> = db.billQueries.selectByRange(bookId, fromDay, toDay).executeAsList()
+        .filter { it.status == 0L && it.type == type && it.member_cate_id == cateId }
+        .sortedByDescending { it.day }
+
+    /** 指定年 12 个月的收支，key 为 yyyyMM，按时间从早到晚。 */
+    fun monthsOfYear(year: Long, bookId: Long = 0): List<PeriodTotal> {
+        val from = year * 10000 + 101L
+        val to = year * 10000 + 1231L
+        val bills = db.billQueries.selectByRange(bookId, from, to).executeAsList()
+            .filter { it.status == 0L }
+        val refunds = refundByBill(db.refundQueries.selectByRange(from, to).executeAsList())
+        return (1..12).map { month ->
+            val m = month.toString().padStart(2, '0')
+            val monthKey = year * 100 + month
+            val items = bills.filter { it.day / 100 == monthKey }
+            PeriodTotal(
+                key = monthKey.toInt(),
+                expense = items.filter { it.type == TYPE_EXPENSE }.sumOf { netMoney(it, refunds) },
+                income = items.filter { it.type == TYPE_INCOME }.sumOf { netMoney(it, refunds) },
+            )
+        }
+    }
 }
 
 /** 按月还是按年归组。 */
@@ -234,3 +270,45 @@ private fun addDays(weekDay: Long): Long {
 private fun leap(year: Int) = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 
 internal expect fun todayAsDay(): Long
+
+/** 一个下钻行：标签或月份的金额与笔数。cents 为净额。 */
+data class DrillRow(val key: Long, val cents: Long, val count: Int)
+
+class TagDrill(private val db: MeowDatabase) {
+
+    /** 按标签聚合一段期间的账单。只算 bill_tag 关联表里出现的标签。 */
+    fun byTag(fromDay: Long, toDay: Long, type: Long, bookId: Long = 0): List<DrillRow> {
+        val refunds = refundsOf(fromDay, toDay)
+        val links = db.s2Queries.selectBillTags().executeAsList()
+            .associateBy({ it.client_id }) { it.tag_id }
+        return drill(fromDay, toDay, type, bookId)
+            .filter { links.containsKey(it.client_id) }
+            .groupBy { links.getValue(it.client_id) }
+            .map { (tagId, items) ->
+                DrillRow(
+                    key = tagId,
+                    cents = items.sumOf { bill -> netMoney(bill, refunds) },
+                    count = items.size,
+                )
+            }
+            .sortedByDescending { it.cents }
+    }
+
+    /** 一个标签下的账单，净额、按日期倒序。 */
+    fun billsOfTag(fromDay: Long, toDay: Long, tagId: Long, type: Long, bookId: Long = 0): List<Bill> {
+        val clients = db.s2Queries.selectBillTags().executeAsList()
+            .filter { it.tag_id == tagId }
+            .map { it.client_id }
+            .toSet()
+        return drill(fromDay, toDay, type, bookId)
+            .filter { it.client_id in clients }
+            .sortedByDescending { it.day }
+    }
+
+    private fun drill(fromDay: Long, toDay: Long, type: Long, bookId: Long): List<Bill> =
+        db.billQueries.selectByRange(bookId, fromDay, toDay).executeAsList()
+            .filter { it.status == 0L && it.type == type }
+
+    private fun refundsOf(fromDay: Long, toDay: Long) =
+        refundByBill(db.refundQueries.selectByRange(fromDay, toDay).executeAsList())
+}

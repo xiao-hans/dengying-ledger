@@ -29,3 +29,6 @@ INSERT OR REPLACE INTO refund_bill(
 
 deleteOne:
 DELETE FROM refund_bill WHERE id = :id;
+
+selectAll:
+SELECT * FROM refund_bill;

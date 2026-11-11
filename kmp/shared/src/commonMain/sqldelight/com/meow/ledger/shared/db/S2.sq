@@ -147,3 +147,6 @@ UPDATE sync_queue SET status = 0, retry_count = retry_count + 1, next_attempt = 
 
 deleteSync:
 DELETE FROM sync_queue WHERE id = :id;
+
+selectBillTags:
+SELECT * FROM bill_tag;

@@ -2,7 +2,7 @@
 title: 喵啊记账 KMP 全量复刻实施计划
 date: 2026-11-11
 design: docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md
-status: S2 完成，S3 待启动
+status: S3 完成，S4 进行中
 ad_free: 不接入广告 SDK，不调用广告请求端点
 ---
 
@@ -59,15 +59,15 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S3 · M7 预算与 M8 统计
 
-状态：未开始。
+状态：部分完成（模拟器验证通过，真机待用户配合）。
 
-1. 补齐 `budget`、`cate_budget` 和对应迁移。
-2. 实现 `Budget` 9 个契约方法和预算包含排除规则。
-3. 实现总预算、分类预算、预算详情、统计报表、类型下钻、分类下钻和标签下钻页。
-4. 实现整数分聚合、月份筛选和自绘 SVG 图表。
-5. 为金额聚合、边界月份和包含排除规则写 JVM 测试。
-6. 在真机验证预算编辑和 4 类统计下钻。
-7. 更新差距表和接口对照表；提交并推送。
+1. 补齐 `budget`、`cate_budget` 和对应迁移。已做（S2 迁移 3.sqm 覆盖）。
+2. 实现 `Budget` 9 个契约方法和预算包含排除规则。已做：契约 `BudgetContracts` 9 方法、`removeCategory`、`not_in_budget` 过滤；包含排除、复制年预算未做。
+3. 实现总预算、分类预算、预算详情、统计报表、类型下钻、分类下钻和标签下钻页。已做：`ui/manage/Budget.kt`、`ui/stats/StatsDetail.kt`（cate:/tag:/tags/type/report 路由）、StatsHome 4 个入口；类型下钻用月列表替代。
+4. 实现整数分聚合、月份筛选和自绘 SVG 图表。已做（净额口径 netMoney）。
+5. 为金额聚合、边界月份和包含排除规则写 JVM 测试。已做：`BudgetNotInBudgetTest`、`TagDrillTest`；100 tests 0 fail。
+6. 在真机验证预算编辑和 4 类统计下钻。模拟器已验证：分类下钻（合计 93.70·3 笔）、年度报表、返回键回上级；真机待用户配合。
+7. 更新差距表和接口对照表；提交并推送。已做（契约 41/112）。
 
 完成依据：9 个契约方法有实现位置；图表在深浅色模式可读；金额不出现浮点累加误差。
 

@@ -47,6 +47,10 @@ fun StatsHome(
     period: TrendPeriod,
     onType: (Long) -> Unit,
     onPeriod: (TrendPeriod) -> Unit,
+    onOpenCate: (Long) -> Unit = {},
+    onOpenTags: () -> Unit = {},
+    onOpenType: () -> Unit = {},
+    onOpenReport: () -> Unit = {},
 ) {
     val palette = LocalPalette.current
     Column(
@@ -76,7 +80,7 @@ fun StatsHome(
                     .padding(vertical = 6.dp),
             ) {
                 summary.byCate.forEach { share ->
-                    CategoryRow(share.name, share.cents, share.pct, type)
+                    CategoryRow(share.name, share.cents, share.pct, type, Modifier.clickable { onOpenCate(share.id) })
                 }
             }
         }
@@ -87,6 +91,24 @@ fun StatsHome(
         } else {
             TrendChart(trend, type, Modifier.padding(horizontal = 18.dp).card().padding(16.dp))
         }
+
+        SectionTitle("更多报表")
+        Column(Modifier.padding(horizontal = 18.dp).card().padding(vertical = 4.dp)) {
+            LinkRow("收支月报", "12 个月的支出与收入对比", onOpenType)
+            LinkRow("年度报表", "全年收支与结余汇总", onOpenReport)
+            LinkRow("标签", "按标签看一笔笔账单", onOpenTags)
+        }
+    }
+}
+
+@Composable
+private fun LinkRow(title: String, hint: String, onClick: () -> Unit) {
+    val palette = LocalPalette.current
+    Column(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
+    ) {
+        Text(title, color = palette.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(hint, color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
     }
 }
 
@@ -133,10 +155,10 @@ private fun Amount(label: String, cents: Long, color: androidx.compose.ui.graphi
 }
 
 @Composable
-private fun CategoryRow(name: String, cents: Long, pct: Int, type: Long) {
+private fun CategoryRow(name: String, cents: Long, pct: Int, type: Long, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
     val bar = if (type == TYPE_INCOME) palette.brand else palette.danger
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(name, color = palette.textPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
             Text("${pct}%", color = palette.textSecondary, fontSize = 12.sp)

@@ -87,6 +87,11 @@ class BudgetRepository(private val db: MeowDatabase) {
         db.budgetQueries.deleteOne(bookId, yearMonth)
     }
 
+    /** 删掉一个月里某个分类的预算（Budget/DeleteBudgetCate）。 */
+    fun removeCategory(yearMonth: Long, categoryId: Long, bookId: Long = DEFAULT_BOOK_ID) {
+        db.budgetQueries.deleteCateOne(bookId, yearMonth, categoryId)
+    }
+
     private fun spentByCategory(yearMonth: Long, bookId: Long): Map<Long, Long> {
         val from = yearMonth * 100 + 1
         val to = yearMonth * 100 + 31
