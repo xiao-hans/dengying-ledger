@@ -11,6 +11,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -95,7 +96,8 @@ fun MeowApp() {
     seedIfEmpty(AppGraph.database, today)
     seedCategoriesIfEmpty(AppGraph.database)
     val repository = BillsRepository(AppGraph.database)
-    val view = repository.month(now.year * 100 + now.monthNumber)
+    var revision by remember { mutableIntStateOf(0) }
+    val view = remember(revision) { repository.month(now.year * 100 + now.monthNumber) }
     val categories = CategoryRepository(AppGraph.database).ofType(1) + CategoryRepository(AppGraph.database).ofType(2)
 
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -139,6 +141,7 @@ fun MeowApp() {
                     onBack = { composing = false; editing = false },
                     onSave = { bill ->
                         repository.save(bill)
+                        revision++
                         if (editing) openBill = bill.client_id
                         composing = false
                         editing = false
@@ -153,16 +156,17 @@ fun MeowApp() {
                     message = detailMessage,
                     onBack = { openBill = null; detailMessage = null },
                     onEdit = { editing = true },
-                    onDelete = { repository.delete(0, opened.client_id); openBill = null },
+                    onDelete = { repository.delete(0, opened.client_id); openBill = null; revision++ },
                     onAddRefund = { cents ->
                         detailMessage = try {
                             refunds.add(opened.client_id, opened.money, cents, today)
+                            revision++
                             null
                         } catch (e: RefundTooLarge) {
                             "退款合计不能超过原账单金额"
                         }
                     },
-                    onRevokeRefund = { id -> refunds.remove(id); detailMessage = null },
+                    onRevokeRefund = { id -> refunds.remove(id); detailMessage = null; revision++ },
                 )
             } else {
                 when (tab) {

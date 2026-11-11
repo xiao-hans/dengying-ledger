@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -222,7 +223,7 @@ fun BillDetail(
         }
 
         Row(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp),
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             ActionButton("删除", primary = false, modifier = Modifier.weight(1f)) { confirmDelete = true }

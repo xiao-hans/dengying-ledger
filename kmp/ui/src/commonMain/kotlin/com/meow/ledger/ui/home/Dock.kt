@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +59,7 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
     BoxWithConstraints(
         modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(horizontal = 20.dp)
             .height(56.dp)
             .shadow(6.dp, shape, ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
