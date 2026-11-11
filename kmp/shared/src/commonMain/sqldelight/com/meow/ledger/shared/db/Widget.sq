@@ -1,0 +1,21 @@
+-- 桌面小组件的本地预览。没有系统桌面挂件，只保存配置与预览。
+-- size：small / medium / large；kind：month 本月收支 / budget 预算剩余 / plan 存钱进度。
+CREATE TABLE widget_user (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  kind TEXT NOT NULL DEFAULT 'month',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectWidgets:
+SELECT * FROM widget_user ORDER BY create_time DESC;
+
+selectWidget:
+SELECT * FROM widget_user WHERE id = :id;
+
+upsertWidget:
+INSERT OR REPLACE INTO widget_user(id, name, size, kind, create_time) VALUES ?;
+
+deleteWidget:
+DELETE FROM widget_user WHERE id = :id;

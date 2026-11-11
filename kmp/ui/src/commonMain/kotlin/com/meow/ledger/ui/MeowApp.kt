@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.meow.ledger.shared.auto.AutoRepository
 import com.meow.ledger.shared.auto.CaptureResult
+import com.meow.ledger.shared.auto.KEY_APP_LOCK
 import com.meow.ledger.shared.auto.KEY_AUTO_BILL
 import com.meow.ledger.shared.auto.KEY_AUTO_CONFIRM
 import com.meow.ledger.shared.auto.KEY_KEEP_ALIVE
@@ -57,6 +58,7 @@ import com.meow.ledger.shared.manage.BudgetRepository
 import com.meow.ledger.shared.manage.ExchangeRepository
 import com.meow.ledger.shared.manage.FixedBillRepository
 import com.meow.ledger.shared.manage.PlanRepository
+import com.meow.ledger.shared.manage.WidgetRepository
 import com.meow.ledger.ui.manage.AccountPage
 import com.meow.ledger.ui.manage.AssetsPage
 import com.meow.ledger.ui.manage.BooksPage
@@ -64,8 +66,11 @@ import com.meow.ledger.ui.manage.CatalogPage
 import com.meow.ledger.ui.manage.BudgetPage
 import com.meow.ledger.ui.manage.ExchangePage
 import com.meow.ledger.ui.manage.FixedBillsPage
+import com.meow.ledger.ui.manage.HelpPage
+import com.meow.ledger.ui.manage.LockGate
 import com.meow.ledger.ui.manage.MineHome
 import com.meow.ledger.ui.manage.SearchPage
+import com.meow.ledger.ui.manage.WidgetsPage
 import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.theme.DarkPalette
@@ -109,8 +114,16 @@ fun MeowApp() {
     var minePage by rememberSaveable { mutableStateOf("") }
     var captureSource by rememberSaveable { mutableStateOf("") }
     var captureMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val lockPin = settings.text(KEY_APP_LOCK)
+    var unlocked by rememberSaveable { mutableStateOf(lockPin.isEmpty()) }
 
     CompositionLocalProvider(LocalPalette provides palette) {
+        if (!unlocked) {
+            Box(Modifier.fillMaxSize().background(palette.appBg).statusBarsPadding()) {
+                LockGate(lockPin) { unlocked = true }
+            }
+            return@CompositionLocalProvider
+        }
         Box(
             Modifier
                 .fillMaxSize()
@@ -300,6 +313,8 @@ private fun MinePages(
         page.startsWith("categor") || page.startsWith("tag") -> CatalogPage(CatalogRepository(database), page, onOpen, onBack)
         page.startsWith("fixed") -> FixedBillsPage(FixedBillRepository(database), page, onOpen, onBack)
         page.startsWith("installment") || page.startsWith("save-plan") -> PlansPage(PlanRepository(database), page, onOpen, onBack)
+        page.startsWith("widget") -> WidgetsPage(WidgetRepository(database), month, page, onOpen, onBack)
+        page == "help" -> HelpPage(onBack)
         else -> AccountPage(page, AccountRepository(database), settings, onTheme, onClear = {
             database.transaction {
                 database.billQueries.selectByRange(0, 0, 99999999).executeAsList()

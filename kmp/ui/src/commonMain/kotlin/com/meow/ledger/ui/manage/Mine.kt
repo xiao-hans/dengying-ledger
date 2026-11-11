@@ -52,9 +52,11 @@ private val entries = listOf(
     Triple("installments", "分期", "每期金额和还款日"),
     Triple("save-plans", "存钱计划", "目标和已存金额"),
     Triple("imports", "导入账单", "记录导入过的文件"),
+    Triple("widgets", "小组件", "本地预览，不挂系统桌面"),
     Triple("vip", "会员", "开通和订单"),
     Triple("contract", "自动续费", "签约和解约"),
     Triple("feedback", "反馈", "问题和联系方式"),
     Triple("lock", "应用锁", "四位口令"),
+    Triple("help", "帮助与协议", "使用说明和关于"),
     Triple("settings", "设置", "主题、提醒、清空数据"),
 )
