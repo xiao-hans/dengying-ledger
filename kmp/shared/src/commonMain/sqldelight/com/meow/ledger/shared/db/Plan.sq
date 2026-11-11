@@ -28,6 +28,12 @@ CREATE TABLE installment_plan (
 selectAll:
 SELECT * FROM installment_plan ORDER BY create_time DESC;
 
+selectPlan:
+SELECT * FROM installment_plan WHERE id = :id;
+
+deletePlan:
+DELETE FROM installment_plan WHERE id = :id;
+
 upsert:
 INSERT OR REPLACE INTO installment_plan(
   id, member_id, name, deduction_asset_id, start_date, money, total_count, executed_count,
@@ -54,6 +60,12 @@ CREATE TABLE save_plan (
 selectSavePlans:
 SELECT * FROM save_plan WHERE archived = 0 ORDER BY create_time DESC;
 
+selectSavePlan:
+SELECT * FROM save_plan WHERE id = :id;
+
+deleteSavePlan:
+DELETE FROM save_plan WHERE id = :id;
+
 upsertSavePlan:
 INSERT OR REPLACE INTO save_plan(
   id, name, icon, type_id, target_money, saved_money, status, archived, desc, create_time, update_time
@@ -73,6 +85,32 @@ CREATE TABLE save_plan_item (
 selectSaveItems:
 SELECT * FROM save_plan_item WHERE plan_id = :planId ORDER BY num;
 
+deleteSaveItem:
+DELETE FROM save_plan_item WHERE id = :id;
+
+deleteSaveItemsOf:
+DELETE FROM save_plan_item WHERE plan_id = :planId;
+
 upsertSaveItem:
 INSERT OR REPLACE INTO save_plan_item(id, plan_id, num, money, status, remark, create_time, update_time)
 VALUES ?;
+
+-- 分期的每一期。status 0 未还 / 1 已还。
+CREATE TABLE installment_item (
+  id TEXT NOT NULL PRIMARY KEY,
+  plan_id TEXT NOT NULL DEFAULT '',
+  num INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  execute_date INTEGER NOT NULL DEFAULT 0
+);
+
+selectInstallmentItems:
+SELECT * FROM installment_item WHERE plan_id = :planId ORDER BY num;
+
+upsertInstallmentItem:
+INSERT OR REPLACE INTO installment_item(id, plan_id, num, money, interest, status, execute_date) VALUES ?;
+
+deleteInstallmentItems:
+DELETE FROM installment_item WHERE plan_id = :planId;

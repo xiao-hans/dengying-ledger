@@ -1,0 +1,109 @@
+-- 本机账号。没有真实服务器，登录只写这一行。
+CREATE TABLE member_profile (
+  id INTEGER NOT NULL PRIMARY KEY,
+  nickname TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  login_type TEXT NOT NULL DEFAULT '',
+  bind_type TEXT NOT NULL DEFAULT '',
+  bind_id TEXT NOT NULL DEFAULT '',
+  vip INTEGER NOT NULL DEFAULT 0,
+  vip_expire INTEGER NOT NULL DEFAULT 0
+);
+
+selectProfile:
+SELECT * FROM member_profile WHERE id = :id;
+
+upsertProfile:
+INSERT OR REPLACE INTO member_profile(
+  id, nickname, phone, login_type, bind_type, bind_id, vip, vip_expire
+) VALUES ?;
+
+-- 短信验证码，只留在本机。
+CREATE TABLE sms_code (
+  phone TEXT NOT NULL PRIMARY KEY,
+  code TEXT NOT NULL DEFAULT '',
+  expires INTEGER NOT NULL DEFAULT 0
+);
+
+selectCode:
+SELECT * FROM sms_code WHERE phone = :phone;
+
+upsertCode:
+INSERT OR REPLACE INTO sms_code(phone, code, expires) VALUES ?;
+
+-- 导入记录。删除记录不动账单。
+CREATE TABLE member_import_bill_file (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT ''
+);
+
+selectImports:
+SELECT * FROM member_import_bill_file ORDER BY create_time DESC;
+
+selectImport:
+SELECT * FROM member_import_bill_file WHERE id = :id;
+
+upsertImport:
+INSERT OR REPLACE INTO member_import_bill_file(id, name, type, count, status, create_time, content) VALUES ?;
+
+deleteImport:
+DELETE FROM member_import_bill_file WHERE id = :id;
+
+-- 会员订单，本地直接标为已支付。
+CREATE TABLE member_order (
+  id TEXT NOT NULL PRIMARY KEY,
+  money INTEGER NOT NULL DEFAULT 0,
+  method TEXT NOT NULL DEFAULT '',
+  type INTEGER NOT NULL DEFAULT 0,
+  product_id TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectOrders:
+SELECT * FROM member_order ORDER BY create_time DESC;
+
+selectOrder:
+SELECT * FROM member_order WHERE id = :id;
+
+upsertOrder:
+INSERT OR REPLACE INTO member_order(
+  id, money, method, type, product_id, product_name, status, create_time
+) VALUES ?;
+
+-- 自动续费合约，只有一行。
+CREATE TABLE contract_info (
+  id INTEGER NOT NULL PRIMARY KEY,
+  signed INTEGER NOT NULL DEFAULT 0,
+  provider TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  next_date TEXT NOT NULL DEFAULT ''
+);
+
+selectContract:
+SELECT * FROM contract_info WHERE id = :id;
+
+upsertContract:
+INSERT OR REPLACE INTO contract_info(id, signed, provider, product_name, money, next_date) VALUES ?;
+
+-- 意见反馈，kind 固定为 feedback。
+CREATE TABLE behavior_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  contact TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectEvents:
+SELECT * FROM behavior_event WHERE kind = :kind ORDER BY create_time DESC;
+
+upsertEvent:
+INSERT OR REPLACE INTO behavior_event(id, kind, content, contact, create_time) VALUES ?;
