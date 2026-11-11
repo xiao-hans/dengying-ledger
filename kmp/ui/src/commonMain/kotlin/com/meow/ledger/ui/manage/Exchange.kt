@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import com.meow.ledger.ui.ImportCsvButton
+import com.meow.ledger.ui.shareTextFile
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +57,7 @@ fun ExchangePage(
 private fun ExportHome(exchange: ExchangeRepository, onBack: () -> Unit) {
     val palette = LocalPalette.current
     val text = remember { exchange.csv() }
+    var shared by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(palette.appBg)) {
         BackHeader("导出", onBack)
         Column(
@@ -60,6 +65,12 @@ private fun ExportHome(exchange: ExchangeRepository, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("下面是全部账单的 CSV，长按可以复制", color = palette.textSecondary, fontSize = 13.sp)
+            Button(onClick = { shared = shareTextFile("meow-bills.csv", text) }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (shared) "已生成分享文件" else "导出并分享")
+            }
+            if (shared) {
+                Text("文件在应用缓存目录，已拉起系统分享", color = palette.textSecondary, fontSize = 12.sp)
+            }
             BasicTextField(
                 value = text,
                 onValueChange = {},
@@ -78,12 +89,33 @@ private fun ImportHome(exchange: ExchangeRepository, account: AccountRepository,
     var text by rememberSaveable { mutableStateOf("") }
     var result by rememberSaveable { mutableStateOf("") }
     val files = remember(result) { account.imports() }
+    var fileName by rememberSaveable { mutableStateOf("") }
+    var fileText by rememberSaveable { mutableStateOf("") }
+    var fileRows by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(palette.appBg)) {
         BackHeader("导入账单", onBack)
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            ImportCsvButton(enabled = true, onPicked = { name, content ->
+                fileName = name
+                fileText = content
+                fileRows = content.count { it == '\n' } + 1
+            })
+            if (fileText.isNotBlank()) {
+                Text("$fileName · $fileRows 行", color = palette.textSecondary, fontSize = 12.sp)
+                Button(
+                    onClick = {
+                        val outcome = exchange.importCsv(fileText, SOURCE_IMPORT)
+                        account.recordImport(fileName, outcome.created, fileText)
+                        fileText = ""
+                        result = "新增 ${outcome.created} 条，跳过重复 ${outcome.duplicate} 条，跳过无效 ${outcome.skipped} 条"
+                    },
+                    enabled = true,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("导入该文件") }
+            }
             Text("粘贴 CSV。相同备注、金额和日期的账单会被跳过，不会重复入账", color = palette.textSecondary, fontSize = 13.sp)
             BasicTextField(
                 value = text,

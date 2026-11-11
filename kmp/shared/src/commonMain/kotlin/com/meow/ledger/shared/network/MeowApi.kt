@@ -215,3 +215,40 @@ class BudgetContracts(private val api: MeowApi) {
 
     suspend fun getBudgetList() = api.call(EndpointRequest("Budget/GetBudgetList", method = "GET"))
 }
+
+/** KeyWordMatchingRule 4 个契约：匹配规则的云端 CRUD。 */
+class RuleContracts(private val api: MeowApi) {
+    suspend fun create(fields: Map<String, String>) =
+        api.call(EndpointRequest("KeyWordMatchingRule/Create", fields = fields))
+
+    suspend fun list() = api.call(EndpointRequest("KeyWordMatchingRule/List"))
+
+    suspend fun update(fields: Map<String, String>) =
+        api.call(EndpointRequest("KeyWordMatchingRule/Update", fields = fields))
+
+    suspend fun delete(id: String) =
+        api.call(EndpointRequest("KeyWordMatchingRule/Delete", fields = mapOf("id" to id)))
+}
+
+/** MemberImportBillFile 2 个契约：导入文件记录的云端列表与删除。 */
+class ImportFileContracts(private val api: MeowApi) {
+    suspend fun list() = api.call(EndpointRequest("MemberImportBillFile/List"))
+
+    suspend fun delete(id: String) =
+        api.call(EndpointRequest("MemberImportBillFile/Delete", fields = mapOf("id" to id)))
+}
+
+/**
+ * Upload 3 个契约：票据图与账单文件的直传。
+ * multipart 契约按样本口径传文件体，本地仓库没有云端时仅登记调用意图。
+ */
+class UploadContracts(private val api: MeowApi) {
+    suspend fun uploadImages(fileName: String) =
+        api.call(EndpointRequest("Upload/UploadImages", fields = mapOf("fileName" to fileName)))
+
+    suspend fun uploadImg(imgType: String) =
+        api.call(EndpointRequest("Upload/UploadImg", fields = mapOf("imgType" to imgType)))
+
+    suspend fun uploadBills(fileName: String) =
+        api.call(EndpointRequest("Upload/UploadBills", fields = mapOf("fileName" to fileName)))
+}

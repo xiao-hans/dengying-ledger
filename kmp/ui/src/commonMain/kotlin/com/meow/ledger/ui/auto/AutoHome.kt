@@ -59,6 +59,7 @@ fun AutoHome(
     watchCount: Int,
     onToggle: (Boolean) -> Unit,
     onCapture: (source: String) -> Unit,
+    onOcr: () -> Unit,
     onPending: () -> Unit,
     onRules: () -> Unit,
     onApps: () -> Unit,
@@ -133,6 +134,7 @@ fun AutoHome(
         }
 
         Spacer(Modifier.height(8.dp))
+        MenuRow("票据识别", "选图登记或粘贴支付文本", true, onOcr)
         MenuRow("待确认队列", if (pendingCount == 0) "没有待处理的识别结果" else "$pendingCount 条等待确认", true, onPending)
         MenuRow("匹配规则", "$ruleCount 条", true, onRules)
         MenuRow("监听 App 白名单", "$watchCount 个", true, onApps)

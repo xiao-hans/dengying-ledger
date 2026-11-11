@@ -44,6 +44,7 @@ import com.meow.ledger.ui.auto.AutoSettingsPage
 import com.meow.ledger.ui.auto.CapturePage
 import com.meow.ledger.ui.auto.GuidePage
 import com.meow.ledger.ui.auto.KeepAlivePage
+import com.meow.ledger.ui.auto.OcrPage
 import com.meow.ledger.ui.auto.PendingPage
 import com.meow.ledger.ui.auto.RulesPage
 import com.meow.ledger.ui.bills.BillDetail
@@ -262,6 +263,7 @@ private fun MainApp() {
                             onKeepAlive = { keepAlive = it },
                             onWatchApps = { watchApps = it },
                             onBack = { autoPage = "" },
+                            onOpenPending = { autoPage = "pending" },
                         )
                     } else {
                         AutoHome(
@@ -275,6 +277,7 @@ private fun MainApp() {
                                 if (on && watchApps.isEmpty()) autoPage = "guide"
                             },
                             onCapture = { source -> captureSource = source; captureMessage = null; autoPage = "capture" },
+                            onOcr = { autoPage = "ocr" },
                             onPending = { autoPage = "pending" },
                             onRules = { autoPage = "rules" },
                             onApps = { autoPage = "apps" },
@@ -314,12 +317,18 @@ private fun AutoPages(
     onKeepAlive: (Boolean) -> Unit,
     onWatchApps: (Set<String>) -> Unit,
     onBack: () -> Unit,
+    onOpenPending: () -> Unit,
 ) {
     when (page) {
         "capture" -> CapturePage(captureSource, captureMessage, onBack) { text ->
             val result = auto.capture(text, captureSource)
             onCaptureMessage(captureSummary(result))
         }
+        "ocr" -> OcrPage(
+            onBack,
+            onCaptureText = { text -> captureSummary(auto.capture(text, "ocr")) },
+            onOpenPending = onOpenPending,
+        )
         "pending" -> PendingPage(auto.pending(), onBack, onConfirm = { auto.confirm(it) }, onIgnore = { auto.ignore(it) })
         "rules" -> RulesPage(auto.rules(), onBack, onAdd = { keyword, type ->
             auto.saveRule(

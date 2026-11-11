@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +48,8 @@ fun PendingPage(
     onIgnore: (Auto_event) -> Unit,
 ) {
     val palette = LocalPalette.current
+    // 操作后立即从列表移除：数据库写完只是持久层，页面必须跟着变。
+    var events by remember { mutableStateOf(events) }
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 24.dp)) {
         BackHeader("待确认队列", onBack)
         if (events.isEmpty()) {
@@ -70,8 +73,8 @@ fun PendingPage(
                 Text("${sourceLabel(event.source)} · ${event.raw_text}", color = palette.textSecondary, fontSize = 12.sp)
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SmallButton("忽略", false) { onIgnore(event) }
-                    SmallButton("确认入账", true) { onConfirm(event) }
+                    SmallButton("忽略", false) { onIgnore(event); events = events.filterNot { it.id == event.id } }
+                    SmallButton("确认入账", true) { onConfirm(event); events = events.filterNot { it.id == event.id } }
                 }
             }
         }
@@ -87,6 +90,8 @@ fun RulesPage(
     onDelete: (Long) -> Unit,
 ) {
     val palette = LocalPalette.current
+    // 添加/删除后立即反映到列表，与持久层保持一致。
+    var rules by remember { mutableStateOf(rules) }
     var keyword by rememberSaveable { mutableStateOf("") }
     var income by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 24.dp)) {
@@ -107,7 +112,21 @@ fun RulesPage(
             Switch(checked = income, onCheckedChange = { income = it })
         }
         ActionButton("添加规则", keyword.trim().isNotEmpty()) {
-            onAdd(keyword.trim(), if (income) TYPE_INCOME else TYPE_EXPENSE)
+            val kw = keyword.trim()
+            onAdd(kw, if (income) TYPE_INCOME else TYPE_EXPENSE)
+            rules = rules + Rule(
+                id = (rules.maxOfOrNull { it.id } ?: 0L) + 1,
+                key_word = kw,
+                source = 0,
+                member_id = 0,
+                type = if (income) TYPE_INCOME else TYPE_EXPENSE,
+                book_id = 0,
+                member_cate_id = if (income) 101L else 9L,
+                assets_id = 1,
+                tag_ids = "",
+                create_date = 0,
+                update_date = 0,
+            )
             keyword = ""
         }
         Spacer(Modifier.height(12.dp))
@@ -121,7 +140,15 @@ fun RulesPage(
                     Text(rule.key_word, color = palette.textPrimary, fontSize = 15.sp)
                     Text(if (rule.type == TYPE_INCOME) "收入" else "支出", color = palette.textSecondary, fontSize = 12.sp)
                 }
-                Text("删除", color = palette.danger, fontSize = 14.sp, modifier = Modifier.clickable { onDelete(rule.id) }.padding(6.dp))
+                Text(
+                    "删除",
+                    color = palette.danger,
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable {
+                        onDelete(rule.id)
+                        rules = rules.filterNot { it.id == rule.id }
+                    }.padding(6.dp),
+                )
             }
         }
     }

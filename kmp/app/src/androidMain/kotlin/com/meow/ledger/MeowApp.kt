@@ -13,5 +13,8 @@ class MeowApp : Application() {
         AppGraph.database = MeowDatabase(driver)
         // 纯本地模式：写操作入 sync_queue，接真实后端后由 ApiGate 送达。
         AppGraph.sync = SyncEngine(AppGraph.database)
+        // 文件桥与采集桥都需要进程级上下文。
+        com.meow.ledger.ui.AndroidHost.appContext = this
+        com.meow.ledger.platform.CaptureBridge.start(kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
     }
 }
