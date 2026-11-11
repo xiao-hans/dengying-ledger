@@ -16,6 +16,9 @@ const val CONTRACT_ID = 1L
 
 const val FEEDBACK_KIND = "feedback"
 
+/** 登录态刷新记录。只换本机令牌，不注册推送。 */
+const val TOKEN_REFRESH_KIND = "token_refresh"
+
 /** 会员套餐，对应 React 的 order_config。 */
 data class VipPlan(val id: String, val name: String, val money: Long, val days: Int)
 
@@ -184,6 +187,21 @@ class AccountRepository(private val db: MeowDatabase) {
         )
         db.accountQueries.upsertEvent(row)
         return row
+    }
+
+    /** 换一个本机令牌并记一条刷新记录，返回新令牌。不注册任何推送。 */
+    fun refreshLogin(): String {
+        val token = "local_${currentTimeMillis()}${Random.nextInt(1000, 9999)}"
+        db.accountQueries.upsertEvent(
+            Behavior_event(
+                id = token,
+                kind = TOKEN_REFRESH_KIND,
+                content = token,
+                contact = "",
+                create_time = currentTimeMillis(),
+            ),
+        )
+        return token
     }
 
     fun remote(key: String): String =

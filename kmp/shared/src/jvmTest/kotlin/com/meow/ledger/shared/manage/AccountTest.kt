@@ -93,4 +93,13 @@ class AccountTest {
         assertEquals("", repo.remote("min_version"))
         assertEquals(24, repo.remoteAll().size)
     }
+
+    @Test
+    fun refreshLoginIssuesLocalToken() {
+        val repo = repo()
+        val first = repo.refreshLogin()
+        val second = repo.refreshLogin()
+        assertTrue(first.startsWith("local_"))
+        assertTrue(first != second)
+    }
 }

@@ -3,7 +3,9 @@ package com.meow.ledger.ui.manage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +29,8 @@ import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.manage.AccountRepository
-import com.meow.ledger.shared.manage.REMOTE_DEFAULTS
+import com.meow.ledger.shared.manage.REMOTE_SWITCHES
+import com.meow.ledger.shared.manage.RemoteKind
 import com.meow.ledger.shared.manage.VIP_PLANS
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
@@ -43,6 +47,7 @@ fun AccountPage(
     settings: SettingsStore,
     onTheme: (String) -> Unit,
     onClear: () -> Unit,
+    onOpen: (String) -> Unit = {},
     onBack: () -> Unit,
 ) {
     var notice by remember { mutableStateOf("") }
@@ -54,7 +59,9 @@ fun AccountPage(
             "contract" -> ContractHome(account, onBack) { notice = it }
             "feedback" -> FeedbackHome(account, onBack) { notice = it }
             "lock" -> LockHome(settings, onBack) { notice = it }
-            "settings" -> SettingsHome(settings, account, onTheme, onClear, onBack) { notice = it }
+            "push" -> PushHome(account, { onOpen("fixed") }, onBack) { notice = it }
+            "remote" -> RemoteHome(account, onBack) { notice = it }
+            "settings" -> SettingsHome(settings, onTheme, onClear, onBack) { notice = it }
         }
         if (notice.isNotEmpty()) Text(notice, color = LocalPalette.current.danger, modifier = Modifier.padding(top = 12.dp))
     }
@@ -242,7 +249,6 @@ private fun LockHome(settings: SettingsStore, onBack: () -> Unit, onNotice: (Str
 @Composable
 private fun SettingsHome(
     settings: SettingsStore,
-    account: AccountRepository,
     onTheme: (String) -> Unit,
     onClear: () -> Unit,
     onBack: () -> Unit,
@@ -251,7 +257,6 @@ private fun SettingsHome(
     val palette = LocalPalette.current
     var version by remember { mutableStateOf(0) }
     val theme = remember(version) { settings.text(KEY_THEME, THEME_SYSTEM) }
-    val remote = remember(version) { account.remoteAll() }
     var confirm by remember { mutableStateOf(false) }
     BackHeader("设置", onBack)
     Text("主题", color = palette.textSecondary)
@@ -264,30 +269,87 @@ private fun SettingsHome(
             }
         }
     }
-    Text("远程开关", color = palette.textSecondary, modifier = Modifier.padding(top = 8.dp))
-    REMOTE_DEFAULTS.keys.forEach { key ->
-        val value = remote[key].orEmpty()
-        val numeric = value.toIntOrNull()?.let { it > 1 } == true
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(remoteLabel(key), color = palette.textPrimary)
-            if (numeric) Text(value, color = palette.textSecondary)
-            else ChoiceChip(if (value == "1") "开" else "关", value == "1") {
-                account.setRemote(key, if (value == "1") "0" else "1")
-                version += 1
-            }
-        }
-    }
     if (confirm) ConfirmBar("清空本机全部数据？账单、账本和设置都会消失，不能恢复。", { confirm = false }, onClear, "清空")
     else ActionButton("清空本机数据", true) { confirm = true }
     if (version < 0) onNotice("")
 }
 
-private fun remoteLabel(key: String) = when (key) {
-    "auto_bill_enabled" -> "自动记账"
-    "vip_banner" -> "会员入口"
-    "feedback_enabled" -> "反馈入口"
-    "max_books" -> "账本上限"
-    else -> key
+/** 消息推送。本复刻不接收厂商推送，也不申请通知权限，只保留入口。 */
+@Composable
+private fun PushHome(
+    account: AccountRepository,
+    onOpenReminders: () -> Unit,
+    onBack: () -> Unit,
+    onNotice: (String) -> Unit,
+) {
+    val palette = LocalPalette.current
+    BackHeader("消息推送", onBack)
+    GlassCard {
+        Text(
+            "本复刻不接收厂商推送，也不申请通知权限。账单提醒仍按本机的周期账记录生效。",
+            color = palette.textSecondary,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(14.dp),
+        )
+    }
+    Spacer(Modifier.height(10.dp))
+    GlassCard(onClick = onOpenReminders) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("查看本机提醒", color = palette.textPrimary)
+            Text(">", color = palette.textSecondary)
+        }
+    }
+    Spacer(Modifier.height(10.dp))
+    GlassCard(onClick = {
+        account.refreshLogin()
+        onNotice("已刷新，只换了本机令牌，没有注册推送")
+    }) {
+        Column(Modifier.fillMaxWidth().padding(14.dp)) {
+            Text("刷新登录态", color = palette.textPrimary)
+            Text("只换本机令牌，不注册推送", color = palette.textSecondary, fontSize = 12.sp)
+        }
+    }
+}
+
+/** 远程开关。按字段类型分别用开关、数字和文本编辑，写入前由数据层校验。 */
+@Composable
+private fun RemoteHome(account: AccountRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    val palette = LocalPalette.current
+    var version by remember { mutableStateOf(0) }
+    val values = remember(version) { account.remoteAll() }
+    BackHeader("远程开关", onBack)
+    REMOTE_SWITCHES.forEach { spec ->
+        val value = values[spec.key].orEmpty()
+        when (spec.kind) {
+            RemoteKind.TOGGLE -> Row(
+                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(spec.label, color = palette.textPrimary)
+                ChoiceChip(if (value == "1") "开" else "关", value == "1") {
+                    account.setRemote(spec.key, if (value == "1") "0" else "1")
+                    version += 1
+                }
+            }
+            RemoteKind.NUMBER, RemoteKind.TEXT -> {
+                var draft by remember(spec.key) { mutableStateOf(value) }
+                Field(spec.label, draft, { draft = it })
+                if (draft != value) {
+                    Spacer(Modifier.height(4.dp))
+                    ActionButton("保存${spec.label}", true) {
+                        if (account.setRemote(spec.key, draft)) {
+                            version += 1
+                            onNotice("已保存")
+                        } else {
+                            onNotice(if (spec.kind == RemoteKind.NUMBER) "请输入非负整数" else "没有保存")
+                        }
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+            }
+        }
+    }
 }
 
 private fun dateOf(millis: Long): String {
