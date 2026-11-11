@@ -142,15 +142,18 @@ a { color: inherit; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .fade-up { animation: fadeUp .22s ease-out both; }
 
-/* 移动端容器：居中最大宽度，模拟手机视口 */
+/* 容器占满屏幕。桌面浏览器里才限制宽度并居中，手机上不限制，否则宽屏会被挤偏。 */
 #root { display: flex; justify-content: center; }
 .app-viewport {
-  width: 100%; max-width: 480px; height: 100%;
+  width: 100%; max-width: none; height: 100%;
   position: relative; overflow: hidden;
   background: var(--app-bg);
   display: flex; flex-direction: column;
   /* 真机 WebView 全屏时让出状态栏与手势条，桌面浏览器这两项为 0 */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+@media (min-width: 900px) {
+  .app-viewport { max-width: 480px; }
 }
 .app-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 96px; }

@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        // 页面按设备 dp 宽度排版，禁止 WebView 再按物理像素放大，否则右边会被切掉。
+        web.setInitialScale(100);
         s.setAllowFileAccess(false);
         s.setMediaPlaybackRequiresUserGesture(false);
         web.setWebViewClient(new WebViewClient() {
@@ -73,6 +75,15 @@ public class MainActivity extends Activity {
         });
         setContentView(web);
         web.loadUrl(HOST + "/index.html");
+        web.addJavascriptInterface(new Probe(), "Probe");
+    }
+
+    /** 验收用：把页面内的探针结果写到 logcat，标签 MeowProbe。 */
+    private static class Probe {
+        @android.webkit.JavascriptInterface
+        public void log(String s) {
+            android.util.Log.i("MeowProbe", s);
+        }
     }
 
     /** 返回键交给页面内导航，而不是直接退出。页面没有历史时才退出。 */

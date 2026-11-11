@@ -1,38 +1,27 @@
 /* Dock + 应用外壳 */
 .dock {
-  position: absolute; bottom: 14px; left: 14px; right: 14px;
-  height: 68px; border-radius: 24px; z-index: 40;
-  display: flex; align-items: center; justify-content: space-around;
-  padding: 0 6px;
+  position: absolute; bottom: 14px; left: 20px; right: 20px;
+  height: 56px; border-radius: 28px; z-index: 40;
+  display: flex; align-items: stretch;
   -webkit-backdrop-filter: blur(18px) saturate(1.8);
   backdrop-filter: blur(18px) saturate(1.8);
 }
-.dock::after { border-radius: 24px; }
-.dock-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; color: var(--text-secondary); min-width: 0;
-  transition: color .18s, transform .12s;
-}
-.dock-item:active { transform: scale(.92); }
-.dock-item.active { color: var(--text-primary); }
-.dock-item.active .t-label-small { font-weight: 700; }
-.dock-icon {
-  width: 38px; height: 28px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  transition: background .18s, box-shadow .18s;
-}
-.dock-item.active .dock-icon {
+.dock::after { border-radius: 28px; }
+/* 高光玻璃条：滑到选中项背后，不是墨色实底 */
+.dock-highlight {
+  position: absolute; top: 4px; bottom: 4px; left: 0;
+  width: 25%; border-radius: 24px;
   background: var(--dock-highlight);
-  box-shadow: 0 2px 10px var(--glass-shadow);
+  border: 1px solid var(--glass-border);
+  transition: transform .32s cubic-bezier(.2, .8, .2, 1);
 }
-.dock-plus {
-  width: 52px; height: 52px; border-radius: 50%; flex: none;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--brand); color: var(--card-bg);
-  box-shadow: 0 6px 18px var(--glass-shadow);
-  margin: -20px 4px 0; transition: transform .14s;
+.dock-item {
+  position: relative; flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--text-secondary); min-width: 0;
 }
-.dock-plus:active { transform: scale(.9); }
+.dock-item.active { color: var(--text-primary); }
+.dock-label { font-size: 13px; font-weight: 600; white-space: nowrap; }
 
 /* 主内容区：Tab 切换淡入 */
 .tab-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }

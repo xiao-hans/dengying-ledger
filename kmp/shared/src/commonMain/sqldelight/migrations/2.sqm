@@ -1,0 +1,64 @@
+-- 1 → 2：补上账号与小组件表。这些表是在已发布的 1 版之后加进 .sq 的，
+-- 而 SQLDelight 默认不会给已有数据库补建表，老安装一查询就崩溃。
+CREATE TABLE IF NOT EXISTS member_profile (
+  id INTEGER NOT NULL PRIMARY KEY,
+  nickname TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  login_type TEXT NOT NULL DEFAULT '',
+  bind_type TEXT NOT NULL DEFAULT '',
+  bind_id TEXT NOT NULL DEFAULT '',
+  vip INTEGER NOT NULL DEFAULT 0,
+  vip_expire INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sms_code (
+  phone TEXT NOT NULL PRIMARY KEY,
+  code TEXT NOT NULL DEFAULT '',
+  expires INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS member_import_bill_file (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS member_order (
+  id TEXT NOT NULL PRIMARY KEY,
+  money INTEGER NOT NULL DEFAULT 0,
+  method TEXT NOT NULL DEFAULT '',
+  type INTEGER NOT NULL DEFAULT 0,
+  product_id TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS contract_info (
+  id INTEGER NOT NULL PRIMARY KEY,
+  signed INTEGER NOT NULL DEFAULT 0,
+  provider TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  next_date TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS behavior_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  contact TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS widget_user (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  kind TEXT NOT NULL DEFAULT 'month',
+  create_time INTEGER NOT NULL DEFAULT 0
+);

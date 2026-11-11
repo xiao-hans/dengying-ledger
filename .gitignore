@@ -23,3 +23,5 @@ kmp/**/build/
 kmp/.kotlin/
 
 kmp/local.properties
+kmp/.gradle-java.properties
+kmp/app/src/androidTest/

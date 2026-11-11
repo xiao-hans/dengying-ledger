@@ -47,6 +47,9 @@ sqldelight {
     databases {
         create("MeowDatabase") {
             packageName.set("com.meow.ledger.shared.db")
+            // 1 版是已发布的库。后来加的表必须走 migrations/ 的迁移，
+            // 否则老安装查询不存在的表会直接崩溃。
+            version = 2
         }
     }
 }

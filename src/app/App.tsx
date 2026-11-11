@@ -83,12 +83,17 @@ function Shell() {
         return el ? `${el.tagName}.${el.className} "${(el.textContent || '').trim().slice(0, 20)}"` : 'none';
       },
     };
+    const probe = (window as unknown as { Probe?: { log: (s: string) => void } }).Probe;
+    if (probe) {
+      const dock = document.querySelector('.dock');
+      const r = dock ? dock.getBoundingClientRect() : null;
+      probe.log(JSON.stringify({ inner: window.innerWidth, dock: r && { x: Math.round(r.x), w: Math.round(r.width) } }));
+    }
     return () => { delete w.__dy; };
   });
 
   const Page: PageComponent | undefined = pageRoutes[nav.current.name];
 
-  const onQuickAdd = () => nav.push('BillEdit', { mode: 'create' });
 
   return (
     <div className="app-viewport" id="app-viewport">
@@ -100,7 +105,7 @@ function Shell() {
         )}
       </div>
 
-      <Dock tab={nav.tab} onSwitch={nav.switchTab} onQuickAdd={onQuickAdd} />
+      <Dock tab={nav.tab} onSwitch={nav.switchTab} />
 
       {petVisible && nav.depth === 0 && (
         <button
