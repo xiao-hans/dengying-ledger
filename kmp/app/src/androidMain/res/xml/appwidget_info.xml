@@ -2,10 +2,10 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:configure="com.meow.ledger/.MainActivity"
     android:description="@string/app_name"
-    android:initialLayout="@layout/appwidget_placeholder"
+    android:initialLayout="@layout/widget_meow"
     android:minHeight="40dp"
     android:minWidth="110dp"
-    android:previewLayout="@layout/appwidget_placeholder"
+    android:previewLayout="@layout/widget_meow"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

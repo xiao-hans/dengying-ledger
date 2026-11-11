@@ -252,3 +252,108 @@ class UploadContracts(private val api: MeowApi) {
     suspend fun uploadBills(fileName: String) =
         api.call(EndpointRequest("Upload/UploadBills", fields = mapOf("fileName" to fileName)))
 }
+
+/** FundAccount 6 个契约：资产账户的增删改查与欠款单（字段名与 EndpointCatalog 一致）。 */
+class FundAccountContracts(private val api: MeowApi) {
+    suspend fun create(fields: Map<String, String>) =
+        api.call(EndpointRequest("FundAccount/Create", fields = fields))
+
+    suspend fun update(fields: Map<String, String>) =
+        api.call(EndpointRequest("FundAccount/Update", fields = fields))
+
+    suspend fun delete(id: String, isSaveBill: String) = api.call(
+        EndpointRequest("FundAccount/Delete", fields = mapOf("id" to id, "isSaveBill" to isSaveBill)),
+    )
+
+    suspend fun updateStatus(id: String, status: String) = api.call(
+        EndpointRequest("FundAccount/UpdateStatus", fields = mapOf("id" to id, "status" to status)),
+    )
+
+    suspend fun getIOU(status: String) =
+        api.call(EndpointRequest("FundAccount/GetIOU", fields = mapOf("status" to status)))
+
+    suspend fun getFundAccountTypes() =
+        api.call(EndpointRequest("FundAccount/GetFundAccountTypes"))
+}
+
+/** SavePlan 14 个契约：存钱计划与逐期存入（字段名与 EndpointCatalog 一致，混淆 @Body 的明细字段由仓库自定）。 */
+class SavePlanContracts(private val api: MeowApi) {
+    suspend fun createSavePlan(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/CreateSavePlan", fields = fields))
+
+    suspend fun updateSavePlan(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/UpdateSavePlan", fields = fields))
+
+    suspend fun updateSavePlanItem(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/UpdateSavePlanItem", fields = fields))
+
+    suspend fun updateSavePlanItemStatus(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/UpdateSavePlanItemStatus", fields = fields))
+
+    suspend fun updateSavePlanStatus(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/UpdateSavePlanStatus", fields = fields))
+
+    suspend fun createSavePlanItem(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/CreateSavePlanItem", fields = fields))
+
+    suspend fun savePlanItemsById(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/SavePlanItemsById", fields = fields))
+
+    suspend fun getSavePlans() =
+        api.call(EndpointRequest("SavePlan/GetSavePlans"))
+
+    suspend fun getSavePlansByQuery(fields: Map<String, String>) =
+        api.call(EndpointRequest("SavePlan/GetSavePlansByQuery", fields = fields))
+
+    suspend fun getSavePlansByType(type: String) =
+        api.call(EndpointRequest("SavePlan/GetSavePlansByType", fields = mapOf("type" to type)))
+
+    suspend fun getFileSavePlans() =
+        api.call(EndpointRequest("SavePlan/GetFileSavePlans"))
+
+    suspend fun wishes() =
+        api.call(EndpointRequest("SavePlan/Wishes"))
+
+    suspend fun getIcon() =
+        api.call(EndpointRequest("SavePlan/GetIcon"))
+
+    suspend fun getSavePlanType() =
+        api.call(EndpointRequest("SavePlan/GetSavePlanType"))
+}
+
+/** ConsumptionInstallment 6 个契约：分期计划的创建、查询、结清与删除。 */
+class InstallmentContracts(private val api: MeowApi) {
+    suspend fun create(fields: Map<String, String>) =
+        api.call(EndpointRequest("ConsumptionInstallment/Create", fields = fields))
+
+    suspend fun allPlan() =
+        api.call(EndpointRequest("ConsumptionInstallment/AllPlan"))
+
+    suspend fun getByPlanId(planId: String) =
+        api.call(EndpointRequest("ConsumptionInstallment/GetByPlanId", fields = mapOf("planId" to planId)))
+
+    suspend fun getByClientId(clientId: String) =
+        api.call(EndpointRequest("ConsumptionInstallment/GetByClientId", fields = mapOf("clientId" to clientId)))
+
+    suspend fun payOff(fields: Map<String, String>) =
+        api.call(EndpointRequest("ConsumptionInstallment/PayOff", fields = fields))
+
+    suspend fun delete(planId: String, isSaveBill: String) = api.call(
+        EndpointRequest(
+            "ConsumptionInstallment/Delete",
+            fields = mapOf("planId" to planId, "isSaveBill" to isSaveBill),
+        ),
+    )
+}
+
+/** BillRefund 3 个契约：退款记录的建立、更新与删除。 */
+class RefundContracts(private val api: MeowApi) {
+    suspend fun create(fields: Map<String, String>) =
+        api.call(EndpointRequest("BillRefund/Create", fields = fields))
+
+    suspend fun update(fields: Map<String, String>) =
+        api.call(EndpointRequest("BillRefund/Update", fields = fields))
+
+    suspend fun delete(fields: Map<String, String>) =
+        api.call(EndpointRequest("BillRefund/Delete", fields = fields))
+}

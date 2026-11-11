@@ -170,7 +170,7 @@ private fun MainApp() {
                     existing = if (editing) opened else null,
                     onBack = { composing = false; editing = false },
                     onSave = { bill ->
-                        repository.save(bill)
+                        repository.saveWithBalance(bill)
                         revision++
                         if (editing) openBill = bill.client_id
                         composing = false
@@ -186,7 +186,7 @@ private fun MainApp() {
                     message = detailMessage,
                     onBack = { openBill = null; detailMessage = null },
                     onEdit = { editing = true },
-                    onDelete = { repository.delete(0, opened.client_id); openBill = null; revision++ },
+                    onDelete = { repository.deleteWithBalance(0, opened.client_id); openBill = null; revision++ },
                     onAddRefund = { cents ->
                         detailMessage = try {
                             refunds.add(opened.client_id, opened.money, cents, today)

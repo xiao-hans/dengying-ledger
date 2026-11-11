@@ -68,5 +68,49 @@ class MeowApiContractTest {
         assertEquals("book", api.requests.single().fields["BillBookId"])
     }
 
+
+    @Test
+    fun `s5 contracts register 29 endpoints`() {
+        val api = RecordingApi()
+        runBlocking {
+            FundAccountContracts(api).create(emptyMap())
+            FundAccountContracts(api).update(emptyMap())
+            FundAccountContracts(api).delete("1", "1")
+            FundAccountContracts(api).updateStatus("1", "1")
+            FundAccountContracts(api).getIOU("1")
+            FundAccountContracts(api).getFundAccountTypes()
+
+            SavePlanContracts(api).createSavePlan(emptyMap())
+            SavePlanContracts(api).updateSavePlan(emptyMap())
+            SavePlanContracts(api).updateSavePlanItem(emptyMap())
+            SavePlanContracts(api).updateSavePlanItemStatus(emptyMap())
+            SavePlanContracts(api).updateSavePlanStatus(emptyMap())
+            SavePlanContracts(api).createSavePlanItem(emptyMap())
+            SavePlanContracts(api).savePlanItemsById(emptyMap())
+            SavePlanContracts(api).getSavePlans()
+            SavePlanContracts(api).getSavePlansByQuery(emptyMap())
+            SavePlanContracts(api).getSavePlansByType("1")
+            SavePlanContracts(api).getFileSavePlans()
+            SavePlanContracts(api).wishes()
+            SavePlanContracts(api).getIcon()
+            SavePlanContracts(api).getSavePlanType()
+
+            InstallmentContracts(api).create(emptyMap())
+            InstallmentContracts(api).allPlan()
+            InstallmentContracts(api).getByPlanId("1")
+            InstallmentContracts(api).getByClientId("c")
+            InstallmentContracts(api).payOff(emptyMap())
+            InstallmentContracts(api).delete("1", "1")
+
+            RefundContracts(api).create(emptyMap())
+            RefundContracts(api).update(emptyMap())
+            RefundContracts(api).delete(emptyMap())
+        }
+        assertEquals(29, api.requests.size)
+        val paths = api.requests.map { it.path }.toSet()
+        assertEquals(29, paths.size)
+        assertTrue(paths.all { it in EndpointRegistry.uniquePaths() })
+    }
+
     private fun assertTrue(value: Boolean) = kotlin.test.assertTrue(value)
 }

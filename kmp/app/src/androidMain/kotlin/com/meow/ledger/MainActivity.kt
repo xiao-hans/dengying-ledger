@@ -87,6 +87,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // 回前台时同步桌面小组件的今日收支。
+        com.meow.ledger.platform.AppWidgetReceiver.refresh(this)
         if (::gateway.isInitialized) {
             permissions.value = gateway.statuses().map(::toItem)
             if (guidedIndex < guidedKeys.size) {

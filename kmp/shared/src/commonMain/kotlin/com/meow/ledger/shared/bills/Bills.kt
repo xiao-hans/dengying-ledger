@@ -54,6 +54,33 @@ class BillsRepository(private val db: MeowDatabase) {
         db.billQueries.upsert(bill)
     }
 
+    /** 记一笔并联动资产余额：支出扣 from 卡、收入加 to 卡、转账两头走。 */
+    fun saveWithBalance(bill: Bill) {
+        db.billQueries.upsert(bill)
+        applyBalance(bill)
+    }
+
+    /** 删一笔并回滚资产余额，与 [saveWithBalance] 对称。 */
+    fun deleteWithBalance(memberId: Long, clientId: String) {
+        val bill = db.billQueries.selectOne(memberId, clientId).executeAsOneOrNull() ?: return
+        db.billQueries.deleteOne(memberId, clientId)
+        // 用负金额复用同一套联动逻辑，收入/支出/转账的回滚方向自动对称。
+        applyBalance(bill.copy(money = -bill.money))
+    }
+
+    private fun applyBalance(bill: Bill) {
+        val from = if (bill.from_assets_id == 0L) null else db.assetQueries.selectOne(bill.from_assets_id).executeAsOneOrNull()
+        val to = if (bill.to_assets_id == 0L) null else db.assetQueries.selectOne(bill.to_assets_id).executeAsOneOrNull()
+        when (bill.type) {
+            TYPE_EXPENSE -> from?.let { db.assetQueries.upsert(it.copy(balance_cents = it.balance_cents - bill.money)) }
+            TYPE_INCOME -> to?.let { db.assetQueries.upsert(it.copy(balance_cents = it.balance_cents + bill.money)) }
+            TYPE_TRANSFER -> {
+                from?.let { db.assetQueries.upsert(it.copy(balance_cents = it.balance_cents - bill.money)) }
+                to?.let { db.assetQueries.upsert(it.copy(balance_cents = it.balance_cents + bill.money)) }
+            }
+        }
+    }
+
     fun delete(memberId: Long, clientId: String) {
         db.billQueries.deleteOne(memberId, clientId)
     }
