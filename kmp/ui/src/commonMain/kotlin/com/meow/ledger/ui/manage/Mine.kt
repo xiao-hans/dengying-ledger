@@ -23,9 +23,12 @@ fun MineHome(profile: Member_profile, onOpen: (String) -> Unit) {
     val palette = LocalPalette.current
     val name = profile.nickname.ifBlank { "未登录" }
     val vip = if (profile.vip == 1L) "会员" else "普通用户"
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         Text("我的", color = palette.textPrimary, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-        GlassCard(onClick = { onOpen("account") }, modifier = Modifier.padding(top = 12.dp)) {
+        GlassCard(onClick = { onOpen("account") }) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(name, color = palette.textPrimary, fontWeight = FontWeight.Medium)
                 Text(vip, color = palette.textSecondary)

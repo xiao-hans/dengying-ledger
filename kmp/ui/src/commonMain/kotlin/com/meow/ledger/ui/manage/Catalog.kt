@@ -26,7 +26,10 @@ import com.meow.ledger.ui.theme.LocalPalette
 @Composable
 fun CatalogPage(repository: CatalogRepository, page: String, onOpen: (String) -> Unit, onBack: () -> Unit) {
     var notice by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         when {
             page == "categories" -> CategoryList(repository, onOpen, onBack) { notice = it }
             page.startsWith("category-edit:") -> CategoryEdit(repository, page.substringAfter(":").toLongOrNull(), onBack) { notice = it }

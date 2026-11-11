@@ -76,7 +76,7 @@ private fun InstallmentList(repo: PlanRepository, onOpen: (String) -> Unit, onBa
             plans.forEach { plan ->
                 val done = plan.executed_count
                 val total = plan.total_count.coerceAtLeast(1)
-                GlassCard(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { onOpen("installment:${plan.id}") }.padding(14.dp)) {
+                GlassCard(onClick = { onOpen("installment:${plan.id}") }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(plan.name, color = palette.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
@@ -143,7 +143,7 @@ private fun InstallmentDetail(repo: PlanRepository, id: String, onBack: () -> Un
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            GlassCard(Modifier.fillMaxWidth().padding(14.dp)) {
+            GlassCard {
                 Text("总额 ${centsToYuan(plan.money)} 元 · 利息 ${centsToYuan(plan.interest)} 元", color = palette.textPrimary, fontSize = 14.sp)
                 Text("剩余 ${centsToYuan(plan.remaining_money)} 元", color = palette.textSecondary, fontSize = 12.sp)
             }
@@ -212,7 +212,7 @@ private fun SavePlanList(repo: PlanRepository, onOpen: (String) -> Unit, onBack:
                 if (archived) "" else "新建计划",
             ) { onOpen("save-plan-new") }
             plans.forEach { plan ->
-                GlassCard(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { onOpen("save-plan:${plan.id}") }.padding(14.dp)) {
+                GlassCard(onClick = { onOpen("save-plan:${plan.id}") }) {
                     SavePlanSummary(plan)
                 }
             }
@@ -297,7 +297,7 @@ private fun SavePlanDetail(repo: PlanRepository, id: String, onOpen: (String) ->
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            GlassCard(Modifier.fillMaxWidth().padding(14.dp)) { SavePlanSummary(plan) }
+            GlassCard { SavePlanSummary(plan) }
             Text("存入记录", color = palette.textSecondary, fontSize = 12.sp)
             if (items.isEmpty()) Empty("还没有存入记录", "填一笔金额，记到这个计划里")
             items.forEach { SaveItemRow(it) }
@@ -398,10 +398,12 @@ internal fun GlassCard(
     val palette = LocalPalette.current
     Column(
         modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(palette.cardBg)
             .border(1.dp, palette.divider, RoundedCornerShape(16.dp))
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(14.dp),
         content = { content() },
     )
 }

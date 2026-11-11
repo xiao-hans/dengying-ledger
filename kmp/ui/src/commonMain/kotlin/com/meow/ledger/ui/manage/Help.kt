@@ -1,5 +1,6 @@
 package com.meow.ledger.ui.manage
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,10 @@ import com.meow.ledger.ui.theme.LocalPalette
 @Composable
 fun HelpPage(onBack: () -> Unit) {
     val palette = LocalPalette.current
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         BackHeader("帮助与协议", onBack)
         sections.forEach { (title, body) ->
             GlassCard {

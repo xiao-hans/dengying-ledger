@@ -40,7 +40,10 @@ import com.meow.ledger.ui.theme.LocalPalette
 fun BooksPage(repository: BookRepository, page: String, onOpen: (String) -> Unit, onBack: () -> Unit) {
     val palette = LocalPalette.current
     var notice by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth().background(palette.appBg).verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxWidth().background(palette.appBg).verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         when {
             page == "books" -> BookList(repository, onOpen, onBack) { notice = it }
             page == "book-new" -> BookForm(repository, null, onOpen, onBack) { notice = it }

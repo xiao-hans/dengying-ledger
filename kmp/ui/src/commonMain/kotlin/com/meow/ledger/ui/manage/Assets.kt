@@ -32,7 +32,10 @@ import com.meow.ledger.ui.theme.LocalPalette
 @Composable
 fun AssetsPage(repository: AssetRepository, page: String, onOpen: (String) -> Unit, onBack: () -> Unit) {
     var notice by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         when {
             page == "assets" -> AssetList(repository, onOpen, onBack) { notice = it }
             page == "asset-new" -> AssetForm(repository, null, onBack) { notice = it }

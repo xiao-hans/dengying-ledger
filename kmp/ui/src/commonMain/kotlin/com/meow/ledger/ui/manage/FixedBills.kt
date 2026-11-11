@@ -31,7 +31,10 @@ private val CYCLES = listOf(CYCLE_MONTH.toLong() to "每月", CYCLE_WEEK.toLong(
 @Composable
 fun FixedBillsPage(repository: FixedBillRepository, page: String, onOpen: (String) -> Unit, onBack: () -> Unit) {
     var notice by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         when {
             page == "fixed" -> FixedList(repository, onOpen, onBack) { notice = it }
             page == "fixed-new" -> FixedForm(repository, "", onBack) { notice = it }

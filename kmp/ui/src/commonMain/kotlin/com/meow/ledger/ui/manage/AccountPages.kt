@@ -1,6 +1,5 @@
 package com.meow.ledger.ui.manage
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.auto.KEY_APP_LOCK
@@ -59,7 +56,10 @@ fun AccountPage(
     onBack: () -> Unit,
 ) {
     var notice by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         when (page) {
             "account" -> AccountHome(account, onBack) { notice = it }
             "change-phone" -> ChangePhoneHome(account, onBack) { notice = it }
@@ -200,7 +200,7 @@ private fun VipHome(database: MeowDatabase, account: AccountRepository, onBack: 
     orders.forEach { order ->
         Text("${order.product_name} · ${centsToYuan(order.money)} 元 · ${dateOf(order.create_time)}", color = palette.textSecondary, modifier = Modifier.padding(top = 6.dp))
     }
-    GlassCard(Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(16.dp)).clickable { group = true }.padding(14.dp)) {
+    GlassCard(onClick = { group = true }) {
         Text("拼团", color = palette.textPrimary)
         Text("本地模拟，不发起真实分享", color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
     }
@@ -214,7 +214,7 @@ private fun GroupHome(group: GroupRepository, onBack: () -> Unit, onNotice: (Str
     val rows = remember(version) { group.list() }
     var code by remember { mutableStateOf("") }
     BackHeader("拼团", onBack)
-    GlassCard(Modifier.fillMaxWidth().padding(14.dp)) {
+    GlassCard {
         Text("拼团只写本地记录。没有分享，没有支付渠道。", color = palette.textSecondary, fontSize = 13.sp)
         Field("展示码", code, { if (it.length <= SHOW_ID_MAX) code = it }, "自拟一串，用来回查")
         ActionButton("加入本地拼团", code.isNotBlank()) {
@@ -226,10 +226,10 @@ private fun GroupHome(group: GroupRepository, onBack: () -> Unit, onNotice: (Str
     }
     if (rows.isEmpty()) Empty("还没有拼团记录", "填一个展示码就能加入")
     rows.forEach { row ->
-        GlassCard(Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).clickable {
+        GlassCard(onClick = {
             val hit = group.check(row.show_id)
             onNotice(if (hit.isVip == 1L) "记录在册" else "没有这条记录")
-        }.padding(14.dp)) {
+        }) {
             Text(row.show_id.ifBlank { row.id }, color = palette.textPrimary)
             Text(if (row.status == 1L) "已记录" else "未记录", color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
         }
@@ -411,22 +411,19 @@ private fun PushHome(
             "本复刻不接收厂商推送，也不申请通知权限。账单提醒仍按本机的周期账记录生效。",
             color = palette.textSecondary,
             fontSize = 13.sp,
-            modifier = Modifier.padding(14.dp),
         )
     }
-    Spacer(Modifier.height(10.dp))
     GlassCard(onClick = onOpenReminders) {
-        Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("查看本机提醒", color = palette.textPrimary)
             Text(">", color = palette.textSecondary)
         }
     }
-    Spacer(Modifier.height(10.dp))
     GlassCard(onClick = {
         account.refreshLogin()
         onNotice("已刷新，只换了本机令牌，没有注册推送")
     }) {
-        Column(Modifier.fillMaxWidth().padding(14.dp)) {
+        Column(Modifier.fillMaxWidth()) {
             Text("刷新登录态", color = palette.textPrimary)
             Text("只换本机令牌，不注册推送", color = palette.textSecondary, fontSize = 12.sp)
         }

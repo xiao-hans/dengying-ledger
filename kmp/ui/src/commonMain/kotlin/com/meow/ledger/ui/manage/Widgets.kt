@@ -55,7 +55,10 @@ fun WidgetsPage(
 private fun WidgetList(repo: WidgetRepository, month: Long, onOpen: (String) -> Unit, onBack: () -> Unit) {
     val palette = LocalPalette.current
     val rows = repo.all()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         BackHeader("小组件", onBack)
         Text("只在这里预览，不会挂到系统桌面", color = palette.textSecondary, fontSize = 12.sp)
         ActionButton("添加组件", true) { onOpen("widget-new") }
