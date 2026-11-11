@@ -119,8 +119,29 @@ class AccountTest {
     @Test
     fun remoteSwitchFallsBackToDefault() {
         val repo = repo()
-        assertEquals("1", repo.remote("auto_bill_enabled"))
-        repo.setRemote("auto_bill_enabled", "0")
-        assertEquals("0", repo.remote("auto_bill_enabled"))
+        assertEquals("0", repo.remote("ad_enabled"))
+        assertTrue(repo.setRemote("ad_enabled", "1"))
+        assertEquals("1", repo.remote("ad_enabled"))
+    }
+
+    @Test
+    fun remoteRejectsBadValues() {
+        val repo = repo()
+        assertFalse(repo.setRemote("ad_enabled", "2"))
+        assertFalse(repo.setRemote("importBillsMaxRow", "很多"))
+        assertFalse(repo.setRemote("不存在的开关", "1"))
+        assertEquals("5000", repo.remote("importBillsMaxRow"))
+        assertTrue(repo.setRemote("min_version", ""))
+        assertEquals("", repo.remote("min_version"))
+        assertEquals(24, repo.remoteAll().size)
+    }
+
+    @Test
+    fun refreshLoginIssuesLocalToken() {
+        val repo = repo()
+        val first = repo.refreshLogin()
+        val second = repo.refreshLogin()
+        assertTrue(first.startsWith("local_"))
+        assertTrue(first != second)
     }
 }

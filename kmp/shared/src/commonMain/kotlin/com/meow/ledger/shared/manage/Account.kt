@@ -16,6 +16,9 @@ const val CONTRACT_ID = 1L
 
 const val FEEDBACK_KIND = "feedback"
 
+/** 登录态刷新记录。只换本机令牌，不注册推送。 */
+const val TOKEN_REFRESH_KIND = "token_refresh"
+
 /** 会员套餐，对应 React 的 order_config。 */
 data class VipPlan(val id: String, val name: String, val money: Long, val days: Int)
 
@@ -32,13 +35,42 @@ const val KEY_MIGRATE_TIME = "member_migrate_time"
 /** 迁移结果。already 为 true 表示这次执行之前就已经迁移过。 */
 data class MigrationState(val done: Boolean, val timeMillis: Long, val already: Boolean = false)
 
-/** 远程开关的默认值。数值项存数字，开关项存 1 或 0。 */
-val REMOTE_DEFAULTS = mapOf(
-    "auto_bill_enabled" to "1",
-    "vip_banner" to "1",
-    "feedback_enabled" to "1",
-    "max_books" to "20",
+/** 远程开关的类型。数值项只收非负整数，开关项只收 1 或 0，文本项可以为空。 */
+enum class RemoteKind { TOGGLE, NUMBER, TEXT }
+
+/** 一项远程配置：字段名、中文名、类型、默认值。字段名与 Web 版一致。 */
+data class RemoteSwitch(val key: String, val label: String, val kind: RemoteKind, val default: String)
+
+/** 远程开关的全部 24 项，顺序与 Web 版一致。数值项存数字，开关项存 1 或 0。 */
+val REMOTE_SWITCHES = listOf(
+    RemoteSwitch("ad_enabled", "广告总开关", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("dialog_enabled", "运营弹窗", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("force_update", "强制更新", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("min_version", "最低版本", RemoteKind.TEXT, "1.0.0"),
+    RemoteSwitch("latest_version", "最新版本", RemoteKind.TEXT, "1.8.1"),
+    RemoteSwitch("autoBillRemindCount", "自动记账提醒次数", RemoteKind.NUMBER, "3"),
+    RemoteSwitch("autoBillShowNotificationDelay", "通知延迟（秒）", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("autoBookkeepingFreeCount", "免费自动记账次数", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("autoBookkeepingPopupCycle", "自动记账弹窗周期", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("assetBookkeepingPopupCycle", "资产记账弹窗周期", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("evaluateDay", "评价提醒天数", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("hotSplashAdInterval", "热启动广告间隔", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("splashAdReqTime", "开屏广告超时（秒）", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("importBillsMaxCount", "导入次数上限", RemoteKind.NUMBER, "10"),
+    RemoteSwitch("importBillsMaxRow", "单次导入行数上限", RemoteKind.NUMBER, "5000"),
+    RemoteSwitch("importBillsMaxSize", "导入文件上限（MB）", RemoteKind.NUMBER, "10"),
+    RemoteSwitch("ocrUpdateCount", "截图识别次数", RemoteKind.NUMBER, "3"),
+    RemoteSwitch("popupBackgroundEnable", "弹窗背景", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("isInterceptStartActivity", "拦截启动页", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("memberServiceAgreementDialog", "会员协议弹窗", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("autoBillBgWhiteState", "自动记账白名单", RemoteKind.TOGGLE, "0"),
+    RemoteSwitch("vipExpirationPopNum", "会员到期弹窗次数", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("vipExpirationPopTime", "会员到期弹窗间隔", RemoteKind.NUMBER, "0"),
+    RemoteSwitch("yearlyReport", "年度报告", RemoteKind.TOGGLE, "0"),
 )
+
+/** 按字段名取默认值。未知字段不在表内。 */
+val REMOTE_DEFAULTS: Map<String, String> = REMOTE_SWITCHES.associate { it.key to it.default }
 
 /** 账号、导入记录、会员订单、合约与反馈。 */
 class AccountRepository(private val db: MeowDatabase) {
@@ -198,15 +230,40 @@ class AccountRepository(private val db: MeowDatabase) {
         return row
     }
 
+    /** 换一个本机令牌并记一条刷新记录，返回新令牌。不注册任何推送。 */
+    fun refreshLogin(): String {
+        val token = "local_${currentTimeMillis()}${Random.nextInt(1000, 9999)}"
+        db.accountQueries.upsertEvent(
+            Behavior_event(
+                id = token,
+                kind = TOKEN_REFRESH_KIND,
+                content = token,
+                contact = "",
+                create_time = currentTimeMillis(),
+            ),
+        )
+        return token
+    }
+
     fun remote(key: String): String =
         db.configQueries.selectOne(key).executeAsOneOrNull()?.value_ ?: REMOTE_DEFAULTS[key] ?: ""
 
     fun remoteAll(): Map<String, String> = REMOTE_DEFAULTS.mapValues { remote(it.key) }
 
-    fun setRemote(key: String, value: String) {
+    /** 按字段类型校验后写入。未知字段、开关项不是 1 或 0、数值项不是非负整数时不写，返回 false。 */
+    fun setRemote(key: String, value: String): Boolean {
+        val spec = REMOTE_SWITCHES.firstOrNull { it.key == key } ?: return false
+        val text = value.trim()
+        val valid = when (spec.kind) {
+            RemoteKind.TOGGLE -> text == "1" || text == "0"
+            RemoteKind.NUMBER -> text.isNotEmpty() && text.all(Char::isDigit)
+            RemoteKind.TEXT -> true
+        }
+        if (!valid) return false
         db.configQueries.upsert(
-            com.meow.ledger.shared.db.Remote_config(key, value, currentTimeMillis()),
+            com.meow.ledger.shared.db.Remote_config(key, text, currentTimeMillis()),
         )
+        return true
     }
 }
 

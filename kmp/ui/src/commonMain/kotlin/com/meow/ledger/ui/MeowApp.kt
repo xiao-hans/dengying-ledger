@@ -324,7 +324,7 @@ private fun MinePages(
                 database.billQueries.selectByRange(0, 0, 99999999).executeAsList()
                     .forEach { database.billQueries.deleteOne(it.member_id, it.client_id) }
             }
-        }, onBack)
+        }, onOpen, onBack)
     }
 }
 
