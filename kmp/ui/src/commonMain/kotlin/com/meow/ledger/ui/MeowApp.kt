@@ -319,7 +319,7 @@ private fun MinePages(
         page.startsWith("installment") || page.startsWith("save-plan") -> PlansPage(PlanRepository(database), page, onOpen, onBack)
         page.startsWith("widget") -> WidgetsPage(WidgetRepository(database), month, page, onOpen, onBack)
         page == "help" -> HelpPage(onBack)
-        else -> AccountPage(page, AccountRepository(database), settings, onTheme, onClear = {
+        else -> AccountPage(page, database, AccountRepository(database), settings, onTheme, onClear = {
             database.transaction {
                 database.billQueries.selectByRange(0, 0, 99999999).executeAsList()
                     .forEach { database.billQueries.deleteOne(it.member_id, it.client_id) }
