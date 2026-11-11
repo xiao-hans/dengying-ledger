@@ -62,3 +62,98 @@ CREATE TABLE IF NOT EXISTS widget_user (
   kind TEXT NOT NULL DEFAULT 'month',
   create_time INTEGER NOT NULL DEFAULT 0
 );
+
+-- 升级到 3：账单标签、备注、分类扩展、账本协作、票据图、同步队列与小组件表。
+-- 与 S2.sq 的全新安装 schema 保持一致。
+CREATE TABLE IF NOT EXISTS bill_tag (
+  client_id TEXT NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  tag_id INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (client_id, member_id, tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS bill_remark (
+  client_id TEXT NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (client_id, member_id)
+);
+
+CREATE TABLE IF NOT EXISTS cate_extend (
+  member_cate_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  sort INTEGER NOT NULL DEFAULT 0,
+  hidden INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_cate_id, book_id, member_id)
+);
+
+CREATE TABLE IF NOT EXISTS member_assets (
+  member_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  appear INTEGER NOT NULL DEFAULT 0,
+  income INTEGER NOT NULL DEFAULT 0,
+  is_master INTEGER NOT NULL DEFAULT 0,
+  join_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, book_id)
+);
+
+CREATE TABLE IF NOT EXISTS image_info (
+  id TEXT NOT NULL PRIMARY KEY,
+  client_id TEXT NOT NULL DEFAULT '',
+  path TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0
+);
+
+-- 旧 sync_queue 只有 4 列；队列是可重放的缓存，重建为 11 列。
+DROP TABLE IF EXISTS sync_queue;
+CREATE TABLE IF NOT EXISTS sync_queue (
+  id TEXT NOT NULL PRIMARY KEY,
+  path TEXT NOT NULL DEFAULT '',
+  method TEXT NOT NULL DEFAULT 'POST',
+  payload TEXT NOT NULL DEFAULT '',
+  client_id TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  next_attempt INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0,
+  error TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS sync_queue_status ON sync_queue(status, next_attempt);
+
+CREATE TABLE IF NOT EXISTS widget_base (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  background TEXT NOT NULL DEFAULT '',
+  transparency INTEGER NOT NULL DEFAULT 100,
+  text_color TEXT NOT NULL DEFAULT '#0C0C09',
+  show_bills INTEGER NOT NULL DEFAULT 1,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS widget_desktop (
+  id TEXT NOT NULL PRIMARY KEY,
+  widget_id TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  position INTEGER NOT NULL DEFAULT 0,
+  config TEXT NOT NULL DEFAULT '',
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS widget_hot (
+  id TEXT NOT NULL PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  path TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);

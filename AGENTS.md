@@ -112,6 +112,7 @@ works/
 | 文档被反复打补丁需要推倒重写 | `hai-rewrite-doc` | 按最新结论重建 |
 | 修正/废弃某方案后写正式工程文档 | `no-negative-echo` | 禁止「此地无银三百两」式残留与编辑旁白 |
 | 开发功能/修复/重构（任何增量） | `software-development-workflow` | 小步、可验证增量、先定 Definition of Done |
+| 写代码/审代码/重构时防 LLM 常见编码错误 | `karpathy-guidelines` | 外科手术式改动、不过度设计、假设显式化、可验证成功标准 |
 | 创造性工作（新功能/改行为）**动手之前** | `superpowers-brainstorming` | 先澄清意图与需求 |
 | 2 个以上互不依赖的独立任务 | `superpowers-dispatching-parallel-agents` | 并行分派 |
 | 声明「完成 / 已修复 / 测试通过」之前 | `superpowers-verification-before-completion` | 应先跑验证命令并看到输出 |

@@ -1,0 +1,174 @@
+package com.meow.ledger.shared.network
+
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+
+data class EndpointRequest(
+    val path: String,
+    val method: String = "POST",
+    val fields: Map<String, String> = emptyMap(),
+    val body: JsonElement? = null,
+    val urlType: String? = null,
+    val headers: Map<String, String> = emptyMap(),
+)
+
+interface MeowApi {
+    suspend fun call(request: EndpointRequest): JsonEnvelope
+}
+
+/** Ktor 实现：统一 host、超时、明文 JSON 与 {code,message,data,trace_id} 信封。 */
+class KtorMeowApi(
+    private val client: HttpClient = defaultClient(),
+    private val json: Json = Json { ignoreUnknownKeys = true },
+) : MeowApi {
+    override suspend fun call(request: EndpointRequest): JsonEnvelope {
+        val url = HttpConfig.baseFor(request.path, request.urlType) + request.path
+        val response = client.request(url) {
+            method = HttpMethod.parse(request.method)
+            contentType(ContentType.Application.Json)
+            request.headers.forEach { (key, value) -> headers.append(key, value) }
+            val payload = buildJsonObject {
+                request.fields.forEach { (key, value) -> put(key, JsonPrimitive(value)) }
+                if (request.body is JsonObject) {
+                    request.body.forEach { (key, value) -> put(key, value) }
+                } else if (request.body != null) {
+                    put("data", request.body)
+                }
+            }
+            setBody(payload)
+        }
+        val text = response.bodyAsText()
+        return try {
+            json.decodeFromString<JsonEnvelope>(text)
+        } catch (error: Exception) {
+            throw IllegalArgumentException("${request.path} returned invalid envelope: ${text.take(160)}", error)
+        }
+    }
+
+    companion object {
+        fun defaultClient(): HttpClient = HttpClient {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
+            install(HttpTimeout) {
+                connectTimeoutMillis = HttpConfig.CONNECT_TIMEOUT_MS
+                requestTimeoutMillis = HttpConfig.REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = HttpConfig.SOCKET_TIMEOUT_MS
+            }
+        }
+    }
+}
+
+/** 32 个 S2 契约方法以同名扩展封装，避免手写路径和字段名漂移。 */
+class BillsContracts(private val api: MeowApi) {
+    suspend fun pageList(updateDate: String, pageNum: String) =
+        api.call(EndpointRequest("Bills/PageList", fields = mapOf("updateDate" to updateDate, "pageNum" to pageNum)))
+
+    suspend fun create(body: JsonElement) = api.call(EndpointRequest("Bills/Create", body = body))
+
+    suspend fun update(body: JsonElement) = api.call(EndpointRequest("Bills/Update", body = body))
+
+    suspend fun delete(body: JsonElement) = api.call(EndpointRequest("Bills/Delete", body = body))
+
+    suspend fun billsCountOfHasPic() = api.call(EndpointRequest("Bills/BillsCountOfHasPic"))
+
+    suspend fun autoBillsCallBack(type: String) =
+        api.call(EndpointRequest("Bills/AutoBillsCallBack", fields = mapOf("type" to type)))
+
+    suspend fun deleteFixedBill(id: String) =
+        api.call(EndpointRequest("Bills/DeleteFixedBill", fields = mapOf("id" to id)))
+
+    suspend fun updateFixedBill(fields: Map<String, String>) =
+        api.call(EndpointRequest("Bills/UpdateFixedBill", fields = fields))
+
+    suspend fun getFixedBills() = api.call(EndpointRequest("Bills/GetFixedBills"))
+
+    suspend fun createFixedBill(fields: Map<String, String>) =
+        api.call(EndpointRequest("Bills/CreateFixedBill", fields = fields))
+
+    suspend fun importBills(req: JsonElement) = api.call(EndpointRequest("Bills/ImportBills", body = req))
+
+    suspend fun importOcrBills(req: JsonElement) = api.call(EndpointRequest("Bills/ImportBills", body = req))
+}
+
+class CateContracts(private val api: MeowApi) {
+    suspend fun create(title: String, type: String, iconId: String) = api.call(
+        EndpointRequest("Cate/Create", fields = mapOf("title" to title, "type" to type, "iconId" to iconId)),
+    )
+
+    suspend fun update(fields: Map<String, String>) = api.call(EndpointRequest("Cate/Update", fields = fields))
+
+    suspend fun delete(id: String) = api.call(EndpointRequest("Cate/Delete", fields = mapOf("id" to id)))
+
+    suspend fun getMainCates() = api.call(EndpointRequest("Cate/GetMainCates"))
+
+    suspend fun getCateIcons() = api.call(EndpointRequest("Cate/GetCateIcons"))
+
+    suspend fun updateExtend(body: JsonElement) = api.call(EndpointRequest("Cate/UpdateExtend", body = body))
+}
+
+class MemberTagContracts(private val api: MeowApi) {
+    suspend fun create(billsBookId: String, name: String) = api.call(
+        EndpointRequest("MemberTag/Create", fields = mapOf("BillBookId" to billsBookId, "name" to name)),
+    )
+
+    suspend fun update(tagId: String, name: String) = api.call(
+        EndpointRequest("MemberTag/Update", fields = mapOf("tagId" to tagId, "name" to name)),
+    )
+
+    suspend fun delete(tagId: String) =
+        api.call(EndpointRequest("MemberTag/Delete", fields = mapOf("tagId" to tagId)))
+
+    suspend fun updateSort(body: JsonElement) = api.call(EndpointRequest("MemberTag/UpdateSort", body = body))
+}
+
+class BillsBookContracts(private val api: MeowApi) {
+    suspend fun create(name: String, iconId: String, monthStartDate: String) = api.call(
+        EndpointRequest(
+            "BillsBook/Create",
+            fields = mapOf("name" to name, "iconId" to iconId, "monthStartDate" to monthStartDate),
+        ),
+    )
+
+    suspend fun update(fields: Map<String, String>) = api.call(EndpointRequest("BillsBook/Update", fields = fields))
+
+    suspend fun delete(billsBookId: String) =
+        api.call(EndpointRequest("BillsBook/Delete", fields = mapOf("billsBookId" to billsBookId)))
+
+    suspend fun getList() = api.call(EndpointRequest("BillsBook/GetList"))
+
+    suspend fun getBillsBookIcons() = api.call(EndpointRequest("BillsBook/GetBillsBookIcons"))
+
+    suspend fun join(billsBookId: String) =
+        api.call(EndpointRequest("BillsBook/Join", fields = mapOf("billsBookId" to billsBookId)))
+
+    suspend fun getInfoByCode(code: String) =
+        api.call(EndpointRequest("BillsBook/GetInfoByCode", fields = mapOf("code" to code)))
+
+    suspend fun createInviteCode(billsBookId: String) =
+        api.call(EndpointRequest("BillsBook/CreateInviteCode", fields = mapOf("billsBookId" to billsBookId)))
+
+    suspend fun removeMember(memberId: String, billsBookId: String) = api.call(
+        EndpointRequest(
+            "BillsBook/RemoveMember",
+            fields = mapOf("memberId" to memberId, "billsBookId" to billsBookId),
+        ),
+    )
+
+    suspend fun exit(billsBookId: String) =
+        api.call(EndpointRequest("BillsBook/Exit", fields = mapOf("billsBookId" to billsBookId)))
+}

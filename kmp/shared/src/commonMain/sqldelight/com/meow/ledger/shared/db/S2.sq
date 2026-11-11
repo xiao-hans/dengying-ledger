@@ -1,0 +1,146 @@
+-- S2：账单标签、备注、分类扩展、账本协作、票据图、同步队列与小组件表。
+-- 2.sqm 同步定义这些表，保证老安装升级后与全新安装的 schema 一致。
+
+CREATE TABLE bill_tag (
+  client_id TEXT NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  tag_id INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (client_id, member_id, tag_id)
+);
+
+CREATE TABLE bill_remark (
+  client_id TEXT NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (client_id, member_id)
+);
+
+CREATE TABLE cate_extend (
+  member_cate_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  sort INTEGER NOT NULL DEFAULT 0,
+  hidden INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_cate_id, book_id, member_id)
+);
+
+CREATE TABLE member_assets (
+  member_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  appear INTEGER NOT NULL DEFAULT 0,
+  income INTEGER NOT NULL DEFAULT 0,
+  is_master INTEGER NOT NULL DEFAULT 0,
+  join_date INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, book_id)
+);
+
+CREATE TABLE image_info (
+  id TEXT NOT NULL PRIMARY KEY,
+  client_id TEXT NOT NULL DEFAULT '',
+  path TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE widget_base (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  background TEXT NOT NULL DEFAULT '',
+  transparency INTEGER NOT NULL DEFAULT 100,
+  text_color TEXT NOT NULL DEFAULT '#0C0C09',
+  show_bills INTEGER NOT NULL DEFAULT 1,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE widget_desktop (
+  id TEXT NOT NULL PRIMARY KEY,
+  widget_id TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  position INTEGER NOT NULL DEFAULT 0,
+  config TEXT NOT NULL DEFAULT '',
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE widget_hot (
+  id TEXT NOT NULL PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  path TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE sync_queue (
+  id TEXT NOT NULL PRIMARY KEY,
+  path TEXT NOT NULL DEFAULT '',
+  method TEXT NOT NULL DEFAULT 'POST',
+  payload TEXT NOT NULL DEFAULT '',
+  client_id TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  next_attempt INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0,
+  error TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX sync_queue_status ON sync_queue(status, next_attempt);
+
+selectTagsOfBill:
+SELECT * FROM bill_tag WHERE client_id = :clientId AND member_id = :memberId ORDER BY tag_id;
+
+upsertBillTag:
+INSERT OR REPLACE INTO bill_tag(client_id, member_id, tag_id) VALUES ?;
+
+deleteBillTags:
+DELETE FROM bill_tag WHERE client_id = :clientId AND member_id = :memberId;
+
+selectRemark:
+SELECT * FROM bill_remark WHERE client_id = :clientId AND member_id = :memberId;
+
+upsertRemark:
+INSERT OR REPLACE INTO bill_remark(client_id, member_id, content, images, create_date, update_date) VALUES ?;
+
+selectCateExtend:
+SELECT * FROM cate_extend WHERE member_id = :memberId AND book_id = :bookId ORDER BY sort, member_cate_id;
+
+upsertCateExtend:
+INSERT OR REPLACE INTO cate_extend(
+  member_cate_id, book_id, member_id, type, sort, hidden, status, create_date, update_date
+) VALUES ?;
+
+selectMemberAssets:
+SELECT * FROM member_assets WHERE book_id = :bookId ORDER BY member_id;
+
+upsertMemberAssets:
+INSERT OR REPLACE INTO member_assets(member_id, book_id, appear, income, is_master, join_date) VALUES ?;
+
+selectImages:
+SELECT * FROM image_info WHERE client_id = :clientId ORDER BY create_date;
+
+upsertImage:
+INSERT OR REPLACE INTO image_info(id, client_id, path, url, source, create_date) VALUES ?;
+
+selectPendingSync:
+SELECT * FROM sync_queue WHERE status = 0 AND next_attempt <= :now ORDER BY create_time LIMIT :limitAmount;
+
+enqueueSync:
+INSERT OR REPLACE INTO sync_queue(
+  id, path, method, payload, client_id, status, retry_count, next_attempt, create_time, update_time, error
+) VALUES ?;
+
+markSyncDone:
+UPDATE sync_queue SET status = 1, update_time = :now, error = '' WHERE id = :id;
+
+markSyncRetry:
+UPDATE sync_queue SET status = 0, retry_count = retry_count + 1, next_attempt = :nextAttempt, update_time = :now, error = :error WHERE id = :id;
+
+deleteSync:
+DELETE FROM sync_queue WHERE id = :id;

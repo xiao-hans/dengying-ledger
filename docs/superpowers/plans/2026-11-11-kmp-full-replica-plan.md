@@ -152,7 +152,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 | 切片 | 提交号 | 构建结果 | 真机结果 | 差距表状态 |
 | --- | --- | --- | --- | --- |
 | S0 | `b756323`、`ce0cbb2` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 完成 |
-| S1 | 本片提交 | `BUILD SUCCESSFUL in 32s`；`:app:assembleDebug`、`:shared:jvmTest` 通过 | 模拟器权限页截图、继续按钮后首页文本与截图 | 完成 |
+| S1 | `ab51295` | `BUILD SUCCESSFUL in 32s`；`:app:assembleDebug`、`:shared:jvmTest` 通过 | 模拟器权限页截图、继续按钮后首页文本与截图 | 完成 |
 | S2 | 待记录 | 待记录 | 待记录 | 执行中 |
 | S3 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S4 | 待记录 | 待记录 | 待记录 | 未开始 |

@@ -22,20 +22,3 @@ SELECT value FROM user_setting WHERE key = :key;
 
 upsertSetting:
 INSERT OR REPLACE INTO user_setting(key, value) VALUES ?;
-
--- 同步队列：本地先写，云端不可达时排队。
-CREATE TABLE sync_queue (
-  id TEXT NOT NULL PRIMARY KEY,
-  path TEXT NOT NULL DEFAULT '',
-  payload TEXT NOT NULL DEFAULT '',
-  create_time INTEGER NOT NULL DEFAULT 0
-);
-
-selectPendingSync:
-SELECT * FROM sync_queue ORDER BY create_time;
-
-enqueue:
-INSERT OR REPLACE INTO sync_queue(id, path, payload, create_time) VALUES ?;
-
-dequeue:
-DELETE FROM sync_queue WHERE id = :id;
