@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -173,7 +174,7 @@ fun BillEntry(
         }
 
         Row(
-            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().imePadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ActionButton("取消", primary = false, modifier = Modifier.weight(1f), onClick = onBack)

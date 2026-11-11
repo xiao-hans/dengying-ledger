@@ -154,9 +154,9 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 | S0 | `b756323`、`ce0cbb2` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 完成 |
 | S1 | `ab51295` | `BUILD SUCCESSFUL in 32s`；`:app:assembleDebug`、`:shared:jvmTest` 通过 | 模拟器权限页截图、继续按钮后首页文本与截图 | 完成 |
 | S2 | `e3a4b25` + 本切片 | `BUILD SUCCESSFUL`（96 tests 0 fail） | 模拟器升级路径+批量修改 uiautomator 通过；真机待用户确认安装 | 完成 |
-| S3 | 待记录 | 待记录 | 待记录 | 未开始 |
-| S4 | 待记录 | 待记录 | 待记录 | 未开始 |
-| S5 | 契约 29/29 + 余额联动/存钱单期/分期公式/小组件渲染/提醒闹钟（模拟器 reboot 实证 2026-12-01 09:00） | 116 tests 0 fail + widget 桌面放置真机待验 | 1dbf13b 后 S5 commit | 部分完成 |
-| S6 | 契约 28/28 + Account/Group 业务层已齐（VIP 页/订单列表/拼团页已有 UI） | 契约测试 33 全绿 | 09558c5 后 S6 commit | 部分完成 |
-| S7 | 平台契约 5/5（Operation/Behavior/Config/PersonCenter） | catalog 112 断言绿 | 同 S6 commit | 部分完成（业务接线待 S8） |
-| S8 | 埋点三类落库 + 契约 112/112 全量 + 全量验收 | 118 tests 0 fail | 8e921db 后 S8 commit | 部分完成 |
+| S3 | `ad7a125` | 100 tests 0 fail；统计下钻/年度报表/预算空态模拟器截图 | 模拟器 uiautomator + 返回键回归 | 完成 |
+| S4 | `1dbf13b` | 113 tests 0 fail；ML Kit 中文 OCR 模拟器选图→识别→待确认→入账全流程截图 | 模拟器全绿；真机 OCR 待用户配合 | 完成（真机待验） |
+| S5 | `09558c5` | 116 tests 0 fail；余额联动/存钱单期/分期/小组件渲染/精确提醒（reboot 实证 2026-12-01 09:00） | 模拟器周期账+提醒 E2E；widget 桌面放置待人工 | 完成（widget 待验） |
+| S6 | `8e921db` | 契约测试全绿；Account/Group 业务层齐（VIP/订单/拼团 UI 已有） | — | 完成 |
+| S7 | 同 S6 | Operation/Behavior/Config/PersonCenter 5 契约 + catalog 112 断言绿 | — | 完成 |
+| S8 | `2a8c806` | 118 tests 0 fail；埋点三类落库 E2E（ac_add_bill×2 入库实证） | 模拟器记账保存+埋点；imePadding 键盘遮挡修复后回归截图 | 完成 |
