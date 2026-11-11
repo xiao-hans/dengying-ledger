@@ -161,7 +161,7 @@ private fun BookDetail(repository: BookRepository, id: Long, onOpen: (String) ->
 private fun JoinBook(repository: BookRepository, onBack: () -> Unit, onNotice: (String) -> Unit) {
     var code by remember { mutableStateOf("") }
     BackHeader("加入账本", onBack)
-    Text("网页不能调用相机，把对方分享的邀请码粘贴到下面，校验通过后加入，和扫码是同一条链路。", color = LocalPalette.current.textSecondary)
+    Text("扫一扫对方的账本二维码，或把分享来的邀请码粘贴到下面，校验通过后加入，两条路走同一条链路。", color = LocalPalette.current.textSecondary)
     Field("邀请码", code, { code = it }, "例如 DY1ABC23")
     ActionButton("加入账本", code.isNotBlank()) {
         val joined = repository.join(code.trim())

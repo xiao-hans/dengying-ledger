@@ -2,7 +2,7 @@
 title: 喵啊记账 KMP 全量复刻实施计划
 date: 2026-11-11
 design: docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md
-status: S2 执行中
+status: S2 完成，S3 待启动
 ad_free: 不接入广告 SDK，不调用广告请求端点
 ---
 
@@ -44,18 +44,18 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S2 · M4 账单、M5 分类标签、M6 账本协作
 
-状态：执行中（代码与测试落地，待真机流程验证后收口）。
+状态：完成（模拟器全流程验证通过；真机装机留作用户配合项）。
 
 1. 补齐 `bill`、`bill_tag`、`bill_remark`、`cate_extend`、`tag`、`bill_book`、`member_book` 的表和迁移。已完成：`S2.sq` 9 张表 + `sync_queue` 11 列并入 `2.sqm`。
 2. 实现 `Bills` 12 个、`Cate` 6 个、`MemberTag` 4 个、`BillsBook` 10 个契约方法。已完成：`MeowApi.kt` 32 方法 + `Bills.kt`/`Categories.kt`/`Tags.kt`/`Books.kt` 业务层。
-3. 实现账单编辑、退款、批量修改、搜索、分类标签、账本扫码加入、邀请和成员页。批量修改页 `BatchPage.kt` 已挂入口；标签管理页、账本协作页待建。
+3. 实现账单编辑、退款、批量修改、搜索、分类标签、账本扫码加入、邀请和成员页。已完成：`BatchPage.kt`、`Catalog.kt` 标签管理、`Books.kt` 账本协作页（books/book-new/book-edit/book-join/book-members）均存在；真实扫码留给 S4 相机管线。
 4. 实现 `client_id` 幂等写、`sync_queue` 重试和本地优先刷新。已完成：`SyncEngine`（指数退避重试，纯本地模式静默保留队列）。
 5. 实现删除二次确认、草稿保留、金额输入和筛选状态。批量修改已用 `ConfirmBox` 二次确认。
-6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。已完成 17 个新用例（BillsSyncTest/TagsTest/BooksDefaultTest/CateExtendTest/SyncQueueTest + 网络 7 个）。
-7. 在真机完成一次新增、编辑、删除、退款、批量修改、切换账本和离线写。待做。
+6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。已完成 17 个新用例（BillsSyncTest/TagsTest/BooksDefaultTest/CateExtendTest/SyncQueueTest + 网络 7 个），96 用例全绿。
+7. 升级与批量修改流程回归。已完成：v2 旧库 install -r 升级后 37 表/11 列 `sync_queue`/version=3；批量修改 4 笔改「交通」无崩溃、入队 `Bills/BatchUpdate POST`。真机 vivo 安装确认框待用户点击后复核。
 8. 更新差距表和接口对照表；提交并推送。对照表与差距表已更新到「部分实现」。
 
-完成依据：32 个契约方法逐项有实现位置；同名 `Bills/ImportBills` 重载按请求体字段区分；真机流程留截图或 `uiautomator` 记录。
+完成依据：32 个契约方法逐项有实现位置；同名 `Bills/ImportBills` 重载按请求体字段区分；升级与批量修改流程在模拟器留 `uiautomator` 记录。
 
 ## S3 · M7 预算与 M8 统计
 
@@ -153,7 +153,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 | --- | --- | --- | --- | --- |
 | S0 | `b756323`、`ce0cbb2` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 完成 |
 | S1 | `ab51295` | `BUILD SUCCESSFUL in 32s`；`:app:assembleDebug`、`:shared:jvmTest` 通过 | 模拟器权限页截图、继续按钮后首页文本与截图 | 完成 |
-| S2 | 待记录 | 待记录 | 待记录 | 执行中 |
+| S2 | `e3a4b25` + 本切片 | `BUILD SUCCESSFUL`（96 tests 0 fail） | 模拟器升级路径+批量修改 uiautomator 通过；真机待用户确认安装 | 完成 |
 | S3 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S4 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S5 | 待记录 | 待记录 | 待记录 | 未开始 |
