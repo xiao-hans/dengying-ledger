@@ -82,7 +82,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 @Composable
-fun MeowApp() {
+fun MeowApp(
+    initialRoute: String = "",
+    entryHost: EntryHost? = null,
+) {
+    EntryNavHost(initialRoute = initialRoute, host = entryHost) {
+        MainApp()
+    }
+}
+
+@Composable
+private fun MainApp() {
     val settings = SettingsStore(AppGraph.database)
     var theme by rememberSaveable { mutableStateOf(settings.text(KEY_THEME, THEME_SYSTEM)) }
     val dark = when (theme) {

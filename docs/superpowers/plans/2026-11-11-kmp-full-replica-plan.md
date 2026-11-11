@@ -2,7 +2,7 @@
 title: 喵啊记账 KMP 全量复刻实施计划
 date: 2026-11-11
 design: docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md
-status: S0 执行中
+status: S2 执行中
 ad_free: 不接入广告 SDK，不调用广告请求端点
 ---
 
@@ -14,7 +14,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S0 · 全量依据建立
 
-状态：执行中。
+状态：完成（`ce0cbb2`）。
 
 1. 生成 `docs/功能差距表.md`。
 2. 在差距表中登记 `01` 的 21 个模块、组件数、证据行和 KMP 实现位置。
@@ -29,7 +29,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S1 · M1 应用框架与 M20 权限
 
-状态：未开始。
+状态：完成。
 
 1. 在 `AndroidManifest.xml` 声明 `01` §1 的入口组件，包括 Activity、TileService、前台服务、闹钟 Receiver 和开机 Receiver。
 2. 声明 `POST_NOTIFICATIONS`、`READ_MEDIA_IMAGES`、`CAMERA`、`USE_BIOMETRIC`、`SCHEDULE_EXACT_ALARM`、`WAKE_LOCK`、`FOREGROUND_SERVICE` 等权限。
@@ -44,7 +44,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S2 · M4 账单、M5 分类标签、M6 账本协作
 
-状态：未开始。
+状态：执行中。
 
 1. 补齐 `bill`、`bill_tag`、`bill_remark`、`cate_extend`、`tag`、`bill_book`、`member_book` 的表和迁移。
 2. 实现 `Bills` 12 个、`Cate` 6 个、`MemberTag` 4 个、`BillsBook` 10 个契约方法。
@@ -151,9 +151,9 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 | 切片 | 提交号 | 构建结果 | 真机结果 | 差距表状态 |
 | --- | --- | --- | --- | --- |
-| S0 | `b756323` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 执行中 |
-| S1 | 待记录 | 待记录 | 待记录 | 未开始 |
-| S2 | 待记录 | 待记录 | 待记录 | 未开始 |
+| S0 | `b756323`、`ce0cbb2` | `npm run build` 通过；`git diff --check` 通过 | 不必 | 完成 |
+| S1 | 本片提交 | `BUILD SUCCESSFUL in 32s`；`:app:assembleDebug`、`:shared:jvmTest` 通过 | 模拟器权限页截图、继续按钮后首页文本与截图 | 完成 |
+| S2 | 待记录 | 待记录 | 待记录 | 执行中 |
 | S3 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S4 | 待记录 | 待记录 | 待记录 | 未开始 |
 | S5 | 待记录 | 待记录 | 待记录 | 未开始 |
