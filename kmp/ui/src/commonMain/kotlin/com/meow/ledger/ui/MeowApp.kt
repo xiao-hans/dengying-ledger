@@ -45,6 +45,23 @@ import com.meow.ledger.ui.bills.BillDetail
 import com.meow.ledger.ui.bills.BillEntry
 import com.meow.ledger.ui.home.BillsHome
 import com.meow.ledger.ui.home.Dock
+import com.meow.ledger.shared.auto.KEY_THEME
+import com.meow.ledger.shared.auto.THEME_DARK
+import com.meow.ledger.shared.auto.THEME_LIGHT
+import com.meow.ledger.shared.auto.THEME_SYSTEM
+import com.meow.ledger.shared.manage.AccountRepository
+import com.meow.ledger.shared.manage.AssetRepository
+import com.meow.ledger.shared.manage.BookRepository
+import com.meow.ledger.shared.manage.CatalogRepository
+import com.meow.ledger.shared.manage.FixedBillRepository
+import com.meow.ledger.shared.manage.PlanRepository
+import com.meow.ledger.ui.manage.AccountPage
+import com.meow.ledger.ui.manage.AssetsPage
+import com.meow.ledger.ui.manage.BooksPage
+import com.meow.ledger.ui.manage.CatalogPage
+import com.meow.ledger.ui.manage.FixedBillsPage
+import com.meow.ledger.ui.manage.MineHome
+import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.theme.DarkPalette
 import com.meow.ledger.ui.theme.LightPalette
@@ -55,7 +72,14 @@ import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun MeowApp() {
-    val palette = if (isSystemInDarkTheme()) DarkPalette else LightPalette
+    val settings = SettingsStore(AppGraph.database)
+    var theme by rememberSaveable { mutableStateOf(settings.text(KEY_THEME, THEME_SYSTEM)) }
+    val dark = when (theme) {
+        THEME_DARK -> true
+        THEME_LIGHT -> false
+        else -> isSystemInDarkTheme()
+    }
+    val palette = if (dark) DarkPalette else LightPalette
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     val today = (now.year * 10000 + now.monthNumber * 100 + now.dayOfMonth).toLong()
     seedIfEmpty(AppGraph.database, today)
@@ -71,13 +95,13 @@ fun MeowApp() {
     var detailMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var statsType by rememberSaveable { mutableStateOf(TYPE_EXPENSE) }
     var statsPeriod by rememberSaveable { mutableStateOf(TrendPeriod.MONTH) }
-    val settings = SettingsStore(AppGraph.database)
     val auto = AutoRepository(AppGraph.database)
     var autoEnabled by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_BILL, false)) }
     var autoConfirm by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_CONFIRM, false)) }
     var keepAlive by rememberSaveable { mutableStateOf(settings.flag(KEY_KEEP_ALIVE, false)) }
     var watchApps by rememberSaveable { mutableStateOf(settings.watchApps()) }
     var autoPage by rememberSaveable { mutableStateOf("") }
+    var minePage by rememberSaveable { mutableStateOf("") }
     var captureSource by rememberSaveable { mutableStateOf("") }
     var captureMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -179,9 +203,13 @@ fun MeowApp() {
                             onSettings = { autoPage = "settings" },
                         )
                     }
-                    else -> Placeholder(tab)
+                    else -> if (minePage.isNotEmpty()) {
+                        MinePages(minePage, settings, { theme = it }, { minePage = it }, { minePage = "" })
+                    } else {
+                        MineHome(AccountRepository(AppGraph.database).profile()) { minePage = it }
+                    }
                 }
-                if (tab != 2 || autoPage.isEmpty()) Dock(
+                if ((tab != 2 || autoPage.isEmpty()) && (tab != 3 || minePage.isEmpty())) Dock(
                     selected = tab,
                     onSelect = { tab = it },
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
@@ -244,6 +272,24 @@ private fun AutoPages(
             onAutoConfirm(on)
             settings.setFlag(KEY_AUTO_CONFIRM, on)
         }
+    }
+}
+
+@Composable
+private fun MinePages(page: String, settings: SettingsStore, onTheme: (String) -> Unit, onOpen: (String) -> Unit, onBack: () -> Unit) {
+    val database = AppGraph.database
+    when {
+        page.startsWith("book") -> BooksPage(BookRepository(database), page, onOpen, onBack)
+        page.startsWith("asset") -> AssetsPage(AssetRepository(database), page, onOpen, onBack)
+        page.startsWith("categor") || page.startsWith("tag") -> CatalogPage(CatalogRepository(database), page, onOpen, onBack)
+        page.startsWith("fixed") -> FixedBillsPage(FixedBillRepository(database), page, onOpen, onBack)
+        page.startsWith("installment") || page.startsWith("save-plan") -> PlansPage(PlanRepository(database), page, onOpen, onBack)
+        else -> AccountPage(page, AccountRepository(database), settings, onTheme, onClear = {
+            database.transaction {
+                database.billQueries.selectByRange(0, 0, 99999999).executeAsList()
+                    .forEach { database.billQueries.deleteOne(it.member_id, it.client_id) }
+            }
+        }, onBack)
     }
 }
 

@@ -121,7 +121,7 @@ class BookRepository(private val db: MeowDatabase) {
         return true
     }
 
-    private fun roleOf(bookId: Long): Long =
+    fun roleOf(bookId: Long): Long =
         db.memberQueries.selectMember(LOCAL_MEMBER_ID, bookId).executeAsOneOrNull()?.role ?: ROLE_OWNER
 
 }
