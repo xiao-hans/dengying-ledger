@@ -42,6 +42,9 @@ SELECT * FROM bill
 WHERE (:bookId = 0 OR book_id = :bookId) AND day >= :fromDay AND day <= :toDay AND status = 0
 ORDER BY day DESC, local_create_time DESC;
 
+selectAll:
+SELECT * FROM bill WHERE status = 0 ORDER BY day DESC, local_create_time DESC;
+
 selectOne:
 SELECT * FROM bill WHERE member_id = :memberId AND client_id = :clientId;
 

@@ -53,14 +53,19 @@ import com.meow.ledger.shared.manage.AccountRepository
 import com.meow.ledger.shared.manage.AssetRepository
 import com.meow.ledger.shared.manage.BookRepository
 import com.meow.ledger.shared.manage.CatalogRepository
+import com.meow.ledger.shared.manage.BudgetRepository
+import com.meow.ledger.shared.manage.ExchangeRepository
 import com.meow.ledger.shared.manage.FixedBillRepository
 import com.meow.ledger.shared.manage.PlanRepository
 import com.meow.ledger.ui.manage.AccountPage
 import com.meow.ledger.ui.manage.AssetsPage
 import com.meow.ledger.ui.manage.BooksPage
 import com.meow.ledger.ui.manage.CatalogPage
+import com.meow.ledger.ui.manage.BudgetPage
+import com.meow.ledger.ui.manage.ExchangePage
 import com.meow.ledger.ui.manage.FixedBillsPage
 import com.meow.ledger.ui.manage.MineHome
+import com.meow.ledger.ui.manage.SearchPage
 import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.theme.DarkPalette
@@ -204,7 +209,7 @@ fun MeowApp() {
                         )
                     }
                     else -> if (minePage.isNotEmpty()) {
-                        MinePages(minePage, settings, { theme = it }, { minePage = it }, { minePage = "" })
+                        MinePages(minePage, settings, { theme = it }, { minePage = it }, { minePage = "" }, { openBill = it })
                     } else {
                         MineHome(AccountRepository(AppGraph.database).profile()) { minePage = it }
                     }
@@ -276,9 +281,20 @@ private fun AutoPages(
 }
 
 @Composable
-private fun MinePages(page: String, settings: SettingsStore, onTheme: (String) -> Unit, onOpen: (String) -> Unit, onBack: () -> Unit) {
+private fun MinePages(
+    page: String,
+    settings: SettingsStore,
+    onTheme: (String) -> Unit,
+    onOpen: (String) -> Unit,
+    onBack: () -> Unit,
+    onOpenBill: (String) -> Unit,
+) {
     val database = AppGraph.database
+    val month = com.meow.ledger.shared.stats.periodSpan(com.meow.ledger.shared.stats.TrendPeriod.MONTH, 1).second / 100
     when {
+        page.startsWith("budget") -> BudgetPage(BudgetRepository(database), month, page, onOpen, onBack)
+        page == "search" -> SearchPage(ExchangeRepository(database), onOpenBill, onBack)
+        page == "export" || page.startsWith("import") -> ExchangePage(ExchangeRepository(database), AccountRepository(database), page, onOpen, onBack)
         page.startsWith("book") -> BooksPage(BookRepository(database), page, onOpen, onBack)
         page.startsWith("asset") -> AssetsPage(AssetRepository(database), page, onOpen, onBack)
         page.startsWith("categor") || page.startsWith("tag") -> CatalogPage(CatalogRepository(database), page, onOpen, onBack)

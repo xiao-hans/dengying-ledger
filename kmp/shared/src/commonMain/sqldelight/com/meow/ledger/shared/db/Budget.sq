@@ -18,6 +18,12 @@ upsert:
 INSERT OR REPLACE INTO budget(book_id, day, money, acf_money, is_remind, remind_rate, carry_down, is_copy)
 VALUES ?;
 
+deleteOne:
+DELETE FROM budget WHERE book_id = :bookId AND day = :day;
+
+deleteCatesOfMonth:
+DELETE FROM cate_budget WHERE book_id = :bookId AND day = :day;
+
 CREATE TABLE cate_budget (
   book_id INTEGER NOT NULL,
   day INTEGER NOT NULL,
