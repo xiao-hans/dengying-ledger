@@ -1,0 +1,78 @@
+-- 分期计划。
+CREATE TABLE installment_plan (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL DEFAULT '',
+  deduction_asset_id INTEGER NOT NULL DEFAULT 0,
+  start_date INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  total_count INTEGER NOT NULL DEFAULT 0,
+  executed_count INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  interest_type INTEGER NOT NULL DEFAULT 0,
+  remainder_process_type INTEGER NOT NULL DEFAULT 0,
+  remaining_money INTEGER NOT NULL DEFAULT 0,
+  remaining_interest INTEGER NOT NULL DEFAULT 0,
+  next_execute_date INTEGER NOT NULL DEFAULT 0,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  tag_ids TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectAll:
+SELECT * FROM installment_plan ORDER BY create_time DESC;
+
+upsert:
+INSERT OR REPLACE INTO installment_plan(
+  id, member_id, name, deduction_asset_id, start_date, money, total_count, executed_count,
+  interest, interest_type, remainder_process_type, remaining_money, remaining_interest,
+  next_execute_date, book_id, member_cate_id, not_in_budget, desc, images, tag_ids,
+  status, create_time, update_time
+) VALUES ?;
+
+-- 存钱计划。
+CREATE TABLE save_plan (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  type_id INTEGER NOT NULL DEFAULT 0,
+  target_money INTEGER NOT NULL DEFAULT 0,
+  saved_money INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectSavePlans:
+SELECT * FROM save_plan WHERE archived = 0 ORDER BY create_time DESC;
+
+upsertSavePlan:
+INSERT OR REPLACE INTO save_plan(
+  id, name, icon, type_id, target_money, saved_money, status, archived, desc, create_time, update_time
+) VALUES ?;
+
+CREATE TABLE save_plan_item (
+  id TEXT NOT NULL PRIMARY KEY,
+  plan_id TEXT NOT NULL DEFAULT '',
+  num INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  remark TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectSaveItems:
+SELECT * FROM save_plan_item WHERE plan_id = :planId ORDER BY num;
+
+upsertSaveItem:
+INSERT OR REPLACE INTO save_plan_item(id, plan_id, num, money, status, remark, create_time, update_time)
+VALUES ?;

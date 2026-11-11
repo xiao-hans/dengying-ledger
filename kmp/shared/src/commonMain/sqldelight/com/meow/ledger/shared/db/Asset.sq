@@ -1,0 +1,35 @@
+-- 资产账户。balance_cents / credit_line 均为整数分。
+CREATE TABLE assets (
+  id INTEGER NOT NULL PRIMARY KEY,
+  type_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 0,
+  type_name TEXT NOT NULL DEFAULT '',
+  type_title TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL DEFAULT '',
+  desc TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  currency TEXT NOT NULL DEFAULT 'CNY',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  credit_line INTEGER NOT NULL DEFAULT 0,
+  repayment_date INTEGER NOT NULL DEFAULT 0,
+  statement_date INTEGER NOT NULL DEFAULT 0,
+  is_remind INTEGER NOT NULL DEFAULT 0,
+  is_total_assets INTEGER NOT NULL DEFAULT 1,
+  is_next_bills INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  balance_cents INTEGER NOT NULL DEFAULT 0
+);
+
+selectAll:
+SELECT * FROM assets WHERE status = 0 ORDER BY id;
+
+selectOne:
+SELECT * FROM assets WHERE id = :id;
+
+upsert:
+INSERT OR REPLACE INTO assets(
+  id, type_id, type, type_name, type_title, name, desc, icon, currency,
+  create_date, update_date, credit_line, repayment_date, statement_date,
+  is_remind, is_total_assets, is_next_bills, status, balance_cents
+) VALUES ?;

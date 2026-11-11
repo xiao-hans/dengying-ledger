@@ -1,0 +1,47 @@
+-- 周期账单。
+CREATE TABLE fixed_bill (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  fixed_type INTEGER NOT NULL DEFAULT 0,
+  fixed_day INTEGER NOT NULL DEFAULT 1,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  tag_ids TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  next_execute_date INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectAll:
+SELECT * FROM fixed_bill ORDER BY create_time DESC;
+
+upsert:
+INSERT OR REPLACE INTO fixed_bill(
+  id, member_cate_id, money, type, fixed_type, fixed_day, book_id, assets_id,
+  desc, tag_ids, status, next_execute_date, create_time, update_time
+) VALUES ?;
+
+deleteOne:
+DELETE FROM fixed_bill WHERE id = :id;
+
+-- 记账提醒。
+CREATE TABLE bill_remind (
+  id TEXT NOT NULL PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  time TEXT NOT NULL DEFAULT '',
+  repeat_type INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectReminds:
+SELECT * FROM bill_remind ORDER BY create_time DESC;
+
+upsertRemind:
+INSERT OR REPLACE INTO bill_remind(id, title, time, repeat_type, enabled, create_time, update_time)
+VALUES ?;

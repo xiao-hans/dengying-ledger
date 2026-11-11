@@ -1,0 +1,41 @@
+-- 远程开关与配置，value 存 JSON 字符串。
+CREATE TABLE remote_config (
+  key TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT '',
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectOne:
+SELECT * FROM remote_config WHERE key = :key;
+
+upsert:
+INSERT OR REPLACE INTO remote_config(key, value, update_time) VALUES ?;
+
+-- 用户设置（深浅色、应用锁等）。
+CREATE TABLE user_setting (
+  key TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT ''
+);
+
+selectSetting:
+SELECT value FROM user_setting WHERE key = :key;
+
+upsertSetting:
+INSERT OR REPLACE INTO user_setting(key, value) VALUES ?;
+
+-- 同步队列：本地先写，云端不可达时排队。
+CREATE TABLE sync_queue (
+  id TEXT NOT NULL PRIMARY KEY,
+  path TEXT NOT NULL DEFAULT '',
+  payload TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+selectPendingSync:
+SELECT * FROM sync_queue ORDER BY create_time;
+
+enqueue:
+INSERT OR REPLACE INTO sync_queue(id, path, payload, create_time) VALUES ?;
+
+dequeue:
+DELETE FROM sync_queue WHERE id = :id;

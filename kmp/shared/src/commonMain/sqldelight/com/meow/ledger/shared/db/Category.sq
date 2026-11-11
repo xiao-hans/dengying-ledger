@@ -1,0 +1,24 @@
+-- type 1 支出 / 2 收入。
+CREATE TABLE category (
+  id INTEGER NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  cate_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL DEFAULT '',
+  icon_id INTEGER NOT NULL DEFAULT 0,
+  base_icon TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  is_custom INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  sort INTEGER NOT NULL DEFAULT 0,
+  hidden INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (id, member_id)
+);
+
+selectByType:
+SELECT * FROM category WHERE type = :type AND hidden = 0 ORDER BY sort, id;
+
+upsert:
+INSERT OR REPLACE INTO category(
+  id, member_id, cate_id, type, title, icon_id, base_icon, icon, is_custom, status, sort, hidden
+) VALUES ?;

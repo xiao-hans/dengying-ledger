@@ -1,0 +1,31 @@
+-- 退款记录，挂在原账单 client_id 上。money 为整数分。
+CREATE TABLE refund_bill (
+  id TEXT NOT NULL PRIMARY KEY,
+  client_id TEXT NOT NULL DEFAULT '',
+  member_id INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  asset_id INTEGER NOT NULL DEFAULT 0,
+  day INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX refund_client ON refund_bill(client_id);
+
+selectByBill:
+SELECT * FROM refund_bill WHERE client_id = :clientId AND status = 0 ORDER BY create_date;
+
+selectByRange:
+SELECT * FROM refund_bill WHERE day >= :fromDay AND day <= :toDay AND status = 0;
+
+upsert:
+INSERT OR REPLACE INTO refund_bill(
+  id, client_id, member_id, money, asset_id, day, desc, images, source, status, create_date, update_date
+) VALUES ?;
+
+deleteOne:
+DELETE FROM refund_bill WHERE id = :id;

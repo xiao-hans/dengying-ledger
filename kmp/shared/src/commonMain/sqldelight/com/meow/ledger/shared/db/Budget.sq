@@ -1,0 +1,34 @@
+-- 预算。day 为月份 yyyyMM；money / acf_money / carry_down 均为整数分。
+CREATE TABLE budget (
+  book_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  acf_money INTEGER NOT NULL DEFAULT 0,
+  is_remind INTEGER NOT NULL DEFAULT 0,
+  remind_rate INTEGER NOT NULL DEFAULT 0,
+  carry_down INTEGER NOT NULL DEFAULT 0,
+  is_copy INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (book_id, day)
+);
+
+selectOne:
+SELECT * FROM budget WHERE book_id = :bookId AND day = :day;
+
+upsert:
+INSERT OR REPLACE INTO budget(book_id, day, money, acf_money, is_remind, remind_rate, carry_down, is_copy)
+VALUES ?;
+
+CREATE TABLE cate_budget (
+  book_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  member_cate_id INTEGER NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  acf_money INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (book_id, day, member_cate_id)
+);
+
+selectByMonth:
+SELECT * FROM cate_budget WHERE book_id = :bookId AND day = :day;
+
+upsertCate:
+INSERT OR REPLACE INTO cate_budget(book_id, day, member_cate_id, money, acf_money) VALUES ?;

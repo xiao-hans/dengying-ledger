@@ -1,0 +1,19 @@
+CREATE TABLE tag (
+  tag_id INTEGER NOT NULL PRIMARY KEY,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL DEFAULT '',
+  sort INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+selectByBook:
+SELECT * FROM tag WHERE book_id = :bookId ORDER BY sort, tag_id;
+
+upsert:
+INSERT OR REPLACE INTO tag(tag_id, book_id, member_id, name, sort, create_date, update_date)
+VALUES ?;
+
+deleteOne:
+DELETE FROM tag WHERE tag_id = :tagId;

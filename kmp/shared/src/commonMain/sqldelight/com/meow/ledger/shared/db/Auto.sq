@@ -1,0 +1,37 @@
+-- 自动记账待确认队列。status 0 待确认 / 1 已入账 / 2 已忽略。
+-- hash = hash(sourceApp + money + occurredAt/60s + merchant)，三路采集共用的去重键。
+CREATE TABLE auto_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  hash TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT '',
+  source_app TEXT NOT NULL DEFAULT '',
+  merchant TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  occurred_at INTEGER NOT NULL DEFAULT 0,
+  raw_text TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  book_id INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  rule_id INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX auto_event_hash ON auto_event(hash);
+
+selectPending:
+SELECT * FROM auto_event WHERE status = 0 ORDER BY occurred_at DESC;
+
+selectByHash:
+SELECT * FROM auto_event WHERE hash = :hash;
+
+deleteOne:
+DELETE FROM auto_event WHERE id = :id;
+upsert:
+INSERT OR REPLACE INTO auto_event(
+  id, hash, source, source_app, merchant, money, type, occurred_at, raw_text, status,
+  member_cate_id, assets_id, tag_ids, book_id, desc, rule_id, create_time
+) VALUES ?;

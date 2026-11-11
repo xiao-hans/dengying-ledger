@@ -1,0 +1,28 @@
+-- 自动记账匹配规则。
+CREATE TABLE rule (
+  id INTEGER NOT NULL PRIMARY KEY,
+  key_word TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX rule_keyword ON rule(key_word);
+
+selectAll:
+SELECT * FROM rule ORDER BY update_date DESC;
+
+upsert:
+INSERT OR REPLACE INTO rule(
+  id, key_word, source, member_id, type, book_id, member_cate_id, assets_id, tag_ids,
+  create_date, update_date
+) VALUES ?;
+
+deleteOne:
+DELETE FROM rule WHERE id = :id;

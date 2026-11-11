@@ -1,0 +1,58 @@
+-- 账单。金额全部整数分；type 1 支出 / 2 收入 / 3 转账；source 0 手工 / 1 通知 / 2 截屏 / 3 OCR / 4 导入 / 5 周期。
+-- 复合主键 (member_id, client_id)：client_id 是端侧幂等键。
+CREATE TABLE bill (
+  member_id INTEGER NOT NULL,
+  client_id TEXT NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  refund_money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  exchange INTEGER NOT NULL DEFAULT 0,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'CNY',
+  day INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
+  images TEXT NOT NULL DEFAULT '',
+  update_date INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  to_assets_id INTEGER NOT NULL DEFAULT 0,
+  from_assets_id INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  interest_reckon_type INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  import_id INTEGER NOT NULL DEFAULT 0,
+  repayment_day INTEGER NOT NULL DEFAULT 0,
+  local_create_time INTEGER NOT NULL DEFAULT 0,
+  local_update_time INTEGER NOT NULL DEFAULT 0,
+  installment_plan_id TEXT NOT NULL DEFAULT '',
+  installment_num INTEGER NOT NULL DEFAULT 0,
+  installment_money INTEGER NOT NULL DEFAULT 0,
+  installment_interest INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, client_id)
+);
+
+CREATE INDEX bill_day ON bill(day);
+CREATE INDEX bill_book_day ON bill(book_id, day);
+
+selectByRange:
+SELECT * FROM bill
+WHERE (:bookId = 0 OR book_id = :bookId) AND day >= :fromDay AND day <= :toDay AND status = 0
+ORDER BY day DESC, local_create_time DESC;
+
+selectOne:
+SELECT * FROM bill WHERE member_id = :memberId AND client_id = :clientId;
+
+upsert:
+INSERT OR REPLACE INTO bill(
+  member_id, client_id, money, refund_money, type, exchange, book_id, member_cate_id,
+  currency, day, desc, not_in_budget, images, update_date, create_date, status,
+  to_assets_id, from_assets_id, interest, interest_reckon_type, tag_ids, source,
+  import_id, repayment_day, local_create_time, local_update_time,
+  installment_plan_id, installment_num, installment_money, installment_interest
+) VALUES ?;
+
+deleteOne:
+DELETE FROM bill WHERE member_id = :memberId AND client_id = :clientId;

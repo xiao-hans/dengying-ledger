@@ -1,0 +1,29 @@
+CREATE TABLE bill_book (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  icon_id INTEGER NOT NULL DEFAULT 0,
+  icon TEXT NOT NULL DEFAULT '',
+  tag TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  month_start_date INTEGER NOT NULL DEFAULT 1
+);
+
+selectAll:
+SELECT * FROM bill_book ORDER BY create_date;
+
+selectOne:
+SELECT * FROM bill_book WHERE id = :id;
+
+upsert:
+INSERT OR REPLACE INTO bill_book(id, name, icon_id, icon, tag, create_date, month_start_date)
+VALUES ?;
+
+deleteOne:
+DELETE FROM bill_book WHERE id = :id;
+
+CREATE TABLE member_book (
+  member_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL,
+  role INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, book_id)
+);
