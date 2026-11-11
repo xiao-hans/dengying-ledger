@@ -1,4 +1,4 @@
--- 周期账单。
+-- 周期账单。not_in_budget：1 不计入预算，0 计入。
 CREATE TABLE fixed_bill (
   id TEXT NOT NULL PRIMARY KEY,
   member_cate_id INTEGER NOT NULL DEFAULT 0,
@@ -11,6 +11,7 @@ CREATE TABLE fixed_bill (
   desc TEXT NOT NULL DEFAULT '',
   tag_ids TEXT NOT NULL DEFAULT '',
   status INTEGER NOT NULL DEFAULT 0,
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
   next_execute_date INTEGER NOT NULL DEFAULT 0,
   create_time INTEGER NOT NULL DEFAULT 0,
   update_time INTEGER NOT NULL DEFAULT 0
@@ -22,17 +23,20 @@ SELECT * FROM fixed_bill ORDER BY create_time DESC;
 upsert:
 INSERT OR REPLACE INTO fixed_bill(
   id, member_cate_id, money, type, fixed_type, fixed_day, book_id, assets_id,
-  desc, tag_ids, status, next_execute_date, create_time, update_time
+  desc, tag_ids, status, not_in_budget, next_execute_date, create_time, update_time
 ) VALUES ?;
 
 deleteOne:
 DELETE FROM fixed_bill WHERE id = :id;
 
--- 记账提醒。
+-- 记账提醒。day 是每月几号，hour 是几点。
 CREATE TABLE bill_remind (
   id TEXT NOT NULL PRIMARY KEY,
   title TEXT NOT NULL DEFAULT '',
   time TEXT NOT NULL DEFAULT '',
+  day INTEGER NOT NULL DEFAULT 1,
+  hour INTEGER NOT NULL DEFAULT 9,
+  fixed_bill_id TEXT NOT NULL DEFAULT '',
   repeat_type INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1,
   create_time INTEGER NOT NULL DEFAULT 0,
@@ -43,5 +47,9 @@ selectReminds:
 SELECT * FROM bill_remind ORDER BY create_time DESC;
 
 upsertRemind:
-INSERT OR REPLACE INTO bill_remind(id, title, time, repeat_type, enabled, create_time, update_time)
-VALUES ?;
+INSERT OR REPLACE INTO bill_remind(
+  id, title, time, day, hour, fixed_bill_id, repeat_type, enabled, create_time, update_time
+) VALUES ?;
+
+deleteRemind:
+DELETE FROM bill_remind WHERE id = :id;

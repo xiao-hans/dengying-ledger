@@ -1,0 +1,12 @@
+-- 账本成员。role 0 成员 / 1 创建者。
+selectMembers:
+SELECT * FROM member_book WHERE book_id = :bookId ORDER BY role DESC, member_id;
+
+selectMember:
+SELECT * FROM member_book WHERE member_id = :memberId AND book_id = :bookId;
+
+upsertMember:
+INSERT OR REPLACE INTO member_book(member_id, book_id, role) VALUES ?;
+
+deleteMember:
+DELETE FROM member_book WHERE member_id = :memberId AND book_id = :bookId;

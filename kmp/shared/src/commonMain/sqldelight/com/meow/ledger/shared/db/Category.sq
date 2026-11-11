@@ -18,6 +18,15 @@ CREATE TABLE category (
 selectByType:
 SELECT * FROM category WHERE type = :type AND hidden = 0 ORDER BY sort, id;
 
+selectAllOfType:
+SELECT * FROM category WHERE type = :type ORDER BY sort, id;
+
+selectOne:
+SELECT * FROM category WHERE id = :id AND member_id = :memberId;
+
+deleteOne:
+DELETE FROM category WHERE id = :id AND member_id = :memberId;
+
 upsert:
 INSERT OR REPLACE INTO category(
   id, member_id, cate_id, type, title, icon_id, base_icon, icon, is_custom, status, sort, hidden

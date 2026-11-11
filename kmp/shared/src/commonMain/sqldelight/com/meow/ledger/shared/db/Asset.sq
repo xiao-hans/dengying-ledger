@@ -22,7 +22,10 @@ CREATE TABLE assets (
 );
 
 selectAll:
-SELECT * FROM assets WHERE status = 0 ORDER BY id;
+SELECT * FROM assets WHERE status = 1 ORDER BY id;
+
+selectEvery:
+SELECT * FROM assets ORDER BY id;
 
 selectOne:
 SELECT * FROM assets WHERE id = :id;
@@ -33,3 +36,6 @@ INSERT OR REPLACE INTO assets(
   create_date, update_date, credit_line, repayment_date, statement_date,
   is_remind, is_total_assets, is_next_bills, status, balance_cents
 ) VALUES ?;
+
+deleteOne:
+DELETE FROM assets WHERE id = :id;
