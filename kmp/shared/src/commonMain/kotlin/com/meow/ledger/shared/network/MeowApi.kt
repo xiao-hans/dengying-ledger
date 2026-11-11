@@ -357,3 +357,110 @@ class RefundContracts(private val api: MeowApi) {
     suspend fun delete(fields: Map<String, String>) =
         api.call(EndpointRequest("BillRefund/Delete", fields = fields))
 }
+
+
+/** Account 10 个契约：手机验证码、三方绑定与设备登录。 */
+class AccountContracts(private val api: MeowApi) {
+    suspend fun sendCode(phone: String) =
+        api.call(EndpointRequest("Account/SendCode", fields = mapOf("phone" to phone)))
+
+    suspend fun loginByPhone(phone: String, code: String) = api.call(
+        EndpointRequest("Account/LoginByPhone", fields = mapOf("phone" to phone, "code" to code)),
+    )
+
+    suspend fun loginByDevice() = api.call(EndpointRequest("Account/LoginByDevice"))
+
+    suspend fun activateV3(distinctId: String) =
+        api.call(EndpointRequest("Account/ActivateV3", fields = mapOf("distinctId" to distinctId)))
+
+    suspend fun bindPhone(phone: String, code: String, oldPhone: String) = api.call(
+        EndpointRequest(
+            "Account/BindPhone",
+            fields = mapOf("phone" to phone, "code" to code, "oldPhone" to oldPhone),
+        ),
+    )
+
+    suspend fun unbind() = api.call(EndpointRequest("Account/Unbind"))
+
+    suspend fun bindQQ(fields: Map<String, String>) =
+        api.call(EndpointRequest("Account/BindQQ", fields = fields))
+
+    suspend fun bindWechat(fields: Map<String, String>) =
+        api.call(EndpointRequest("Account/BindWechat", fields = fields))
+
+    suspend fun loginByQQ(fields: Map<String, String>) =
+        api.call(EndpointRequest("Account/LoginByQQ", fields = fields))
+
+    suspend fun loginByWechat(fields: Map<String, String>) =
+        api.call(EndpointRequest("Account/LoginByWechat", fields = fields))
+}
+
+/** Member 10 个契约：资料、设置、消息推送提醒。 */
+class MemberContracts(private val api: MeowApi) {
+    suspend fun getInfo() = api.call(EndpointRequest("Member/GetInfo"))
+
+    suspend fun getContractInfo() = api.call(EndpointRequest("Member/GetMemberContractInfo"))
+
+    suspend fun getSetting() = api.call(EndpointRequest("Member/GetSetting"))
+
+    suspend fun updateSetting(key: String, value: String) = api.call(
+        EndpointRequest("Member/UpdateSetting", fields = mapOf("key" to key, "value" to value)),
+    )
+
+    suspend fun updateNickname(nickname: String) =
+        api.call(EndpointRequest("Member/UpdateNickname", fields = mapOf("nickname" to nickname)))
+
+    suspend fun refreshToken(gtCid: String) =
+        api.call(EndpointRequest("Member/RefreshToken", fields = mapOf("gtCid" to gtCid)))
+
+    suspend fun createReminder(fields: Map<String, String>) =
+        api.call(EndpointRequest("Member/CreateReminder", fields = fields))
+
+    suspend fun updateReminder(fields: Map<String, String>) =
+        api.call(EndpointRequest("Member/UpdateReminder", fields = fields))
+
+    suspend fun reminderList() = api.call(EndpointRequest("Member/MemberReminderList"))
+
+    suspend fun initSSOldUserInfo() = api.call(EndpointRequest("Member/InitSSOldUserInfo"))
+}
+
+/** Order 5 个契约：VIP 下单与支付状态回查。 */
+class OrderContracts(private val api: MeowApi) {
+    suspend fun createOrder(fields: Map<String, String>) =
+        api.call(EndpointRequest("Order/v2/CreateOrder", fields = fields))
+
+    suspend fun vipConfigs() = api.call(EndpointRequest("Order/v2/VipConfigs"))
+
+    suspend fun checkStatus(orderId: String) =
+        api.call(EndpointRequest("Order/CheckStatus", fields = mapOf("orderId" to orderId)))
+
+    suspend fun rechargeDiscountConfig() =
+        api.call(EndpointRequest("Order/GetRechargeDiscountConfig"))
+
+    suspend fun alipayUnSign() = api.call(EndpointRequest("Order/AlipayUnSign"))
+}
+
+/** VipGroupBuy 3 个契约：拼团展示码、列表与绑定。 */
+class VipGroupBuyContracts(private val api: MeowApi) {
+    suspend fun list() = api.call(EndpointRequest("VipGroupBuy/List", method = "GET"))
+
+    suspend fun bind() = api.call(EndpointRequest("VipGroupBuy/Bind"))
+
+    suspend fun getByShowId(showId: String) =
+        api.call(EndpointRequest("VipGroupBuy/GetByShowId", fields = mapOf("showId" to showId)))
+}
+
+/** S7 平台契约 5 个：运营弹窗、更新提醒、埋点、远程配置与个人中心图标。 */
+class PlatformContracts(private val api: MeowApi) {
+    suspend fun getDialog() = api.call(EndpointRequest("Operation/GetDialog"))
+
+    suspend fun getUpdateRemind() = api.call(EndpointRequest("Operation/GetUpdateRemind"))
+
+    suspend fun behaviorAdd() = api.call(EndpointRequest("Behavior/Add"))
+
+    suspend fun configGetV2(fields: Map<String, String>) =
+        api.call(EndpointRequest("Config/GetV2", fields = fields))
+
+    suspend fun personCenterIcons() =
+        api.call(EndpointRequest("PersonCenter/GetPersonCenterIcons", method = "GET"))
+}

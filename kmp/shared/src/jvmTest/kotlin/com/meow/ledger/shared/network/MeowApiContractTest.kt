@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MeowApiContractTest {
     private class RecordingApi : MeowApi {
@@ -113,4 +114,56 @@ class MeowApiContractTest {
     }
 
     private fun assertTrue(value: Boolean) = kotlin.test.assertTrue(value)
+    @Test
+    fun `s6 s7 contracts register 33 endpoints`() {
+        val api = RecordingApi()
+        runBlocking {
+            AccountContracts(api).sendCode("13800138000")
+            AccountContracts(api).loginByPhone("13800138000", "1234")
+            AccountContracts(api).loginByDevice()
+            AccountContracts(api).activateV3("d1")
+            AccountContracts(api).bindPhone("13800138000", "1234", "")
+            AccountContracts(api).unbind()
+            AccountContracts(api).bindQQ(emptyMap())
+            AccountContracts(api).bindWechat(emptyMap())
+            AccountContracts(api).loginByQQ(emptyMap())
+            AccountContracts(api).loginByWechat(emptyMap())
+
+            MemberContracts(api).getInfo()
+            MemberContracts(api).getContractInfo()
+            MemberContracts(api).getSetting()
+            MemberContracts(api).updateSetting("key", "value")
+            MemberContracts(api).updateNickname("喵")
+            MemberContracts(api).refreshToken("gt")
+            MemberContracts(api).createReminder(emptyMap())
+            MemberContracts(api).updateReminder(emptyMap())
+            MemberContracts(api).reminderList()
+            MemberContracts(api).initSSOldUserInfo()
+
+            OrderContracts(api).createOrder(emptyMap())
+            OrderContracts(api).vipConfigs()
+            OrderContracts(api).checkStatus("o1")
+            OrderContracts(api).rechargeDiscountConfig()
+            OrderContracts(api).alipayUnSign()
+
+            VipGroupBuyContracts(api).list()
+            VipGroupBuyContracts(api).bind()
+            VipGroupBuyContracts(api).getByShowId("s1")
+
+            PlatformContracts(api).getDialog()
+            PlatformContracts(api).getUpdateRemind()
+            PlatformContracts(api).behaviorAdd()
+            PlatformContracts(api).configGetV2(emptyMap())
+            PlatformContracts(api).personCenterIcons()
+        }
+        assertEquals(33, api.requests.size)
+        assertTrue(api.requests.all { it.path in EndpointRegistry.uniquePaths() })
+    }
+
+    @Test
+    fun `catalog covers all 112 endpoints`() {
+        // ImportBills 两个重载同路径，112 条 spec 唯一路径 111。
+        assertEquals(112, EndpointRegistry.all.size)
+        assertEquals(111, EndpointRegistry.uniquePaths().size)
+    }
 }
