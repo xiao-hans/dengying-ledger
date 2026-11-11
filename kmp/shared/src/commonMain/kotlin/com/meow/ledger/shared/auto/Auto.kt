@@ -55,7 +55,12 @@ val GUIDE_STEPS = listOf(
     GuideStep("确认后才入账", "识别结果先进入待确认队列，重复事件会折叠。你可以逐条修改或批量通过，绝不会静默写进账本。"),
 )
 
-private val MONEY_RE = Regex("""(?:[¥￥]|RMB|人民币)?\s*(-?\d+(?:\.\d{1,2})?)\s*(?:元|块|[¥￥])?""")
+/**
+ * 金额正则：带货币符号、带单位、或带小数点的数字才算金额。
+ * 裸整数（如「2026年」「100分」里的数字）不是金额；日期、时间与折扣紧跟字会被否定前瞻排除。
+ */
+private val MONEY_RE = Regex("""(?:[¥￥]|RMB|人民币)\s*(-?\d+(?:\.\d{1,2})?|-?\d+\s*(?:元|块))|-?\d+\.\d{1,2}(?!\d)|-?\d+\s*(?:元|块)(?!\s*[年月日时分秒号折%])""")
+
 private val NOISE_RE = Regex("[\u652f\u4ed8\u6210\u529f\u4ed8\u6b3e\u6210\u529f\u5df2\u652f\u4ed8\u6536\u6b3e\u6210\u529f\u5df2\u6536\u6b3e\u4ea4\u6613\u6210\u529f\u6d88\u8d39\u652f\u51fa\u6536\u5165\u5230\u8d26\u8f6c\u8d26\u8ba2\u5355\u8d26\u5355\u60a8\u4f60\u5df2\u6210\u529f\u91d1\u989d\u4f59\u989d\u672c\u6b21\u5b8c\u6210\u4eba\u6c11\u5e01\u5143\u6574\uff1a:\u00b7,\uff0c\u3002!\uff01\\s]")
 
 /** 解析结果。没有有效金额时为 null。 */
@@ -67,12 +72,13 @@ data class Parsed(
 )
 
 /** 从原始文本提取金额、商户与收支方向。带货币符号或单位的金额优先。 */
-fun parseRaw(raw: String, source: String): Parsed? {
+fun parseRaw(raw: String, source: String, preferAfterMoney: Boolean = false): Parsed? {
     val text = raw.replace(Regex("\\s+"), " ").trim()
     if (text.isEmpty()) return null
     var best: Pair<Long, Int>? = null
     for (m in MONEY_RE.findAll(text)) {
-        val cents = toCents(m.groupValues[1]) ?: continue
+        val digits = Regex("""-?\d+(?:\.\d{1,2})?""").find(m.value)?.value ?: continue
+        val cents = toCents(digits) ?: continue
         if (kotlin.math.abs(cents) < 1) continue
         val marked = m.value.contains('¥') || m.value.contains('￥') || m.value.contains('元') || m.value.contains('块')
         val score = (if (marked) 1000 else 0) + kotlin.math.abs(cents).toInt()
@@ -82,10 +88,20 @@ fun parseRaw(raw: String, source: String): Parsed? {
     val income = Regex("收款|到账|已收|转入|退款|收入|红包已领|入账").containsMatchIn(text)
     val expense = Regex("付款|支付|消费|支出|转出|扣款|已付").containsMatchIn(text)
     val type = if (income && !expense) TYPE_INCOME else TYPE_EXPENSE
-    return Parsed(money, extractMerchant(text), type, sourceLabel(source))
+    return Parsed(money, extractMerchant(text, preferAfterMoney), type, sourceLabel(source))
 }
 
-private fun extractMerchant(text: String): String {
+private fun extractMerchant(text: String, preferAfterMoney: Boolean = false): String {
+    if (preferAfterMoney) {
+        // 票据版式里商户名紧跟金额行；从最后一个金额之后取第一个像名字的词。
+        val last = MONEY_RE.findAll(text).lastOrNull()
+        if (last != null) {
+            val rest = text.substring(last.range.last + 1)
+            val token = rest.split(Regex("[\\s,，。;.；:：|/年月日时分秒]+"))
+                .firstOrNull { it.length in 2..18 && !it.all(Char::isDigit) }
+            if (token != null) return token
+        }
+    }
     val labeled = Regex("(?:商户|商家|收款方|付款给|收款人|店铺|店名|交易对方)\\s*[：:为]?\\s*([^\\s,\uff0c\u3002;\uff1b:\uff1a\u00a5\uffe5\\d]{2,18})")
         .find(text)
     if (labeled != null) return labeled.groupValues[1].trim()
@@ -194,6 +210,48 @@ class AutoRepository(private val db: MeowDatabase) {
             created++
         }
         return CaptureResult(created, duplicate, unsupported)
+    }
+
+    /**
+     * 票据 OCR 专用：整图文本一次解析，只产出一条候选。
+     * 不按行拆分——金额行和商户行在票据里是分开的，拆开会把商户丢成「未识别商户」。
+     */
+    fun captureTicket(
+        rawText: String,
+        source: String,
+        occurredAt: Long = currentTimeMillis(),
+        sourceApp: String = sourceLabel(source),
+    ): CaptureResult {
+        val parsed = parseRaw(rawText, source, preferAfterMoney = true)
+        if (parsed == null) return CaptureResult(0, 0, 1)
+        val full = parsed.copy(sourceApp = sourceApp)
+        val hash = dedupKey(full.sourceApp, full.money, occurredAt, full.merchant)
+        if (db.autoQueries.selectByHash(hash).executeAsOneOrNull() != null) return CaptureResult(0, 1, 0)
+        val rules = rules()
+        val rule = matchRule(rules, full.merchant, rawText)
+        val now = occurredAt / 1000
+        db.autoQueries.upsert(
+            Auto_event(
+                id = hash,
+                hash = hash,
+                source = source,
+                source_app = full.sourceApp,
+                merchant = full.merchant,
+                money = full.money,
+                type = full.type,
+                occurred_at = occurredAt,
+                raw_text = rawText.take(200),
+                status = 0,
+                member_cate_id = rule?.member_cate_id ?: if (full.type == TYPE_INCOME) 101 else 9,
+                assets_id = rule?.assets_id ?: 1,
+                tag_ids = rule?.tag_ids ?: "",
+                book_id = rule?.book_id ?: 0,
+                desc = "${full.merchant} · ${sourceLabel(source)}",
+                rule_id = rule?.id ?: 0,
+                create_time = now,
+            ),
+        )
+        return CaptureResult(1, 0, 0)
     }
 
     /** 确认入账：写一笔账单，再把事件标成已入账。 */

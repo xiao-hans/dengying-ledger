@@ -73,18 +73,18 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S4 · M2 自动记账、M3 OCR、M13 导入导出
 
-状态：部分完成（S4a 已推送，S4b 进行中）。
+状态：部分完成（S4a/S4b 已完成，S4c 真机验证待用户配合）。
 
 1. ✅ 声明通知监听服务、无障碍服务；截屏与快捷磁贴服务在 S4b 补 MediaProjection 实现。
-2. ✅ 通知/无障碍文本解析 + `CaptureBridge` 白名单过滤入队；OcrLite 引擎未接入（`OcrPage` 以选图登记 + 粘贴文本 + 手动登记覆盖流程）。
+2. ✅ 通知/无障碍文本解析 + `CaptureBridge` 白名单过滤入队；ML Kit 中文 OCR（`text-recognition-chinese:16.0.1` 本地 bundled）接入 `PickImageButton`，`AutoRepository.captureTicket` 整图一次解析（商户取金额后首个词、日期不误判金额）。
 3. ✅ 去重键（`dedupKey(sourceApp|money|分钟桶|merchant)`）与待确认队列；确认/忽略后列表即时刷新。
 4. ✅ `KeyWordMatchingRule` 4 个、`MemberImportBillFile` 2 个、`Upload` 3 个契约方法（契约 50/112）。
 5. ✅ OCR 页与批量改分类已做（S2）；5 个 OCR 页以单页三区（选图/粘贴/手动）等价覆盖。
 6. ✅ CSV 粘贴/文件导入 + 重复合并 + 导入记录；导出分享（cacheDir + ACTION_SEND）；票据图存储到 cacheDir/ocr。
 7. ✅ JVM `AutoCaptureTest`：20 条样本识别率与重复 0（同分钟去重、垃圾文本 unsupported）。
-8. ⬜ 用 10 张支付截图验证金额和商户，并记录批量改分类结果（S4b）。
+8. ✅ S4b 模拟器 E2E：ML Kit 识别生成的支付截图，金额 42.50、商户瑞幸咖啡正确入队，确认后清空；批量改分类结果见 S2 真机流程（待用户配合）。
 9. ⬜ 在真机验证三路采集、权限和待确认队列（需用户配合授权）。
-10. ✅ 更新差距表和接口对照表；提交并推送。
+10. ✅ 更新差距表和接口对照表；提交并推送（S4b 提交号见下方记录）。
 
 完成依据：`04` M3 的识别率不低于 90%，重复数为 0；`04` M4 的 10 张截图金额和商户正确；解析结果不得静默入账。
 

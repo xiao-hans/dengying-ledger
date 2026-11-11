@@ -16,6 +16,9 @@ expect fun shareTextFile(name: String, content: String): Boolean
 
 expect val platformOcrName: String?
 
-/** 选一张票据图，拷贝到本地缓存后把路径交给 onPicked。平台没有选图能力时按钮禁用。 */
+/**
+ * 选一张票据图，拷贝到本地缓存后把路径交给 onPicked。
+ * 平台接了 OCR 引擎时同时回传识别文本（ocrText 非空）；没有引擎时 ocrText 为 null，按钮禁用。
+ */
 @Composable
-expect fun PickImageButton(enabled: Boolean, modifier: Modifier = Modifier, onPicked: (path: String) -> Unit)
+expect fun PickImageButton(enabled: Boolean, modifier: Modifier = Modifier, onPicked: (path: String, ocrText: String?) -> Unit)

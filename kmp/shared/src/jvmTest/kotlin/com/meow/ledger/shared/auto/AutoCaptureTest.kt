@@ -76,3 +76,39 @@ class AutoCaptureTest {
         assertTrue(repo.pending().isEmpty())
     }
 }
+
+/** 票据整图：ML Kit 多行文本一次解析，日期数字不误判成金额，商户取全段。 */
+class AutoTicketTest {
+    private val db = MeowDatabase(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply { MeowDatabase.Schema.create(this) })
+    private val repo = AutoRepository(db)
+
+    @Test
+    fun ticketTextProducesOneEventWithMerchant() {
+        val text = "微信支付\n¥42.50\n瑞幸咖啡\n2026年11月12日 01:45"
+        val result = repo.captureTicket(text, "ocr")
+        assertEquals(1, result.created)
+        assertEquals(0, result.unsupported)
+        val events = repo.pending()
+        assertEquals(1, events.size)
+        val event = events.first()
+        assertEquals(4250L, event.money)
+        assertEquals("瑞幸咖啡", event.merchant)
+        assertEquals(9L, event.member_cate_id)
+    }
+
+    @Test
+    fun plainDateTextIsNotMoney() {
+        val result = repo.captureTicket("2026年11月12日 01:45", "ocr")
+        assertEquals(0, result.created)
+        assertEquals(1, result.unsupported)
+    }
+
+    @Test
+    fun duplicateTicketIsFolded() {
+        val text = "支付成功 ¥15.90 美团外卖"
+        repo.captureTicket(text, "ocr")
+        val again = repo.captureTicket(text, "ocr")
+        assertEquals(0, again.created)
+        assertEquals(1, again.duplicate)
+    }
+}

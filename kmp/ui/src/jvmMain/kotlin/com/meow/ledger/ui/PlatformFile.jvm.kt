@@ -30,7 +30,7 @@ actual fun shareTextFile(name: String, content: String): Boolean = false
 actual val platformOcrName: String? = null
 
 @Composable
-actual fun PickImageButton(enabled: Boolean, modifier: Modifier, onPicked: (path: String) -> Unit) {
+actual fun PickImageButton(enabled: Boolean, modifier: Modifier, onPicked: (path: String, ocrText: String?) -> Unit) {
     val palette = LocalPalette.current
     Box(
         modifier

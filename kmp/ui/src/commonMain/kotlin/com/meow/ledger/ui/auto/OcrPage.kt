@@ -64,9 +64,13 @@ fun OcrPage(
                 modifier = Modifier.padding(top = 4.dp),
             )
             Spacer(Modifier.height(12.dp))
-            PickImageButton(enabled = true, modifier = Modifier.fillMaxWidth()) { path ->
+            PickImageButton(enabled = true, modifier = Modifier.fillMaxWidth()) { path, ocrText ->
                 pickedPath = path
-                message = "图片已登记：" + path.substringAfterLast('/')
+                if (ocrText.isNullOrBlank()) {
+                    message = "图片已登记：" + path.substringAfterLast('/')
+                } else {
+                    message = onCaptureText(ocrText)
+                }
             }
             if (pickedPath.isNotEmpty()) {
                 Text(pickedPath, color = palette.textSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))

@@ -17,6 +17,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation(libs.mlkit.text.recognition.chinese)
         }
         commonMain.dependencies {
             implementation(project(":shared"))

@@ -326,7 +326,7 @@ private fun AutoPages(
         }
         "ocr" -> OcrPage(
             onBack,
-            onCaptureText = { text -> captureSummary(auto.capture(text, "ocr")) },
+            onCaptureText = { text -> captureSummary(auto.captureTicket(text, "ocr")) },
             onOpenPending = onOpenPending,
         )
         "pending" -> PendingPage(auto.pending(), onBack, onConfirm = { auto.confirm(it) }, onIgnore = { auto.ignore(it) })
