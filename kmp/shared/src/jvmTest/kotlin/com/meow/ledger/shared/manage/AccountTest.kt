@@ -35,6 +35,48 @@ class AccountTest {
     }
 
     @Test
+    fun changePhoneNeedsBothCodes() {
+        val repo = repo()
+        val oldCode = repo.sendCode("13800000000")!!
+        repo.loginByPhone("13800000000", oldCode)
+        val newCode = repo.sendCode("13900000000")!!
+
+        assertNull(repo.changePhone(oldCode, "13900000000", "000000"))
+        assertEquals("13800000000", repo.profile().phone)
+
+        assertNull(repo.changePhone("000000", "13900000000", newCode))
+        assertNull(repo.changePhone(oldCode, "13800000000", newCode))
+        assertNull(repo.changePhone(oldCode, "123", newCode))
+
+        val changed = repo.changePhone(oldCode, "13900000000", newCode)
+        assertEquals("13900000000", changed!!.phone)
+        assertEquals("phone", changed.bind_type)
+    }
+
+    @Test
+    fun changePhoneWithoutABoundPhoneDoesNothing() {
+        val repo = repo()
+        val code = repo.sendCode("13900000000")!!
+        assertNull(repo.changePhone("000000", "13900000000", code))
+        assertEquals("", repo.profile().phone)
+    }
+
+    @Test
+    fun migrationRunsOnceAndDeletesNothing() {
+        val repo = repo()
+        assertFalse(repo.migration().done)
+
+        val first = repo.migrateOldUser(1_000)
+        assertFalse(first.already)
+        assertTrue(first.done)
+        assertEquals(1_000, first.timeMillis)
+
+        val second = repo.migrateOldUser(9_000)
+        assertTrue(second.already)
+        assertEquals(1_000, repo.migration().timeMillis)
+    }
+
+    @Test
     fun blankNicknameIsRejected() {
         assertNull(repo().updateNickname("   "))
     }
