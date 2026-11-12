@@ -40,6 +40,8 @@ import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.manage.PLAN_ICONS
 import com.meow.ledger.shared.manage.PlanRepository
+import com.meow.ledger.shared.manage.SAVE_PLAN_DONE
+import com.meow.ledger.shared.manage.WISH_TYPE
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
 import com.meow.ledger.ui.theme.LocalPalette
@@ -53,6 +55,7 @@ fun PlansPage(repo: PlanRepository, page: String, onOpen: (String) -> Unit, onBa
         page == "installment-new" -> InstallmentEdit(repo, onBack)
         page.startsWith("installment:") -> InstallmentDetail(repo, planId, onBack)
         page == "save-plans" -> SavePlanList(repo, onOpen, onBack)
+        page == "wishes" -> WishList(repo, onBack)
         page == "save-plan-new" -> SavePlanEdit(repo, "", onBack)
         page.startsWith("save-plan-edit:") -> SavePlanEdit(repo, planId, onBack)
         page.startsWith("save-plan:") -> SavePlanDetail(repo, planId, onOpen, onBack)
@@ -201,6 +204,7 @@ private fun SavePlanList(repo: PlanRepository, onOpen: (String) -> Unit, onBack:
         ) {
             ChoiceChip("全部", typeId == 0L) { typeId = 0 }
             SAVE_TYPES.forEach { (id, label) -> ChoiceChip(label, typeId == id) { typeId = id } }
+            ChoiceChip("愿望清单", false) { onOpen("wishes") }
         }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -468,6 +472,82 @@ internal fun ConfirmBar(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(Modifier.weight(1f)) { ActionButton("取消", true, onCancel) }
             Box(Modifier.weight(1f)) { ActionButton(confirmLabel, true, onConfirm) }
+        }
+    }
+}
+
+/** 愿望清单：许愿-攒钱-达成，type_id = 0 的存钱计划。 */
+@Composable
+private fun WishList(repo: PlanRepository, onBack: () -> Unit) {
+    val palette = LocalPalette.current
+    var version by remember { mutableStateOf(0) }
+    var adding by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    var target by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+    var confirmId by remember { mutableStateOf<String?>(null) }
+    val wishes = remember(version) { repo.wishes() }
+    Column(Modifier.fillMaxSize().background(palette.appBg)) {
+        BackHeader("愿望清单", onBack)
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (wishes.isEmpty()) Empty("还没有愿望", "许一个愿，慢慢攒", "许个愿") { adding = true }
+            wishes.forEach { wish ->
+                GlassCard {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(wish.name, color = palette.textPrimary, fontWeight = FontWeight.Medium)
+                        Text(
+                            "${centsToYuan(wish.saved_money)} / ${centsToYuan(wish.target_money)} 元",
+                            color = palette.textPrimary,
+                        )
+                    }
+                    val done = wish.status == SAVE_PLAN_DONE
+                    Text(
+                        if (done) "已达成" else "还差 ${centsToYuan((wish.target_money - wish.saved_money).coerceAtLeast(0))} 元",
+                        color = palette.textSecondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    if (!done) {
+                        Text(
+                            "标记达成 ›",
+                            color = palette.textPrimary,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 6.dp).clickable { confirmId = wish.id },
+                        )
+                    }
+                }
+            }
+            if (adding) {
+                Field("愿望（必填）", name, { name = it }, "比如：新手机")
+                Field("目标金额（元）", target, { target = it }, "0.00")
+                if (error.isNotEmpty()) Text(error, color = palette.danger, fontSize = 12.sp)
+            }
+        }
+        when {
+            confirmId != null -> ConfirmBar(
+                text = "标记达成后，这个愿望会显示已达成。",
+                onCancel = { confirmId = null },
+                onConfirm = {
+                    repo.grantSavePlan(confirmId ?: return@ConfirmBar)
+                    confirmId = null
+                    version++
+                },
+            )
+            adding -> Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.weight(1f)) { ActionButton("取消", true) { adding = false; error = "" } }
+                Box(Modifier.weight(1f)) {
+                    ActionButton("许愿", true) {
+                        val cents = toCents(target)
+                        if (name.isBlank()) { error = "先给愿望起个名字"; return@ActionButton }
+                        if (cents == null || cents <= 0) { error = "目标金额要大于 0"; return@ActionButton }
+                        repo.addWish(name, cents)
+                        name = ""; target = ""; error = ""; adding = false; version++
+                    }
+                }
+            }
         }
     }
 }

@@ -39,8 +39,26 @@ data class WidgetPreview(
     val secondValue: Long,
 )
 
+/** 桌面小组件额外行配置，存 user_setting:widget_rows，逗号分隔。 */
+const val WIDGET_ROWS_KEY = "widget_rows"
+const val WIDGET_ROW_BUDGET = "budget"
+const val WIDGET_ROW_PLAN = "plan"
+const val WIDGET_ROW_REFUND = "refund"
+
 /** 桌面小组件的本地配置。只写本地表，不挂到系统桌面。 */
 class WidgetRepository(private val db: MeowDatabase) {
+
+    /** 桌面小组件显示的额外行。 */
+    fun extraRows(): Set<String> =
+        (db.configQueries.selectSetting(WIDGET_ROWS_KEY).executeAsOneOrNull() ?: "")
+            .split(',').filter { it.isNotBlank() }.toSet()
+
+    /** 设置桌面小组件显示的额外行。 */
+    fun setExtraRows(rows: Set<String>) {
+        db.configQueries.upsertSetting(
+            com.meow.ledger.shared.db.User_setting(WIDGET_ROWS_KEY, rows.filter { it.isNotBlank() }.sorted().joinToString(",")),
+        )
+    }
 
     fun all(): List<Widget_user> = db.widgetQueries.selectWidgets().executeAsList()
 

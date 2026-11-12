@@ -27,6 +27,7 @@ import com.meow.ledger.shared.db.Tag
 import com.meow.ledger.shared.stats.PeriodTotal
 import com.meow.ledger.ui.auto.BackHeader
 import com.meow.ledger.ui.home.formatYuan
+import com.meow.ledger.ui.manage.ChoiceChip
 import com.meow.ledger.ui.theme.LocalPalette
 
 /** 统计下钻二级页。page 为 cate:<id>、tags、tag:<id>、type、report。 */
@@ -43,6 +44,7 @@ fun StatsPages(
     months: List<PeriodTotal>,
     onOpenPage: (String) -> Unit,
     onOpenBill: (String) -> Unit,
+    onType: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     when {
@@ -69,7 +71,18 @@ fun StatsPages(
             )
         }
         page == "tags" -> TagPickerPage(tags, month, year, type, onOpenPage, onBack)
-        page == "type" -> MonthListPage("收支月报", months, onBack)
+        page == "type" -> BillListPage(
+            title = if (type == 2L) "收入明细" else "支出明细",
+            bills = bills,
+            refunds = refunds,
+            names = names,
+            onOpenBill = onOpenBill,
+            onBack = onBack,
+            tabs = {
+                ChoiceChip("支出", type == 1L) { onType(1L) }
+                ChoiceChip("收入", type == 2L) { onType(2L) }
+            },
+        )
         else -> ReportPage(year, months, onBack)
     }
 }
@@ -83,12 +96,14 @@ private fun BillListPage(
     names: Map<Long, String>,
     onOpenBill: (String) -> Unit,
     onBack: () -> Unit,
+    tabs: (@Composable () -> Unit)? = null,
 ) {
     val palette = LocalPalette.current
     val refunded = refunds.groupBy { it.client_id }.mapValues { (_, items) -> items.sumOf { it.money } }
     val net = bills.sumOf { bill -> netPaid(bill.money, refunded[bill.client_id] ?: 0L) }
     Column(Modifier.fillMaxSize().background(palette.appBg)) {
         BackHeader(title, onBack)
+        tabs?.invoke()
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),

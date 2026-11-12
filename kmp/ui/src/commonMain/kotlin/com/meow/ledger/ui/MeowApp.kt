@@ -187,6 +187,14 @@ private fun MainApp() {
                     onBack = { openBill = null; detailMessage = null },
                     onEdit = { editing = true },
                     onDelete = { repository.deleteWithBalance(0, opened.client_id); openBill = null; revision++ },
+                    onEditRefund = { id, cents ->
+                        val refund = refunds.ofBill(opened.client_id).firstOrNull { it.id == id }
+                        detailMessage = try {
+                            if (refund == null) "退款不存在" else { refunds.update(refund, cents, opened.money); revision++; null }
+                        } catch (e: RefundTooLarge) {
+                            "退款合计不能超过原账单金额"
+                        }
+                    },
                     onAddRefund = { cents ->
                         detailMessage = try {
                             refunds.add(opened.client_id, opened.money, cents, today)
@@ -231,6 +239,7 @@ private fun MainApp() {
                                 months = stats.monthsOfYear(year),
                                 onOpenPage = { statsPage = it },
                                 onOpenBill = { openBill = it; detailMessage = null },
+                                onType = { statsType = it },
                                 onBack = { statsPage = "" },
                             )
                         } else {

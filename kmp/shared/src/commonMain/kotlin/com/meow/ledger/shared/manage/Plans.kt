@@ -14,6 +14,12 @@ const val INSTALLMENT_PAID_OFF = 2L
 /** 存钱计划进行中。 */
 const val SAVE_PLAN_ACTIVE = 1L
 
+/** 计划已达成。 */
+const val SAVE_PLAN_DONE = 2L
+
+/** 愿望清单：type_id = 0 的存钱计划。 */
+const val WISH_TYPE = 0L
+
 /** 存钱类型，对应 React 的 plan_type 表。 */
 data class PlanType(val id: Long, val name: String)
 
@@ -118,7 +124,8 @@ class PlanRepository(private val db: MeowDatabase) {
         db.planQueries.deletePlan(id)
     }
 
-    fun savePlans(): List<Save_plan> = db.planQueries.selectSavePlans().executeAsList()
+    /** 存钱计划（进行中 + 已归档）。愿望清单不算存钱计划。 */
+    fun savePlans(): List<Save_plan> = db.planQueries.selectSavePlans().executeAsList().filter { it.type_id != WISH_TYPE }
 
     fun savePlan(id: String): Save_plan? = db.planQueries.selectSavePlan(id).executeAsOneOrNull()
 
@@ -183,6 +190,22 @@ class PlanRepository(private val db: MeowDatabase) {
         db.planQueries.upsertSaveItem(item)
         db.planQueries.upsertSavePlan(plan.copy(saved_money = plan.saved_money + money, update_time = now))
         return item
+    }
+
+    /** 愿望清单：许愿-攒钱-达成。 */
+    fun wishes(): List<Save_plan> = db.planQueries.selectSavePlans().executeAsList().filter { it.type_id == WISH_TYPE }
+
+    /** 新增愿望。目标金额是分。 */
+    fun addWish(name: String, targetMoney: Long): Save_plan =
+        saveSavePlan(name = name.ifBlank { "未命名愿望" }, targetMoney = targetMoney, typeId = WISH_TYPE, icon = "star")
+            ?: error("unreachable: saveSavePlan 新建分支不返回 null")
+
+    /** 标记达成。计划不存在返回 null。 */
+    fun grantSavePlan(id: String): Save_plan? {
+        val old = savePlan(id) ?: return null
+        val row = old.copy(status = SAVE_PLAN_DONE, update_time = currentTimeMillis())
+        db.planQueries.upsertSavePlan(row)
+        return row
     }
 
     private fun newId(prefix: String): String = "$prefix${currentTimeMillis()}${Random.nextInt(1000, 9999)}"

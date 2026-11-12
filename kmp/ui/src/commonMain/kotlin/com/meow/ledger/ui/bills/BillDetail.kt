@@ -72,12 +72,14 @@ fun BillDetail(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onAddRefund: (Long) -> Unit,
+    onEditRefund: (String, Long) -> Unit,
     onRevokeRefund: (String) -> Unit,
 ) {
     val palette = LocalPalette.current
     val card = RoundedCornerShape(18.dp)
     val refunded = refundedCents(refunds)
     var amount by rememberSaveable { mutableStateOf("") }
+    var editRefundId by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var revokeId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -174,6 +176,7 @@ fun BillDetail(
                                 fontSize = 12.sp,
                             )
                         }
+                        TextButton("改金额") { editRefundId = refund.id; amount = formatYuan(refund.money) }
                         TextButton("撤销") { revokeId = refund.id }
                     }
                 }
@@ -181,7 +184,7 @@ fun BillDetail(
                     Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("新增退款（元）", Modifier.weight(1f), color = palette.textPrimary, fontSize = 15.sp)
+                    Text(if (editRefundId == null) "新增退款（元）" else "修改退款（元）", Modifier.weight(1f), color = palette.textPrimary, fontSize = 15.sp)
                     BasicTextField(
                         value = amount,
                         onValueChange = { amount = it },
@@ -200,11 +203,22 @@ fun BillDetail(
             }
 
             Spacer(Modifier.height(10.dp))
-            ActionButton("记录退款", primary = false, modifier = Modifier.padding(horizontal = 16.dp)) {
-                val cents = toCents(amount)
-                if (cents == null || cents <= 0) return@ActionButton
-                onAddRefund(cents)
-                amount = ""
+            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (editRefundId != null) {
+                    Box(Modifier.weight(1f)) {
+                        ActionButton("取消修改", primary = false) { editRefundId = null; amount = "" }
+                    }
+                }
+                Box(Modifier.weight(1f)) {
+                    ActionButton(if (editRefundId == null) "记录退款" else "保存修改", primary = false) {
+                        val cents = toCents(amount)
+                        if (cents == null || cents <= 0) return@ActionButton
+                        val id = editRefundId
+                        if (id == null) onAddRefund(cents) else onEditRefund(id, cents)
+                        amount = ""
+                        editRefundId = null
+                    }
+                }
             }
             if (message != null) {
                 Text(

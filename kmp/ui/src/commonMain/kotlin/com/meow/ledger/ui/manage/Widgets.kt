@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.db.Widget_user
 import com.meow.ledger.shared.manage.WIDGET_KIND_MONTH
+import com.meow.ledger.shared.manage.WIDGET_ROW_BUDGET
+import com.meow.ledger.shared.manage.WIDGET_ROW_PLAN
+import com.meow.ledger.shared.manage.WIDGET_ROW_REFUND
 import com.meow.ledger.shared.manage.WIDGET_KINDS
 import com.meow.ledger.shared.manage.WIDGET_SIZE_SMALL
 import com.meow.ledger.shared.manage.WIDGET_SIZES
@@ -54,6 +57,12 @@ fun WidgetsPage(
 @Composable
 private fun WidgetList(repo: WidgetRepository, month: Long, onOpen: (String) -> Unit, onBack: () -> Unit) {
     val palette = LocalPalette.current
+    var extraRows by remember { mutableStateOf(repo.extraRows()) }
+    fun toggleRow(key: String) {
+        val next = if (key in extraRows) extraRows - key else extraRows + key
+        repo.setExtraRows(next)
+        extraRows = next
+    }
     val rows = repo.all()
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -61,6 +70,20 @@ private fun WidgetList(repo: WidgetRepository, month: Long, onOpen: (String) -> 
     ) {
         BackHeader("小组件", onBack)
         Text("只在这里预览，不会挂到系统桌面", color = palette.textSecondary, fontSize = 12.sp)
+        GlassCard {
+            Text("桌面小组件显示内容", color = palette.textPrimary, fontWeight = FontWeight.Medium)
+            Text(
+                "选中的行会出现在桌面小组件上，即时生效",
+                color = palette.textSecondary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+            Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChoiceChip("预算", WIDGET_ROW_BUDGET in extraRows) { toggleRow(WIDGET_ROW_BUDGET) }
+                ChoiceChip("存钱", WIDGET_ROW_PLAN in extraRows) { toggleRow(WIDGET_ROW_PLAN) }
+                ChoiceChip("退款", WIDGET_ROW_REFUND in extraRows) { toggleRow(WIDGET_ROW_REFUND) }
+            }
+        }
         ActionButton("添加组件", true) { onOpen("widget-new") }
         if (rows.isEmpty()) {
             Empty("还没有组件", "选一个尺寸，看看它在桌面上的样子")

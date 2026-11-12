@@ -47,6 +47,15 @@ class RefundRepository(private val db: MeowDatabase) {
         return row
     }
 
+    /** 修改退款金额：本账单全部退款合计不能超过原账单金额。 */
+    fun update(old: Refund_bill, cents: Long, billCents: Long): Refund_bill {
+        val others = ofBill(old.client_id).filter { it.id != old.id && it.status == 0L }.sumOf { it.money }
+        if (others + cents > billCents) throw RefundTooLarge(billCents, others, cents)
+        val row = old.copy(money = cents, update_date = old.day * 1000000)
+        db.refundQueries.upsert(row)
+        return row
+    }
+
     fun remove(id: String) {
         db.refundQueries.deleteOne(id)
     }
