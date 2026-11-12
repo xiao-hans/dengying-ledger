@@ -157,6 +157,13 @@ private fun mul32(a: Long, b: Long): Long {
 /** 一次采集的结果。重复事件不重新入队。 */
 data class CaptureResult(val created: Int, val duplicate: Int, val unsupported: Int)
 
+/** 待确认队列里用户可修改的字段。金额用整数分；备注为空时确认仍回退到商户名。 */
+data class PendingEdit(
+    val money: Long,
+    val desc: String,
+    val memberCateId: Long,
+)
+
 /**
  * 采集入口：原始文本 → 解析 → 规则 → 去重 → 写 auto_event。
  * 结果只进待确认队列，绝不静默入账。
@@ -270,21 +277,28 @@ class AutoRepository(private val db: MeowDatabase) {
         )
     }
 
-    /** 确认入账：写一笔账单，再把事件标成已入账。 */
-    fun confirm(event: Auto_event, memberId: Long = 0): Bill {
+    /**
+     * 确认入账：写一笔账单，再把事件标成已入账。
+     * 只允许由用户显式动作调用；批量通过走 [confirmAll]，绝不自动调用。
+     * edit 非空时用用户改过的金额/备注/分类覆盖识别结果。
+     */
+    fun confirm(event: Auto_event, memberId: Long = 0, edit: PendingEdit? = null): Bill {
+        val money = edit?.money ?: event.money
+        val desc = (edit?.desc ?: event.desc).ifBlank { event.merchant }
+        val cateId = edit?.memberCateId ?: event.member_cate_id
         val day = dayOf(event.occurred_at)
         val bill = Bill(
             member_id = memberId,
             client_id = "auto-${event.hash}",
-            money = event.money,
+            money = money,
             refund_money = 0,
             type = event.type,
             exchange = 0,
             book_id = event.book_id,
-            member_cate_id = event.member_cate_id,
+            member_cate_id = cateId,
             currency = "CNY",
             day = day,
-            desc = event.desc.ifBlank { event.merchant },
+            desc = desc,
             not_in_budget = 0,
             images = "",
             update_date = event.occurred_at,
@@ -307,13 +321,46 @@ class AutoRepository(private val db: MeowDatabase) {
         )
         db.billQueries.upsert(bill)
         db.autoQueries.upsert(event.copy(status = 1))
-        track("ac_auto_confirm", "${event.desc}|${event.money}")
+        track("ac_auto_confirm", "$desc|$money")
         return bill
     }
 
     /** 忽略：不写账单，事件留着供查。 */
     fun ignore(event: Auto_event) {
         db.autoQueries.upsert(event.copy(status = 2))
+    }
+
+    /** 按 id 取当前仍待确认的事件，已入账/已忽略的不会被重复处理。 */
+    fun pendingById(id: String): Auto_event? =
+        db.autoQueries.selectByHash(id).executeAsOneOrNull()?.takeIf { it.status == 0L }
+
+    /**
+     * 批量通过：只处理传入且仍处于待确认状态的 id。[edits] 里带的用户修改优先于识别结果。
+     * 整批在一个事务里完成，返回实际入账笔数。
+     */
+    fun confirmAll(ids: Collection<String>, edits: Map<String, PendingEdit> = emptyMap(), memberId: Long = 0): Int {
+        var count = 0
+        db.transaction {
+            ids.distinct().forEach { id ->
+                val event = pendingById(id) ?: return@forEach
+                confirm(event, memberId, edits[id])
+                count++
+            }
+        }
+        return count
+    }
+
+    /** 批量忽略：只处理仍待确认的 id，不写账单，返回实际忽略条数。 */
+    fun ignoreAll(ids: Collection<String>): Int {
+        var count = 0
+        db.transaction {
+            ids.distinct().forEach { id ->
+                val event = pendingById(id) ?: return@forEach
+                ignore(event)
+                count++
+            }
+        }
+        return count
     }
 
     fun remove(id: String) {

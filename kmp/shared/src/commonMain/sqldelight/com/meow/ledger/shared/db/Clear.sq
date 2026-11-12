@@ -1,0 +1,75 @@
+-- 清空本机数据：逐表删除用户数据与设置，供「清空本机数据」的危险操作使用。
+-- 删完后由 clearLocalData() 重建内置默认值，让 App 仍处于可记账状态。
+
+deleteAllBills:
+DELETE FROM bill;
+deleteAllRefunds:
+DELETE FROM refund_bill;
+deleteAllBooks:
+DELETE FROM bill_book;
+deleteAllMembers:
+DELETE FROM member_book;
+deleteAllCategories:
+DELETE FROM category;
+deleteAllCateExtend:
+DELETE FROM cate_extend;
+deleteAllBudgets:
+DELETE FROM budget;
+deleteAllCateBudgets:
+DELETE FROM cate_budget;
+deleteAllAssets:
+DELETE FROM assets;
+deleteAllMemberAssets:
+DELETE FROM member_assets;
+deleteAllTags:
+DELETE FROM tag;
+deleteAllBillTags:
+DELETE FROM bill_tag;
+deleteAllBillRemarks:
+DELETE FROM bill_remark;
+deleteAllRules:
+DELETE FROM rule;
+deleteAllAutoEvents:
+DELETE FROM auto_event;
+deleteAllSettings:
+DELETE FROM user_setting;
+deleteAllRemoteConfig:
+DELETE FROM remote_config;
+deleteAllFixedBills:
+DELETE FROM fixed_bill;
+deleteAllReminds:
+DELETE FROM bill_remind;
+deleteAllImages:
+DELETE FROM image_info;
+deleteAllWidgetBase:
+DELETE FROM widget_base;
+deleteAllWidgetDesktop:
+DELETE FROM widget_desktop;
+deleteAllWidgetHot:
+DELETE FROM widget_hot;
+deleteAllWidgetUser:
+DELETE FROM widget_user;
+deleteAllSyncQueue:
+DELETE FROM sync_queue;
+deleteAllInstallmentPlans:
+DELETE FROM installment_plan;
+deleteAllInstallmentItems:
+DELETE FROM installment_item;
+deleteAllSavePlans:
+DELETE FROM save_plan;
+deleteAllSavePlanItems:
+DELETE FROM save_plan_item;
+deleteAllProfiles:
+DELETE FROM member_profile;
+deleteAllSmsCodes:
+DELETE FROM sms_code;
+deleteAllImports:
+DELETE FROM member_import_bill_file;
+deleteAllOrders:
+DELETE FROM member_order;
+deleteAllContracts:
+DELETE FROM contract_info;
+deleteAllBehaviorEvents:
+DELETE FROM behavior_event;
+deleteAllGroups:
+DELETE FROM group_vip;
