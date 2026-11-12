@@ -37,6 +37,10 @@ android {
         versionName = "1.8.8"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

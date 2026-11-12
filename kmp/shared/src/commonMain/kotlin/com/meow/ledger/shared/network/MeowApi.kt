@@ -3,20 +3,38 @@ package com.meow.ledger.shared.network
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.prepareRequest
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.contentType
+import io.ktor.http.content.TextContent
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.readAvailable
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
+/**
+ * 一次业务请求的描述。
+ *
+ * 字段名与 `spec/endpoints.json` 的 Retrofit `@Field` / `@Body` 声明一致。
+ * `method` 必须与 `EndpointCatalog` 一致；`urlType` 对应样本 `@Headers({"urlType:..."})`。
+ */
 data class EndpointRequest(
     val path: String,
     val method: String = "POST",
@@ -30,36 +48,173 @@ interface MeowApi {
     suspend fun call(request: EndpointRequest): JsonEnvelope
 }
 
-/** Ktor 实现：统一 host、超时、明文 JSON 与 {code,message,data,trace_id} 信封。 */
+/**
+ * Ktor 实现：统一 host、超时、明文 JSON 与 `{code,message,data,trace_id}` 信封。
+ *
+ * ## 请求体契约（对齐 AGENTS.md §2 / 04 §5）
+ *
+ * 自建后端使用**明文 JSON**，不复现样本 so 里的 `data=<native 加密串>` 私有加密。
+ * 一个端点在 `api/a.java` 里要么用 `@FieldMap`/`@Field`，要么用 `@Body`，二者不混用：
+ *
+ * - **`@Field` 端点**：[EndpointRequest.fields] 逐字段放到一个 JSON object 里作为请求体；
+ *   `key` 就是样本字段名，值是字符串。
+ * - **`@Body` 端点**：[EndpointRequest.body] 整个作为请求体发送，不额外包一层、不与
+ *   `fields` 合并。`Bills/ImportBills` 两个重载正是靠 body 内的字段区分。
+ * - **GET 端点**：`fields` 只作为 URL query 参数发送，**不发送请求体**。
+ *
+ * 若某端点同时给了 `fields` 与 `body`（样本里不存在，属于调用错误），直接抛
+ * [IllegalArgumentException]，避免悄悄拼出不符合契约的形状。
+ *
+ * ## 后端 host 与隐私门禁
+ *
+ * [baseUrlProvider] 每次请求解析 base URL（默认 [SpecBaseUrlProvider]，仅供测试 /
+ * 契约自检）。生产装配注入 [SettingsBaseUrlProvider]：只读用户配置的 `sync_base_url`
+ * 等自建后端键，返回 `null` 表示同步禁用，此时 `call` 直接抛异常而不发请求
+ * （`SyncEngine` 更进一步：未启用时连 flush 都不发）。**绝不把样本原 App 的
+ * 第三方生产域名当生产默认值**，账单/设备号/令牌不会发到那里。
+ * `Config/GetV2` 用配置域（或回退主域），其余用主域。
+ *
+ * ## 通用请求头
+ *
+ * [headerProvider] 在每次请求时求值并注入 `Authorization`（未登录则省略）、
+ * `X-Device-Id`、`X-App-Version`、`X-Client-Time`。请求自带的 `headers` 后写，
+ * 可覆盖同名头。**仅用于宿主后端业务请求**；两个动态 `@Url` 方法面对的是
+ * OSS/CDN 预签名绝对地址，**不注入这些 app 头**（多余头会破坏签名校验），
+ * 由调用方按需传 [EndpointRequest.headers] 等价的可选 `headers` 参数。
+ *
+ * ## 响应
+ *
+ * 非 2xx → 抛 [IllegalStateException]；`code != 0` → [Envelope.unwrap] 抛
+ * [ApiException]；信封解析失败 → [IllegalArgumentException]。所有异常留给
+ * [SyncEngine.flush] 的退避重试，绝不会阻塞已经落库的 UI 写操作。
+ */
 class KtorMeowApi(
     private val client: HttpClient = defaultClient(),
     private val json: Json = Json { ignoreUnknownKeys = true },
+    private val headerProvider: HeaderProvider = EmptyHeaderProvider,
+    private val baseUrlProvider: BaseUrlProvider = SpecBaseUrlProvider,
 ) : MeowApi {
+
     override suspend fun call(request: EndpointRequest): JsonEnvelope {
-        val url = HttpConfig.baseFor(request.path, request.urlType) + request.path
+        val isConfig = HttpConfig.isConfigRequest(request.path, request.urlType)
+        val base = baseUrlProvider.base(isConfig)
+            ?: throw IllegalStateException("remote sync disabled: no sync_base_url configured (${request.path})")
+        val url = HttpConfig.compose(base, request.path)
         val response = client.request(url) {
             method = HttpMethod.parse(request.method)
-            contentType(ContentType.Application.Json)
+            headerProvider.headers().forEach { (key, value) -> headers.append(key, value) }
             request.headers.forEach { (key, value) -> headers.append(key, value) }
-            val payload = buildJsonObject {
-                request.fields.forEach { (key, value) -> put(key, JsonPrimitive(value)) }
-                if (request.body is JsonObject) {
-                    request.body.forEach { (key, value) -> put(key, value) }
-                } else if (request.body != null) {
-                    put("data", request.body)
-                }
+            if (method == HttpMethod.Get) {
+                // GET：字段进 query，无请求体、也不带 Content-Type。
+                url { request.fields.forEach { (key, value) -> parameters.append(key, value) } }
+            } else {
+                // 直接发序列化后的明文 JSON 字符串，不依赖 ContentNegotiation 的反射。
+                setBody(TextContent(json.encodeToString(requestBody(request)), ContentType.Application.Json))
             }
-            setBody(payload)
         }
+        return decodeEnvelope(response, request.path)
+    }
+
+    /**
+     * `@Streaming @GET @Url`：用 `prepareRequest(...).execute` 真正流式读取绝对 URL
+     * 的响应体，按 8 KiB 分块逐块交给 [sink]，**不把整个文件缓冲进内存**。
+     * 100 KiB 以上的文件会产生多个 chunk。失败（含非 2xx）直接抛出，由调用方决定重试。
+     *
+     * 这个 URL 通常是 OSS/CDN 预签名地址（第三方 host）：**不注入 app 通用头**
+     * （`Authorization` / `X-Device-Id` / `X-App-Version` / `X-Client-Time`），
+     * 多余头会破坏签名校验。调用方需要携带的签名/自定义头通过 [headers] 显式传入。
+     */
+    suspend fun download(
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        sink: (ByteArray) -> Unit,
+    ) {
+        val requestHeaders = headers
+        client.prepareRequest(url) {
+            method = HttpMethod.Get
+            requestHeaders.forEach { (key, value) -> this.headers.append(key, value) }
+        }.execute { response ->
+            require2xx(response, DynamicEndpoints.DOWNLOAD)
+            streamToSink(response.bodyAsChannel(), sink)
+        }
+    }
+
+    /** 逐块读，直到 channel 关闭；单个 chunk 最多 [DOWNLOAD_CHUNK_BYTES]。 */
+    private suspend fun streamToSink(channel: ByteReadChannel, sink: (ByteArray) -> Unit) {
+        val buffer = ByteArray(DOWNLOAD_CHUNK_BYTES)
+        while (true) {
+            val read = channel.readAvailable(buffer, 0, buffer.size)
+            if (read <= 0) break
+            sink(buffer.copyOf(read))
+        }
+    }
+
+    /**
+     * `@POST @Url + MultipartBody`：OSS 直传。`fields` 作为表单字段，`bytes` 作为文件
+     * part（part 名 `file`，文件名 [fileName]，类型 [contentType]）。
+     * 返回 `UploadOssData`，即信封里的 `data`；`code != 0` 抛 [ApiException]。
+     *
+     * 与 [download] 同理：预签名第三方地址**不注入 app 通用头**，需要额外头时走 [headers]。
+     */
+    suspend fun uploadOss(
+        url: String,
+        fields: Map<String, String>,
+        fileName: String,
+        bytes: ByteArray,
+        contentType: String,
+        headers: Map<String, String> = emptyMap(),
+    ): JsonElement? {
+        val requestHeaders = headers
+        val response = client.submitFormWithBinaryData(
+            url = url,
+            formData = formData {
+                fields.forEach { (key, value) -> append(key, value) }
+                append("file", bytes, Headers.build {
+                    append(HttpHeaders.ContentType, contentType)
+                    append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                })
+            },
+        ) {
+            requestHeaders.forEach { (key, value) -> this.headers.append(key, value) }
+        }
+        require2xx(response, DynamicEndpoints.UPLOAD_OSS)
+        return decodeEnvelope(response, DynamicEndpoints.UPLOAD_OSS)
+            .unwrap(DynamicEndpoints.UPLOAD_OSS)
+    }
+
+    /** POST 请求体：fields 与 body 互斥，形状显式、不合并。 */
+    private fun requestBody(request: EndpointRequest): JsonElement {
+        if (request.fields.isNotEmpty() && request.body != null) {
+            throw IllegalArgumentException("${request.path}: @Field 与 @Body 不能同时出现在一次请求里")
+        }
+        if (request.body != null) return request.body
+        return buildJsonObject {
+            request.fields.forEach { (key, value) -> put(key, JsonPrimitive(value)) }
+        }
+    }
+
+    private suspend fun decodeEnvelope(response: HttpResponse, path: String): JsonEnvelope {
+        require2xx(response, path)
         val text = response.bodyAsText()
-        return try {
+        val envelope = try {
             json.decodeFromString<JsonEnvelope>(text)
         } catch (error: Exception) {
-            throw IllegalArgumentException("${request.path} returned invalid envelope: ${text.take(160)}", error)
+            throw IllegalArgumentException("$path returned invalid envelope: ${text.take(160)}", error)
+        }
+        envelope.unwrap(path)
+        return envelope
+    }
+
+    private fun require2xx(response: HttpResponse, path: String) {
+        if (!response.status.isSuccess()) {
+            throw IllegalStateException("$path returned HTTP ${response.status.value}")
         }
     }
 
     companion object {
+        /** 流式下载的分块大小；大于它的文件必然产生多个 chunk。 */
+        const val DOWNLOAD_CHUNK_BYTES = 8 * 1024
+
         fun defaultClient(): HttpClient = HttpClient {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
@@ -300,7 +455,7 @@ class SavePlanContracts(private val api: MeowApi) {
         api.call(EndpointRequest("SavePlan/SavePlanItemsById", fields = fields))
 
     suspend fun getSavePlans() =
-        api.call(EndpointRequest("SavePlan/GetSavePlans"))
+        api.call(EndpointRequest("SavePlan/GetSavePlans", method = "GET"))
 
     suspend fun getSavePlansByQuery(fields: Map<String, String>) =
         api.call(EndpointRequest("SavePlan/GetSavePlansByQuery", fields = fields))
@@ -309,16 +464,16 @@ class SavePlanContracts(private val api: MeowApi) {
         api.call(EndpointRequest("SavePlan/GetSavePlansByType", fields = mapOf("type" to type)))
 
     suspend fun getFileSavePlans() =
-        api.call(EndpointRequest("SavePlan/GetFileSavePlans"))
+        api.call(EndpointRequest("SavePlan/GetFileSavePlans", method = "GET"))
 
     suspend fun wishes() =
-        api.call(EndpointRequest("SavePlan/Wishes"))
+        api.call(EndpointRequest("SavePlan/Wishes", method = "GET"))
 
     suspend fun getIcon() =
-        api.call(EndpointRequest("SavePlan/GetIcon"))
+        api.call(EndpointRequest("SavePlan/GetIcon", method = "GET"))
 
     suspend fun getSavePlanType() =
-        api.call(EndpointRequest("SavePlan/GetSavePlanType"))
+        api.call(EndpointRequest("SavePlan/GetSavePlanType", method = "GET"))
 }
 
 /** ConsumptionInstallment 6 个契约：分期计划的创建、查询、结清与删除。 */
@@ -399,7 +554,7 @@ class AccountContracts(private val api: MeowApi) {
 class MemberContracts(private val api: MeowApi) {
     suspend fun getInfo() = api.call(EndpointRequest("Member/GetInfo"))
 
-    suspend fun getContractInfo() = api.call(EndpointRequest("Member/GetMemberContractInfo"))
+    suspend fun getContractInfo() = api.call(EndpointRequest("Member/GetMemberContractInfo", method = "GET"))
 
     suspend fun getSetting() = api.call(EndpointRequest("Member/GetSetting"))
 
@@ -458,8 +613,9 @@ class PlatformContracts(private val api: MeowApi) {
 
     suspend fun behaviorAdd() = api.call(EndpointRequest("Behavior/Add"))
 
+    /** 样本带 `@Headers({"urlType:configManage"})`，显式传 urlType，不靠路径兜底。 */
     suspend fun configGetV2(fields: Map<String, String>) =
-        api.call(EndpointRequest("Config/GetV2", fields = fields))
+        api.call(EndpointRequest("Config/GetV2", fields = fields, urlType = "configManage"))
 
     suspend fun personCenterIcons() =
         api.call(EndpointRequest("PersonCenter/GetPersonCenterIcons", method = "GET"))

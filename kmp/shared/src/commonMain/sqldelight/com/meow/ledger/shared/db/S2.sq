@@ -134,6 +134,10 @@ SELECT count(*) FROM sync_queue WHERE status = 0;
 selectPendingSync:
 SELECT * FROM sync_queue WHERE status = 0 AND next_attempt <= :now ORDER BY create_time LIMIT :limitAmount;
 
+-- 供测试/诊断按 id 查任意终态（含已丢弃 status = 2）的队列行。
+selectSyncById:
+SELECT * FROM sync_queue WHERE id = :id;
+
 enqueueSync:
 INSERT OR REPLACE INTO sync_queue(
   id, path, method, payload, client_id, status, retry_count, next_attempt, create_time, update_time, error
@@ -141,6 +145,10 @@ INSERT OR REPLACE INTO sync_queue(
 
 markSyncDone:
 UPDATE sync_queue SET status = 1, update_time = :now, error = '' WHERE id = :id;
+
+-- 清单外的旧队列行（如 Bills/BatchUpdate）标成终态 2，不再重试也不外发。
+markSyncDropped:
+UPDATE sync_queue SET status = 2, update_time = :now, error = :error, retry_count = retry_count + 1 WHERE id = :id;
 
 markSyncRetry:
 UPDATE sync_queue SET status = 0, retry_count = retry_count + 1, next_attempt = :nextAttempt, update_time = :now, error = :error WHERE id = :id;

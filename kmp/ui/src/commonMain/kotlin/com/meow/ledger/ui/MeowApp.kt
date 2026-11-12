@@ -110,7 +110,7 @@ private fun MainApp() {
     val today = (now.year * 10000 + now.monthNumber * 100 + now.dayOfMonth).toLong()
     seedIfEmpty(AppGraph.database, today)
     seedCategoriesIfEmpty(AppGraph.database)
-    val repository = BillsRepository(AppGraph.database)
+    val repository = BillsRepository(AppGraph.database, AppGraph.sync)
     var revision by remember { mutableIntStateOf(0) }
     val view = remember(revision) { repository.month(now.year * 100 + now.monthNumber) }
     val categories = CategoryRepository(AppGraph.database).ofType(1) + CategoryRepository(AppGraph.database).ofType(2)

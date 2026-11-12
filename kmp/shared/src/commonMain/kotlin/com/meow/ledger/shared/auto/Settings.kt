@@ -25,6 +25,19 @@ const val THEME_DARK = "dark"
 const val KEY_APP_LOCK = "app_lock_pin"
 
 /**
+ * 自建后端 base URL。**空白表示禁用远程同步**：写操作照常落本地 `sync_queue`，
+ * 但 `SyncEngine.flush()` 不发任何请求，绝不把账单/设备号/令牌发到样本原域名。
+ * 由用户自行填写自建后端地址后才启用同步（见 `docs/接口实现对照表.md` 网络章节）。
+ */
+const val KEY_SYNC_BASE_URL = "sync_base_url"
+
+/** 可选的配置域 base URL；空白时 `Config/GetV2` 复用主域。 */
+const val KEY_SYNC_CONFIG_BASE_URL = "sync_config_base_url"
+
+/** 真实服务端签发的登录令牌；空表示未登录，不发 `Authorization`。 */
+const val KEY_AUTH_TOKEN = "auth_token"
+
+/**
  * 用户设置的读写，落在 `user_setting` 表上。
  * 每个开关都有明确的默认值，从来没存过和存成关闭不是一回事。
  */
