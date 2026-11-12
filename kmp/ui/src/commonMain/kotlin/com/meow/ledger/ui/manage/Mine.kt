@@ -65,5 +65,5 @@ private val entries = listOf(
     Triple("help", "帮助与协议", "使用说明和关于"),
     Triple("push", "消息推送", "本机提醒，不接收厂商推送"),
     Triple("remote", "远程开关", "广告、导入上限、版本号"),
-    Triple("settings", "设置", "主题和清空数据"),
+    Triple("settings", "设置", "主题、自建同步地址和清空数据"),
 )

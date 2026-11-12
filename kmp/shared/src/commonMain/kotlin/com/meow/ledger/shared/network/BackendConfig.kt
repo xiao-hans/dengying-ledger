@@ -41,6 +41,33 @@ class SettingsBaseUrlProvider(private val settings: SettingsStore) : BaseUrlProv
     }
 }
 
+/** 从 base URL 取主机名（去掉 userinfo / 端口 / 路径）；没有主机名返回 null。 */
+private fun hostOf(url: String): String? =
+    url.substringAfter("://", missingDelimiterValue = "").takeIf { it.isNotEmpty() }
+        ?.substringBefore('/')
+        ?.substringAfterLast('@')
+        ?.substringBefore(':')
+        ?.takeIf { it.isNotBlank() }
+
+/** 样本原 App 的生产域名（取自 [HttpConfig] 常量），用户不得填回。 */
+private val SAMPLE_PRODUCTION_HOSTS: Set<String> =
+    setOfNotNull(hostOf(HttpConfig.MAIN_BASE), hostOf(HttpConfig.CONFIG_BASE))
+
+/**
+ * 校验用户填写的自建同步地址。空白（trim 后）合法，表示禁用远程同步；
+ * 非空白必须是 `http://` 或 `https://` 且带主机名，并拒绝样本原生产域名。
+ * 返回 `null` 表示合法，否则是可直接展示给用户的错误提示。
+ */
+fun validateSyncUrl(raw: String): String? {
+    val value = raw.trim()
+    if (value.isEmpty()) return null
+    val scheme = value.substringBefore("://", missingDelimiterValue = "").lowercase()
+    if (scheme != "http" && scheme != "https") return "必须以 http:// 或 https:// 开头"
+    val host = hostOf(value) ?: return "缺少主机名"
+    if (host in SAMPLE_PRODUCTION_HOSTS) return "不能填写样本原生产域名"
+    return null
+}
+
 /** 从 [MeowDatabase] 读 `sync_base_url` 判定远程同步是否启用。 */
 fun remoteSyncEnabled(db: MeowDatabase): Boolean =
     SettingsStore(db).text(KEY_SYNC_BASE_URL).isNotBlank()
