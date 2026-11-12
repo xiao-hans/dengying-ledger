@@ -1,5 +1,17 @@
--- 1 → 2：补上账号与小组件表。这些表是在已发布的 1 版之后加进 .sq 的，
--- 而 SQLDelight 默认不会给已有数据库补建表，老安装一查询就崩溃。
+-- 2 → 3（也会在 1→3 的链式升级里，于 1.sqm 之后执行）。
+-- 历史上这份文件只有「本应属于 1→2」的账号/小组件表，且头注释误写成 1→2；
+-- 同时把 v3 的新表也塞了进来。现在：1→2 的内容挪到 1.sqm，这里只负责 2→3。
+--
+-- 约束：
+--  * 所有 CREATE 都带 IF NOT EXISTS —— 因为存在「从 v1 升上来的 v2 安装」没跑过
+--    1→2 迁移的场景，2.sqm 必须把 1.sqm 的表也重建一遍，且不能与已有表冲突。
+--  * 只有 sync_queue 的 7 个新增列走 ALTER。它们在所有 1→3 / 2→3 路径上都
+--    「保证不存在」（v1/v2 的 sync_queue 恒为 4 列，1.sqm 不动它，2.sqm 只跑一次），
+--    因此非幂等的 ALTER 是安全的；不 DROP 以免丢掉队列里待重放的同步行。
+--    SQLite 的 ALTER 只能把列追加在末尾，但 SQLDelight 生成的查询全部按列名取数
+--    （SELECT sync_queue.id, ...），列序差异不影响正确性。
+
+-- 1.sqm 的表在这里用 IF NOT EXISTS 重放一次：由 v1 升上来的 v2 安装没跑过 1→2。
 CREATE TABLE IF NOT EXISTS member_profile (
   id INTEGER NOT NULL PRIMARY KEY,
   nickname TEXT NOT NULL DEFAULT '',
@@ -63,8 +75,7 @@ CREATE TABLE IF NOT EXISTS widget_user (
   create_time INTEGER NOT NULL DEFAULT 0
 );
 
--- 升级到 3：账单标签、备注、分类扩展、账本协作、票据图、同步队列与小组件表。
--- 与 S2.sq 的全新安装 schema 保持一致。
+-- v3 新增表，全部 IF NOT EXISTS。
 CREATE TABLE IF NOT EXISTS bill_tag (
   client_id TEXT NOT NULL,
   member_id INTEGER NOT NULL DEFAULT 0,
@@ -114,23 +125,6 @@ CREATE TABLE IF NOT EXISTS image_info (
   create_date INTEGER NOT NULL DEFAULT 0
 );
 
--- 旧 sync_queue 只有 4 列；队列是可重放的缓存，重建为 11 列。
-DROP TABLE IF EXISTS sync_queue;
-CREATE TABLE IF NOT EXISTS sync_queue (
-  id TEXT NOT NULL PRIMARY KEY,
-  path TEXT NOT NULL DEFAULT '',
-  method TEXT NOT NULL DEFAULT 'POST',
-  payload TEXT NOT NULL DEFAULT '',
-  client_id TEXT NOT NULL DEFAULT '',
-  status INTEGER NOT NULL DEFAULT 0,
-  retry_count INTEGER NOT NULL DEFAULT 0,
-  next_attempt INTEGER NOT NULL DEFAULT 0,
-  create_time INTEGER NOT NULL DEFAULT 0,
-  update_time INTEGER NOT NULL DEFAULT 0,
-  error TEXT NOT NULL DEFAULT ''
-);
-CREATE INDEX IF NOT EXISTS sync_queue_status ON sync_queue(status, next_attempt);
-
 CREATE TABLE IF NOT EXISTS widget_base (
   id TEXT NOT NULL PRIMARY KEY,
   kind TEXT NOT NULL DEFAULT '',
@@ -157,3 +151,16 @@ CREATE TABLE IF NOT EXISTS widget_hot (
   count INTEGER NOT NULL DEFAULT 0,
   update_time INTEGER NOT NULL DEFAULT 0
 );
+
+-- sync_queue：v1/v2 是 4 列（id/path/payload/create_time），v3 扩成 11 列。
+-- 只补 7 个「保证不存在」的新列，类型与默认值逐字对齐 S2.sq 的 CREATE TABLE。
+ALTER TABLE sync_queue ADD COLUMN method TEXT NOT NULL DEFAULT 'POST';
+ALTER TABLE sync_queue ADD COLUMN client_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE sync_queue ADD COLUMN status INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sync_queue ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sync_queue ADD COLUMN next_attempt INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sync_queue ADD COLUMN update_time INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sync_queue ADD COLUMN error TEXT NOT NULL DEFAULT '';
+
+-- 索引必须在列补齐之后创建。
+CREATE INDEX IF NOT EXISTS sync_queue_status ON sync_queue(status, next_attempt);
