@@ -1,7 +1,6 @@
 package com.meow.ledger.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,9 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.meow.ledger.ui.theme.DarkPalette
-import com.meow.ledger.ui.theme.LightPalette
+import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.paletteOf
 
 /** 平台侧能力接口。Android 入口注入真实实现，预览可提供只读假实现。 */
 interface EntryHost {
@@ -67,9 +66,11 @@ data class PermissionItem(
 fun EntryNavHost(
     initialRoute: String,
     host: EntryHost?,
+    theme: String = THEME_SYSTEM,
     content: @Composable () -> Unit,
 ) {
-    val palette = if (isSystemInDarkTheme()) DarkPalette else LightPalette
+    // 入口页与主界面共用同一套三态主题（跟随系统 / 浅色 / 深色），避免手动切主题后配色错乱（§6.8）。
+    val palette = paletteOf(theme)
     var route by rememberSaveable(initialRoute) { mutableStateOf(initialRoute.ifEmpty { ROUTE_MAIN }) }
     var scanResult by rememberSaveable { mutableStateOf("") }
     var webMessage by rememberSaveable { mutableStateOf("") }

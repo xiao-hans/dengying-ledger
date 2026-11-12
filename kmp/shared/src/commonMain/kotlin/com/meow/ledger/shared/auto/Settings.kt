@@ -11,6 +11,8 @@ const val KEY_AUTO_BILL = "auto_bill"
 const val KEY_NOTIFICATION = "notification_capture"
 const val KEY_ACCESSIBILITY = "accessibility_capture"
 const val KEY_OCR = "screenshot_ocr"
+// 兼容旧库保留，但不再使用：AGENTS.md §6.7 要求识别结果一律进待确认队列、绝不静默入账，
+// 故「自动确认」开关已从 UI 下线，也不读取该值。保留键名只为避免旧版本写过的 user_setting 行变成孤儿数据。
 const val KEY_AUTO_CONFIRM = "auto_confirm"
 const val KEY_WATCH_APPS = "auto_watch_apps"
 const val KEY_KEEP_ALIVE = "keep_alive"
@@ -60,3 +62,24 @@ class SettingsStore(private val db: MeowDatabase) {
         db.configQueries.upsertSetting(User_setting(key, value))
     }
 }
+
+/**
+ * 界面里镜像设置的那几项内存状态。开机初始化与「清空本机数据」后的重置都读这份快照，
+ * 保证界面显示和库里的设置用同一组缺省值，不会一处改了另一处漏改（AGENTS.md §6.8）。
+ */
+data class SettingsSnapshot(
+    val theme: String,
+    val autoBill: Boolean,
+    val keepAlive: Boolean,
+    val watchApps: Set<String>,
+    val lockPin: String,
+)
+
+/** 从库里读一份当前快照；设置行不存在的项由 SettingsStore 回退到缺省值。 */
+fun SettingsStore.snapshot(): SettingsSnapshot = SettingsSnapshot(
+    theme = text(KEY_THEME, THEME_SYSTEM),
+    autoBill = flag(KEY_AUTO_BILL, false),
+    keepAlive = flag(KEY_KEEP_ALIVE, false),
+    watchApps = watchApps(),
+    lockPin = text(KEY_APP_LOCK),
+)

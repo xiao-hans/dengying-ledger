@@ -38,6 +38,7 @@ import com.meow.ledger.shared.manage.SHOW_ID_MAX
 import com.meow.ledger.shared.manage.VIP_PLANS
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
+import com.meow.ledger.ui.theme.DangerConfirmDialog
 import com.meow.ledger.ui.theme.LocalPalette
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -391,8 +392,17 @@ private fun SettingsHome(
             }
         }
     }
-    if (confirm) ConfirmBar("清空本机全部数据？账单、账本和设置都会消失，不能恢复。", { confirm = false }, onClear, "清空")
-    else ActionButton("清空本机数据", true) { confirm = true }
+    ActionButton("清空本机数据", true) { confirm = true }
+    // 清空是危险操作：用 danger token 的确认弹窗，并把全部后果逐项写清（§6.1 / §6.10）。
+    if (confirm) {
+        DangerConfirmDialog(
+            title = "清空本机全部数据？",
+            message = "账单、账本、分类、资产、预算、计划、规则、待确认记录、本机账号与全部设置都会删除，不能恢复；之后会重建默认账本和分类。",
+            confirmLabel = "清空",
+            onConfirm = { confirm = false; onClear() },
+            onDismiss = { confirm = false },
+        )
+    }
     if (version < 0) onNotice("")
 }
 

@@ -1,7 +1,6 @@
 package com.meow.ledger.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,12 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.meow.ledger.shared.auto.AutoRepository
 import com.meow.ledger.shared.auto.CaptureResult
-import com.meow.ledger.shared.auto.KEY_APP_LOCK
 import com.meow.ledger.shared.auto.KEY_AUTO_BILL
-import com.meow.ledger.shared.auto.KEY_AUTO_CONFIRM
 import com.meow.ledger.shared.auto.KEY_KEEP_ALIVE
 import com.meow.ledger.shared.auto.SettingsStore
+import com.meow.ledger.shared.auto.snapshot
 import com.meow.ledger.shared.bills.BillsRepository
+import com.meow.ledger.shared.bills.clearLocalData
 import com.meow.ledger.shared.db.Rule
 import com.meow.ledger.shared.bills.CategoryRepository
 import com.meow.ledger.shared.bills.RefundRepository
@@ -51,10 +50,6 @@ import com.meow.ledger.ui.bills.BillDetail
 import com.meow.ledger.ui.bills.BillEntry
 import com.meow.ledger.ui.home.BillsHome
 import com.meow.ledger.ui.home.Dock
-import com.meow.ledger.shared.auto.KEY_THEME
-import com.meow.ledger.shared.auto.THEME_DARK
-import com.meow.ledger.shared.auto.THEME_LIGHT
-import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.manage.AccountRepository
 import com.meow.ledger.shared.manage.AssetRepository
 import com.meow.ledger.shared.manage.BookRepository
@@ -79,8 +74,6 @@ import com.meow.ledger.ui.manage.WidgetsPage
 import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.stats.StatsPages
-import com.meow.ledger.ui.theme.DarkPalette
-import com.meow.ledger.ui.theme.LightPalette
 import com.meow.ledger.ui.theme.LocalPalette
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -91,21 +84,19 @@ fun MeowApp(
     initialRoute: String = "",
     entryHost: EntryHost? = null,
 ) {
-    EntryNavHost(initialRoute = initialRoute, host = entryHost) {
-        MainApp()
+    val settings = SettingsStore(AppGraph.database)
+    var theme by rememberSaveable { mutableStateOf(settings.snapshot().theme) }
+    // 主题状态提升到 MeowApp：入口页与主界面读同一个三态值，切换即时生效（§6.8）。
+    // 清空本机数据后由 onTheme 把这里也拉回缺省值，避免界面与库里的设置脱节。
+    EntryNavHost(initialRoute = initialRoute, host = entryHost, theme = theme) {
+        MainApp(theme = theme, onTheme = { theme = it })
     }
 }
 
 @Composable
-private fun MainApp() {
+private fun MainApp(theme: String, onTheme: (String) -> Unit) {
     val settings = SettingsStore(AppGraph.database)
-    var theme by rememberSaveable { mutableStateOf(settings.text(KEY_THEME, THEME_SYSTEM)) }
-    val dark = when (theme) {
-        THEME_DARK -> true
-        THEME_LIGHT -> false
-        else -> isSystemInDarkTheme()
-    }
-    val palette = if (dark) DarkPalette else LightPalette
+    val palette = LocalPalette.current
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     val today = (now.year * 10000 + now.monthNumber * 100 + now.dayOfMonth).toLong()
     seedIfEmpty(AppGraph.database, today)
@@ -124,16 +115,45 @@ private fun MainApp() {
     var statsPeriod by rememberSaveable { mutableStateOf(TrendPeriod.MONTH) }
     var statsPage by rememberSaveable { mutableStateOf("") }
     val auto = AutoRepository(AppGraph.database)
-    var autoEnabled by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_BILL, false)) }
-    var autoConfirm by rememberSaveable { mutableStateOf(settings.flag(KEY_AUTO_CONFIRM, false)) }
-    var keepAlive by rememberSaveable { mutableStateOf(settings.flag(KEY_KEEP_ALIVE, false)) }
-    var watchApps by rememberSaveable { mutableStateOf(settings.watchApps()) }
+    // 这些状态镜像 user_setting，开机与「清空本机数据」后都从同一份快照取值。
+    val initial = remember { settings.snapshot() }
+    var autoEnabled by rememberSaveable { mutableStateOf(initial.autoBill) }
+    var keepAlive by rememberSaveable { mutableStateOf(initial.keepAlive) }
+    var watchApps by rememberSaveable { mutableStateOf(initial.watchApps) }
+    var lockPin by rememberSaveable { mutableStateOf(initial.lockPin) }
+    var unlocked by rememberSaveable { mutableStateOf(initial.lockPin.isEmpty()) }
     var autoPage by rememberSaveable { mutableStateOf("") }
     var minePage by rememberSaveable { mutableStateOf("") }
     var captureSource by rememberSaveable { mutableStateOf("") }
     var captureMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    val lockPin = settings.text(KEY_APP_LOCK)
-    var unlocked by rememberSaveable { mutableStateOf(lockPin.isEmpty()) }
+
+    /**
+     * 「清空本机数据」的完整后果：清库后设置行被整体删掉，镜像设置的内存状态必须一起
+     * 回到缺省值，否则界面与库脱节（例如仍显示深色、自动记账仍开）。同时回到「我的」首页
+     * 并 bump revision，强制账单视图从重建后的库重新读（AGENTS.md §6.8 / §6.9）。
+     */
+    fun clearAndReset() {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val today = (now.year * 10000 + now.monthNumber * 100 + now.dayOfMonth).toLong()
+        clearLocalData(AppGraph.database, today)
+        val fresh = settings.snapshot()
+        onTheme(fresh.theme)
+        autoEnabled = fresh.autoBill
+        keepAlive = fresh.keepAlive
+        watchApps = fresh.watchApps
+        lockPin = fresh.lockPin
+        unlocked = fresh.lockPin.isEmpty()
+        tab = 3
+        minePage = ""
+        autoPage = ""
+        statsPage = ""
+        composing = false
+        editing = false
+        openBill = null
+        detailMessage = null
+        captureMessage = null
+        revision++
+    }
 
     CompositionLocalProvider(LocalPalette provides palette) {
         if (!unlocked) {
@@ -264,11 +284,10 @@ private fun MainApp() {
                             settings = settings,
                             captureSource = captureSource,
                             captureMessage = captureMessage,
-                            autoConfirm = autoConfirm,
+                            categories = categories,
                             keepAlive = keepAlive,
                             watchApps = watchApps,
                             onCaptureMessage = { captureMessage = it },
-                            onAutoConfirm = { autoConfirm = it },
                             onKeepAlive = { keepAlive = it },
                             onWatchApps = { watchApps = it },
                             onBack = { autoPage = "" },
@@ -296,7 +315,7 @@ private fun MainApp() {
                         )
                     }
                     else -> if (minePage.isNotEmpty()) {
-                        MinePages(minePage, settings, { theme = it }, { minePage = it }, { minePage = "" }, { openBill = it })
+                        MinePages(minePage, settings, onTheme, ::clearAndReset, { minePage = it }, { minePage = "" }, { openBill = it })
                     } else {
                         MineHome(AccountRepository(AppGraph.database).profile()) { minePage = it }
                     }
@@ -318,11 +337,10 @@ private fun AutoPages(
     settings: SettingsStore,
     captureSource: String,
     captureMessage: String?,
-    autoConfirm: Boolean,
+    categories: List<com.meow.ledger.shared.db.Category>,
     keepAlive: Boolean,
     watchApps: Set<String>,
     onCaptureMessage: (String) -> Unit,
-    onAutoConfirm: (Boolean) -> Unit,
     onKeepAlive: (Boolean) -> Unit,
     onWatchApps: (Set<String>) -> Unit,
     onBack: () -> Unit,
@@ -338,7 +356,14 @@ private fun AutoPages(
             onCaptureText = { text -> captureSummary(auto.captureTicket(text, "ocr")) },
             onOpenPending = onOpenPending,
         )
-        "pending" -> PendingPage(auto.pending(), onBack, onConfirm = { auto.confirm(it) }, onIgnore = { auto.ignore(it) })
+        "pending" -> PendingPage(
+            events = auto.pending(),
+            categories = categories,
+            onBack = onBack,
+            onConfirmOne = { id, edit -> auto.pendingById(id)?.let { auto.confirm(it, edit = edit) } },
+            onBatchConfirm = { ids, edits -> auto.confirmAll(ids, edits) },
+            onBatchIgnore = { ids -> auto.ignoreAll(ids) },
+        )
         "rules" -> RulesPage(auto.rules(), onBack, onAdd = { keyword, type ->
             auto.saveRule(
                 Rule(
@@ -366,10 +391,7 @@ private fun AutoPages(
             settings.setFlag(KEY_KEEP_ALIVE, on)
         }
         "guide" -> GuidePage(onBack)
-        "settings" -> AutoSettingsPage(autoConfirm, onBack) { on ->
-            onAutoConfirm(on)
-            settings.setFlag(KEY_AUTO_CONFIRM, on)
-        }
+        "settings" -> AutoSettingsPage(onBack)
     }
 }
 
@@ -378,6 +400,7 @@ private fun MinePages(
     page: String,
     settings: SettingsStore,
     onTheme: (String) -> Unit,
+    onClear: () -> Unit,
     onOpen: (String) -> Unit,
     onBack: () -> Unit,
     onOpenBill: (String) -> Unit,
@@ -396,12 +419,7 @@ private fun MinePages(
         page.startsWith("installment") || page.startsWith("save-plan") -> PlansPage(PlanRepository(database), page, onOpen, onBack)
         page.startsWith("widget") -> WidgetsPage(WidgetRepository(database), month, page, onOpen, onBack)
         page == "help" -> HelpPage(onBack)
-        else -> AccountPage(page, database, AccountRepository(database), settings, onTheme, onClear = {
-            database.transaction {
-                database.billQueries.selectByRange(0, 0, 99999999).executeAsList()
-                    .forEach { database.billQueries.deleteOne(it.member_id, it.client_id) }
-            }
-        }, onOpen, onBack)
+        else -> AccountPage(page, database, AccountRepository(database), settings, onTheme, onClear, onOpen, onBack)
     }
 }
 
@@ -411,13 +429,4 @@ private fun captureSummary(result: CaptureResult): String {
     if (result.duplicate > 0) parts += "${result.duplicate} 条重复已跳过"
     if (result.unsupported > 0) parts += "${result.unsupported} 条没有识别出金额"
     return if (parts.isEmpty()) "没有可识别的内容" else parts.joinToString("，")
-}
-
-@Composable
-private fun Placeholder(tab: Int) {
-    val palette = LocalPalette.current
-    val title = listOf("账单", "统计", "自动记账", "我的")[tab]
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        androidx.compose.material3.Text(title, color = palette.textSecondary)
-    }
 }
