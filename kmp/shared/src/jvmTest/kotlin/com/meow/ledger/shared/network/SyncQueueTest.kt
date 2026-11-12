@@ -227,4 +227,70 @@ class SyncQueueTest {
         engine.enqueue(DynamicEndpoints.UPLOAD_OSS, "POST", payload(), "d2")
         assertEquals(2, engine.pendingCount())
     }
+
+    @Test
+    fun http4xxPermanentRejectionDropsRowWithoutRetry() {
+        // 400 与 404 都属于永久拒绝：标成终态 status=2，第二次 flush 不再发送，
+        // 也不计入 fail（永久丢弃既不是成功也不是待重试失败）。
+        for (status in listOf(400, 404)) {
+            var calls = 0
+            val api = object : MeowApi {
+                override suspend fun call(request: EndpointRequest): JsonEnvelope {
+                    calls += 1
+                    throw HttpStatusCodeException(path = "Bills/Create", statusCode = status)
+                }
+            }
+            val (engine, db) = engine(api)
+            engine.enqueue("Bills/Create", "POST", payload(), "c-$status")
+            // enqueue 内部生成队列 id，先从 pending 里取出真实 id 供后面按 id 断言。
+            val queueId = db.s2Queries.selectPendingSync(Long.MAX_VALUE, 100L).executeAsList().single().id
+            val (ok, fail) = runBlocking { engine.flush() }
+            assertEquals(0, ok)
+            assertEquals(0, fail, "permanent drop must not count as retry-fail")
+            assertEquals(0, engine.pendingCount(), "dropped row leaves the pending queue")
+            val row = db.s2Queries.selectSyncById(queueId).executeAsOne()
+            assertEquals(2L, row.status, "status 2 = dropped")
+            assertTrue(row.error.contains("HTTP $status"), "error records the HTTP status, got: ${row.error}")
+            // 第二次 flush 不再发送。
+            runBlocking { engine.flush() }
+            assertEquals(1, calls, "HTTP $status row must never be sent twice")
+        }
+    }
+
+    @Test
+    fun http408And429RemainRetryable() {
+        for (status in listOf(408, 429)) {
+            val api = object : MeowApi {
+                override suspend fun call(request: EndpointRequest): JsonEnvelope {
+                    throw HttpStatusCodeException(path = "Bills/Create", statusCode = status)
+                }
+            }
+            val (engine, db) = engine(api)
+            engine.enqueue("Bills/Create", "POST", payload(), "c-$status")
+            val queueId = db.s2Queries.selectPendingSync(Long.MAX_VALUE, 100L).executeAsList().single().id
+            val (ok, fail) = runBlocking { engine.flush() }
+            assertEquals(0, ok)
+            assertEquals(1, fail, "HTTP $status is a retryable 4xx")
+            assertEquals(1, engine.pendingCount())
+            val row = db.s2Queries.selectSyncById(queueId).executeAsOne()
+            assertEquals(0L, row.status, "still pending")
+            assertEquals(1L, row.retry_count, "retry_count increases")
+            assertTrue(row.next_attempt > row.update_time, "backoff pushed next_attempt into the future")
+        }
+    }
+
+    @Test
+    fun http500StillRetried() {
+        val api = object : MeowApi {
+            override suspend fun call(request: EndpointRequest): JsonEnvelope {
+                throw HttpStatusCodeException(path = "Bills/Create", statusCode = 500)
+            }
+        }
+        val (engine, _) = engine(api)
+        engine.enqueue("Bills/Create", "POST", payload(), "c-500")
+        val (ok, fail) = runBlocking { engine.flush() }
+        assertEquals(0, ok)
+        assertEquals(1, fail)
+        assertEquals(1, engine.pendingCount(), "HTTP 500 stays pending for backoff retry")
+    }
 }

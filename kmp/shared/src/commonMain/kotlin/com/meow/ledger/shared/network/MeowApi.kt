@@ -48,6 +48,12 @@ interface MeowApi {
     suspend fun call(request: EndpointRequest): JsonEnvelope
 }
 
+/** 非 2xx 的 HTTP 响应：携带真实 HTTP 状态码，供 [SyncEngine] 区分可重试与永久拒绝。 */
+class HttpStatusCodeException(
+    val path: String,
+    val statusCode: Int,
+) : IllegalStateException("$path returned HTTP $statusCode")
+
 /**
  * Ktor 实现：统一 host、超时、明文 JSON 与 `{code,message,data,trace_id}` 信封。
  *
@@ -84,9 +90,10 @@ interface MeowApi {
  *
  * ## 响应
  *
- * 非 2xx → 抛 [IllegalStateException]；`code != 0` → [Envelope.unwrap] 抛
- * [ApiException]；信封解析失败 → [IllegalArgumentException]。所有异常留给
- * [SyncEngine.flush] 的退避重试，绝不会阻塞已经落库的 UI 写操作。
+ * 非 2xx → 抛 [HttpStatusCodeException]（`IllegalStateException` 子类，携带 HTTP 状态码）；
+ * `code != 0` → [Envelope.unwrap] 抛 [ApiException]；信封解析失败 →
+ * [IllegalArgumentException]。所有异常留给 [SyncEngine.flush] 分类处理（退避重试或终态丢弃），
+ * 绝不会阻塞已经落库的 UI 写操作。
  */
 class KtorMeowApi(
     private val client: HttpClient = defaultClient(),
@@ -207,7 +214,7 @@ class KtorMeowApi(
 
     private fun require2xx(response: HttpResponse, path: String) {
         if (!response.status.isSuccess()) {
-            throw IllegalStateException("$path returned HTTP ${response.status.value}")
+            throw HttpStatusCodeException(path, response.status.value)
         }
     }
 
