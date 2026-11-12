@@ -115,3 +115,18 @@ val EndpointCatalog: List<EndpointSpec> = listOf(
     EndpointSpec(method = "POST", path = "Cate/GetMainCates", fields = listOf(), body = null, ret = "BillCateResp>"),
     EndpointSpec(method = "POST", path = "Account/LoginByPhone", fields = listOf("phone", "code"), body = null, ret = "User>"),
 )
+
+/**
+ * `api/a.java` 里两个动态 `@Url` 方法。它们没有静态路径，单独登记，
+ * 不混入 [EndpointCatalog] 的 112 条注解路径，保持 112 的计数口径不变。
+ * 与 Web 规格参考 `src/api/mock/index.ts` 的 `DYNAMIC_PATHS` 同 id。
+ */
+object DynamicEndpoints {
+    const val DOWNLOAD = "@Url:GET:download"
+    const val UPLOAD_OSS = "@Url:POST:uploadOss"
+    val ids: Set<String> = setOf(DOWNLOAD, UPLOAD_OSS)
+    val all: List<EndpointSpec> = listOf(
+        EndpointSpec(method = "GET", path = DOWNLOAD, body = null, ret = "ResponseBody"),
+        EndpointSpec(method = "POST", path = UPLOAD_OSS, body = "MultipartBody", ret = "UploadOssData"),
+    )
+}

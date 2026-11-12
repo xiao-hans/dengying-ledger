@@ -24,6 +24,7 @@ kotlin {
         // sqlite-driver 只在 JVM 上能跑，所以仓储测试放在 jvmTest。
         getByName("jvmTest").dependencies {
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.ktor.client.mock)
         }
         getByName("androidMain").dependencies {
             // okhttp engine 传递 okhttp-android 5.5.0，要求 compileSdk 37；

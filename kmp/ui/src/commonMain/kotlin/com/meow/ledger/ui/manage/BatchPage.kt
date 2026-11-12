@@ -47,12 +47,12 @@ private fun moneyYuan(cents: Long): String {
     return "$sign${abs / 100}.${(abs % 100).toString().padStart(2, '0')}"
 }
 
-/** 批量修改页：选中一个月里的多笔账单，一起改分类（Bills/BatchUpdate 的本地口径）。 */
+/** 批量修改页：选中一个月里的多笔账单，一起改分类（逐笔入队 Bills/Update）。 */
 @Composable
 internal fun BatchPage(onBack: () -> Unit) {
     val palette = LocalPalette.current
     val database = AppGraph.database
-    val bills = remember { BillsRepository(database) }
+    val bills = remember { BillsRepository(database, AppGraph.sync) }
     val cates = remember { CategoryRepository(database) }
     val cateNames = remember {
         (cates.ofType(TYPE_EXPENSE) + cates.ofType(TYPE_INCOME)).associate { it.id to it.title }
@@ -72,13 +72,6 @@ internal fun BatchPage(onBack: () -> Unit) {
     val view = remember(yearMonth, doneCount) { bills.month(yearMonth) }
     val flat = view.groups.flatMap { it.bills }
 
-    fun enqueueBatch(cateId: Long) {
-        AppGraph.sync?.enqueueBatchUpdate(
-            memberId = 0L,
-            clientIds = selected.toList(),
-            cateId = cateId,
-        )
-    }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -208,7 +201,6 @@ internal fun BatchPage(onBack: () -> Unit) {
             message = "把选中的 ${selected.size} 笔账单改为「${cateNames[cateId] ?: "分类 $cateId"}」。改动立即生效，之后仍可再次批量修改。",
             onConfirm = {
                 val n = bills.batchUpdate(0, selected.toList(), cateId)
-                enqueueBatch(cateId)
                 doneCount = n
                 selected = emptySet()
                 confirming = null
