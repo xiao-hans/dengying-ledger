@@ -69,6 +69,14 @@ class SyncEngine(
      * 尝试把到期条目送达。返回 (成功数, 失败数)。
      * 网络失败不抛出——写操作已在本地完成，同步失败静默重试。
      *
+     * 失败分类：
+     * - HTTP 4xx（除 408/429）＝服务端永久拒绝，标成终态「已丢弃」（status=2），不再重试。
+     * - HTTP 408/429 与 5xx、网络/IO/超时等其它异常 ＝ 暂时性失败，按指数退避重试。
+     * - 业务信封错误（[ApiException]）的 `code` 是业务码不是 HTTP 状态码，一律按暂时性失败重试。
+     *
+     * 返回值只含 (成功数, 待重试失败数)：永久丢弃既不是成功也不是可重试失败，
+     * 不计入 `fail`，避免 UI 把终态条目误读成「还会重试的失败」。
+     *
      * 用 [flushMutex] 串行化：并发的 `SyncScheduler.onEnqueued` 触发也只会一个个跑，
      * 第二条进来时队列项已被标记完成，不会重复发送。
      */
@@ -92,6 +100,16 @@ class SyncEngine(
                 db.s2Queries.markSyncDone(now = System.currentTimeMillis(), id = item.id)
                 ok += 1
             } catch (e: Exception) {
+                // 只有明确带 HTTP 状态码的类型化异常才进 4xx 判断；ApiException.code 是
+                // 业务信封码，语义不同，绝不能当 HTTP 状态码解读（HTTP 500 ≠ 业务 code 500）。
+                val status = (e as? HttpStatusCodeException)?.statusCode
+                // HTTP 4xx（除 408/429）是服务端对请求本身的永久拒绝：同样的 payload 再发
+                // 多少次都只会得到同样的结果，标成终态「已丢弃」，避免永远卡在退避循环里。
+                if (status != null && status in 400..499 && status != 408 && status != 429) {
+                    markDropped(item.id, "HTTP $status rejected, not retrying: ${item.path}")
+                    continue
+                }
+                // 408/429/5xx、网络与 IO 失败、超时等：暂时性失败，指数退避后重试。
                 val retry = item.retry_count + 1
                 val backoff = (retry * retry * 30_000L).coerceAtMost(30 * 60_000L)
                 db.s2Queries.markSyncRetry(
