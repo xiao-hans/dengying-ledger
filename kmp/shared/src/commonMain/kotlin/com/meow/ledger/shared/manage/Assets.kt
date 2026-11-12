@@ -134,7 +134,7 @@ private fun currentTimeMillis(): Long = System.currentTimeMillis()
 const val DEFAULT_ASSET_ID = 1L
 private const val VISIBLE = 1L
 private const val HIDDEN = 0L
-private const val IOU_TYPE = 6L
+internal const val IOU_TYPE = 6L
 
 val ASSET_TYPES = listOf(
     AssetType(1, "cash", "现金"),

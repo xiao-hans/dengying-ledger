@@ -42,6 +42,7 @@ class PlanRepository(private val db: MeowDatabase) {
         money: Long,
         count: Int = 12,
         interest: Long = 0,
+        deductionAssetId: Long = DEFAULT_ASSET_ID,
     ): Installment_plan {
         val now = currentTimeMillis()
         val periods = count.coerceIn(1, 360)
@@ -49,7 +50,7 @@ class PlanRepository(private val db: MeowDatabase) {
             id = newId("i"),
             member_id = LOCAL_MEMBER_ID,
             name = name.ifBlank { "消费分期" },
-            deduction_asset_id = DEFAULT_ASSET_ID,
+            deduction_asset_id = deductionAssetId,
             start_date = now,
             money = money,
             total_count = periods.toLong(),
@@ -100,6 +101,14 @@ class PlanRepository(private val db: MeowDatabase) {
             update_time = currentTimeMillis(),
         )
         db.planQueries.upsert(row)
+        // 借据联动结清：扣款资产是借条（type=6）时，结清即余额归零。
+        if (old.deduction_asset_id > 0L) {
+            db.assetQueries.selectOne(old.deduction_asset_id).executeAsOneOrNull()?.let { asset ->
+                if (asset.type == IOU_TYPE && asset.balance_cents != 0L) {
+                    db.assetQueries.upsert(asset.copy(balance_cents = 0))
+                }
+            }
+        }
         return row
     }
 
