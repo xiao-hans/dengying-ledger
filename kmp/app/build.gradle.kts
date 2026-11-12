@@ -21,6 +21,8 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.androidx.core.ktx)
+            // 截屏采集服务复用 ui 模块同一套本地中文 OCR 引擎。
+            implementation(libs.mlkit.text.recognition.chinese)
         }
     }
 }

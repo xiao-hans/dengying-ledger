@@ -2,6 +2,7 @@ package com.meow.ledger.platform
 
 import com.meow.ledger.ui.AppGraph
 import com.meow.ledger.shared.auto.AutoRepository
+import com.meow.ledger.shared.auto.SOURCE_SCREENSHOT
 import com.meow.ledger.shared.auto.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,22 @@ import kotlinx.coroutines.launch
  */
 object CaptureBridge {
     private var job: Job? = null
+
+    /**
+     * 供 MediaProjection 截屏服务直接投递 OCR 文本：与三路采集共用白名单和去重，
+     * 结果只进待确认队列。sourceApp 留空表示不限制白名单（用户主动发起的截屏）。
+     */
+    fun submitScreenCapture(text: String, occurredAt: Long = System.currentTimeMillis()) {
+        CandidateQueue.add(
+            CaptureCandidate(
+                source = SOURCE_SCREENSHOT,
+                sourceApp = "",
+                title = "",
+                text = text,
+                occurredAt = occurredAt,
+            ),
+        )
+    }
 
     fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return

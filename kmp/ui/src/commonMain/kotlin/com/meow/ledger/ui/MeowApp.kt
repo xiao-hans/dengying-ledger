@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,22 +19,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.meow.ledger.shared.auto.AutoRepository
 import com.meow.ledger.shared.auto.CaptureResult
+import com.meow.ledger.shared.auto.DeepLinkTarget
 import com.meow.ledger.shared.auto.KEY_AUTO_BILL
 import com.meow.ledger.shared.auto.KEY_KEEP_ALIVE
+import com.meow.ledger.shared.auto.SOURCE_OCR
 import com.meow.ledger.shared.auto.SettingsStore
+import com.meow.ledger.shared.auto.paymentStatusOf
 import com.meow.ledger.shared.auto.snapshot
 import com.meow.ledger.shared.bills.BillsRepository
-import com.meow.ledger.shared.bills.clearLocalData
-import com.meow.ledger.shared.db.Rule
 import com.meow.ledger.shared.bills.CategoryRepository
 import com.meow.ledger.shared.bills.RefundRepository
-import com.meow.ledger.ui.manage.BatchPage
 import com.meow.ledger.shared.bills.RefundTooLarge
+import com.meow.ledger.shared.bills.TYPE_EXPENSE
+import com.meow.ledger.shared.bills.clearLocalData
 import com.meow.ledger.shared.bills.seedCategoriesIfEmpty
 import com.meow.ledger.shared.bills.seedIfEmpty
-import com.meow.ledger.shared.bills.TYPE_EXPENSE
-import com.meow.ledger.shared.stats.StatsRepository
+import com.meow.ledger.shared.db.Rule
+import com.meow.ledger.shared.manage.AccountRepository
+import com.meow.ledger.shared.manage.AssetRepository
+import com.meow.ledger.shared.manage.BookRepository
+import com.meow.ledger.shared.manage.BudgetRepository
+import com.meow.ledger.shared.manage.CatalogRepository
+import com.meow.ledger.shared.manage.ExchangeRepository
+import com.meow.ledger.shared.manage.FixedBillRepository
+import com.meow.ledger.shared.manage.PlanRepository
 import com.meow.ledger.shared.manage.TagRepository
+import com.meow.ledger.shared.manage.WidgetRepository
+import com.meow.ledger.shared.stats.StatsRepository
 import com.meow.ledger.shared.stats.TagDrill
 import com.meow.ledger.shared.stats.TrendPeriod
 import com.meow.ledger.shared.stats.periodSpan
@@ -50,28 +62,20 @@ import com.meow.ledger.ui.bills.BillDetail
 import com.meow.ledger.ui.bills.BillEntry
 import com.meow.ledger.ui.home.BillsHome
 import com.meow.ledger.ui.home.Dock
-import com.meow.ledger.shared.manage.AccountRepository
-import com.meow.ledger.shared.manage.AssetRepository
-import com.meow.ledger.shared.manage.BookRepository
-import com.meow.ledger.shared.manage.CatalogRepository
-import com.meow.ledger.shared.manage.BudgetRepository
-import com.meow.ledger.shared.manage.ExchangeRepository
-import com.meow.ledger.shared.manage.FixedBillRepository
-import com.meow.ledger.shared.manage.PlanRepository
-import com.meow.ledger.shared.manage.WidgetRepository
 import com.meow.ledger.ui.manage.AccountPage
 import com.meow.ledger.ui.manage.AssetsPage
+import com.meow.ledger.ui.manage.BatchPage
 import com.meow.ledger.ui.manage.BooksPage
-import com.meow.ledger.ui.manage.CatalogPage
 import com.meow.ledger.ui.manage.BudgetPage
+import com.meow.ledger.ui.manage.CatalogPage
 import com.meow.ledger.ui.manage.ExchangePage
 import com.meow.ledger.ui.manage.FixedBillsPage
 import com.meow.ledger.ui.manage.HelpPage
 import com.meow.ledger.ui.manage.LockGate
 import com.meow.ledger.ui.manage.MineHome
+import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.manage.SearchPage
 import com.meow.ledger.ui.manage.WidgetsPage
-import com.meow.ledger.ui.manage.PlansPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.stats.StatsPages
 import com.meow.ledger.ui.theme.LocalPalette
@@ -79,23 +83,28 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+/** 深链进来时预置 tab / 页面变量，让每个入口都落到已有功能，而不是说明页（交互纪律 §6.9）。 */
 @Composable
 fun MeowApp(
-    initialRoute: String = "",
+    initialTarget: DeepLinkTarget = DeepLinkTarget(DeepLinkTarget.Kind.MAIN),
     entryHost: EntryHost? = null,
 ) {
     val settings = SettingsStore(AppGraph.database)
-    var theme by rememberSaveable { mutableStateOf(settings.snapshot().theme) }
     // 主题状态提升到 MeowApp：入口页与主界面读同一个三态值，切换即时生效（§6.8）。
     // 清空本机数据后由 onTheme 把这里也拉回缺省值，避免界面与库里的设置脱节。
-    EntryNavHost(initialRoute = initialRoute, host = entryHost, theme = theme) {
-        MainApp(theme = theme, onTheme = { theme = it })
+    var theme by rememberSaveable { mutableStateOf(settings.snapshot().theme) }
+    EntryNavHost(initialTarget = initialTarget, host = entryHost, theme = theme) { target ->
+        MainApp(target = target, onTheme = { theme = it })
     }
 }
 
 @Composable
-private fun MainApp(theme: String, onTheme: (String) -> Unit) {
+private fun MainApp(
+    target: DeepLinkTarget,
+    onTheme: (String) -> Unit,
+) {
     val settings = SettingsStore(AppGraph.database)
+    // 与 EntryNavHost 用同一份三态深浅色，避免权限页与深链目标页配色错乱（§6.8）。
     val palette = LocalPalette.current
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     val today = (now.year * 10000 + now.monthNumber * 100 + now.dayOfMonth).toLong()
@@ -106,9 +115,29 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
     val view = remember(revision) { repository.month(now.year * 100 + now.monthNumber) }
     val categories = CategoryRepository(AppGraph.database).ofType(1) + CategoryRepository(AppGraph.database).ofType(2)
 
-    var tab by rememberSaveable { mutableIntStateOf(0) }
-    var composing by rememberSaveable { mutableStateOf(false) }
-    var openBill by rememberSaveable { mutableStateOf<String?>(null) }
+    // 深链把 tab / 子页预置好；返回后是同一个带 Dock 的主界面，不会卡在孤立页。
+    var tab by rememberSaveable {
+        mutableIntStateOf(
+            when (target.kind) {
+                DeepLinkTarget.Kind.BILL_EDIT -> 0
+                DeepLinkTarget.Kind.TICKET, DeepLinkTarget.Kind.CAPTURE, DeepLinkTarget.Kind.PENDING -> 2
+                DeepLinkTarget.Kind.PAYMENT, DeepLinkTarget.Kind.WEBVIEW -> 3
+                else -> 0
+            },
+        )
+    }
+    var composing by rememberSaveable { mutableStateOf(target.kind == DeepLinkTarget.Kind.BILL_EDIT) }
+    var openBill by rememberSaveable {
+        mutableStateOf(
+            if (target.kind == DeepLinkTarget.Kind.BILL_EDIT && target.clientId.isNotBlank() &&
+                repository.get(0, target.clientId) != null
+            ) {
+                target.clientId
+            } else {
+                null
+            },
+        )
+    }
     var editing by rememberSaveable { mutableStateOf(false) }
     var detailMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var statsType by rememberSaveable { mutableStateOf(TYPE_EXPENSE) }
@@ -122,10 +151,39 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
     var watchApps by rememberSaveable { mutableStateOf(initial.watchApps) }
     var lockPin by rememberSaveable { mutableStateOf(initial.lockPin) }
     var unlocked by rememberSaveable { mutableStateOf(initial.lockPin.isEmpty()) }
-    var autoPage by rememberSaveable { mutableStateOf("") }
-    var minePage by rememberSaveable { mutableStateOf("") }
+    var autoPage by rememberSaveable {
+        mutableStateOf(
+            when (target.kind) {
+                DeepLinkTarget.Kind.TICKET -> "ocr"
+                DeepLinkTarget.Kind.CAPTURE, DeepLinkTarget.Kind.PENDING -> "pending"
+                else -> ""
+            },
+        )
+    }
+    var minePage by rememberSaveable {
+        mutableStateOf(
+            when (target.kind) {
+                DeepLinkTarget.Kind.SCAN -> "book-join"
+                DeepLinkTarget.Kind.PAYMENT -> "vip"
+                DeepLinkTarget.Kind.WEBVIEW -> "help"
+                else -> ""
+            },
+        )
+    }
     var captureSource by rememberSaveable { mutableStateOf("") }
     var captureMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    // 支付回调的状态与订单号一起显示在会员页，用户可自行核对，绝不冒充支付成功。
+    var paymentNotice by rememberSaveable {
+        mutableStateOf(
+            if (target.kind == DeepLinkTarget.Kind.PAYMENT) {
+                val order = target.clientId
+                val prefix = if (order.isBlank()) "" else "订单 $order："
+                prefix + paymentStatusOf(target.paymentResult)
+            } else {
+                ""
+            },
+        )
+    }
 
     /**
      * 「清空本机数据」的完整后果：清库后设置行被整体删掉，镜像设置的内存状态必须一起
@@ -152,7 +210,26 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
         openBill = null
         detailMessage = null
         captureMessage = null
+        paymentNotice = ""
         revision++
+    }
+
+    // onNewIntent 再次带深链进来时，复用同一套预置逻辑，不需要重建 Activity。
+    var appliedKey by rememberSaveable { mutableStateOf("") }
+    val targetKey = with(target) { "$kind|$clientId|$url|$paymentResult|$launchId" }
+    LaunchedEffect(targetKey) {
+        if (targetKey == appliedKey) return@LaunchedEffect
+        appliedKey = targetKey
+        applyTarget(
+            target,
+            repository,
+            setTab = { tab = it },
+            setComposing = { composing = it },
+            setOpenBill = { openBill = it },
+            setAutoPage = { autoPage = it },
+            setMinePage = { minePage = it },
+            setPaymentNotice = { paymentNotice = it },
+        )
     }
 
     CompositionLocalProvider(LocalPalette provides palette) {
@@ -167,13 +244,13 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
             enabled = composing || editing || openBill != null ||
                 statsPage.isNotEmpty() || autoPage.isNotEmpty() || minePage.isNotEmpty(),
             onBack = {
-            when {
-                composing || editing -> { composing = false; editing = false }
-                openBill != null -> { openBill = null; detailMessage = null }
-                statsPage.isNotEmpty() -> statsPage = ""
-                autoPage.isNotEmpty() -> autoPage = ""
-                minePage.isNotEmpty() -> minePage = ""
-            }
+                when {
+                    composing || editing -> { composing = false; editing = false }
+                    openBill != null -> { openBill = null; detailMessage = null }
+                    statsPage.isNotEmpty() -> statsPage = ""
+                    autoPage.isNotEmpty() -> autoPage = ""
+                    minePage.isNotEmpty() -> minePage = ""
+                }
             },
         )
         Box(
@@ -315,7 +392,16 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
                         )
                     }
                     else -> if (minePage.isNotEmpty()) {
-                        MinePages(minePage, settings, onTheme, ::clearAndReset, { minePage = it }, { minePage = "" }, { openBill = it })
+                        MinePages(
+                            minePage,
+                            settings,
+                            onTheme,
+                            ::clearAndReset,
+                            { minePage = it },
+                            { minePage = "" },
+                            { openBill = it },
+                            paymentNotice,
+                        )
                     } else {
                         MineHome(AccountRepository(AppGraph.database).profile()) { minePage = it }
                     }
@@ -326,6 +412,54 @@ private fun MainApp(theme: String, onTheme: (String) -> Unit) {
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
                 )
             }
+        }
+    }
+}
+
+/** 把深链目标落到状态机；冷启动与 onNewIntent 共用，避免两套不一致的跳转。 */
+private fun applyTarget(
+    target: DeepLinkTarget,
+    repository: BillsRepository,
+    setTab: (Int) -> Unit,
+    setComposing: (Boolean) -> Unit,
+    setOpenBill: (String?) -> Unit,
+    setAutoPage: (String) -> Unit,
+    setMinePage: (String) -> Unit,
+    setPaymentNotice: (String) -> Unit,
+) {
+    when (target.kind) {
+        DeepLinkTarget.Kind.BILL_EDIT -> {
+            setTab(0)
+            val existing = target.clientId.takeIf { it.isNotBlank() }?.let { repository.get(0, it) }
+            if (existing == null) {
+                // 没有 clientId 或账单不存在 → 新建一笔；带 clientId 的旧账单 → 打开详情可编辑。
+                setOpenBill(null)
+                setComposing(true)
+            } else {
+                setComposing(false)
+                setOpenBill(target.clientId)
+            }
+        }
+        DeepLinkTarget.Kind.TICKET -> { setTab(2); setAutoPage("ocr") }
+        // 截屏采集由平台侧服务拉起，App 内落到待确认队列，用户确认后才入账。
+        DeepLinkTarget.Kind.CAPTURE -> { setTab(2); setAutoPage("pending") }
+        // 截屏结果通知只回待确认队列，不再拉起授权。
+        DeepLinkTarget.Kind.PENDING -> { setTab(2); setAutoPage("pending") }
+        DeepLinkTarget.Kind.SCAN -> { setTab(3); setMinePage("book-join") }
+        DeepLinkTarget.Kind.PAYMENT -> {
+            setTab(3)
+            setMinePage("vip")
+            val prefix = if (target.clientId.isBlank()) "" else "订单 ${target.clientId}："
+            setPaymentNotice(prefix + paymentStatusOf(target.paymentResult))
+        }
+        DeepLinkTarget.Kind.WEBVIEW -> { setTab(3); setMinePage("help") }
+        DeepLinkTarget.Kind.PERMISSION, DeepLinkTarget.Kind.MAIN -> {
+            setTab(0)
+            setComposing(false)
+            setOpenBill(null)
+            setAutoPage("")
+            setMinePage("")
+            setPaymentNotice("")
         }
     }
 }
@@ -353,7 +487,7 @@ private fun AutoPages(
         }
         "ocr" -> OcrPage(
             onBack,
-            onCaptureText = { text -> captureSummary(auto.captureTicket(text, "ocr")) },
+            onCaptureText = { text -> captureSummary(auto.captureTicket(text, SOURCE_OCR)) },
             onOpenPending = onOpenPending,
         )
         "pending" -> PendingPage(
@@ -404,6 +538,7 @@ private fun MinePages(
     onOpen: (String) -> Unit,
     onBack: () -> Unit,
     onOpenBill: (String) -> Unit,
+    paymentNotice: String = "",
 ) {
     val database = AppGraph.database
     val month = com.meow.ledger.shared.stats.periodSpan(com.meow.ledger.shared.stats.TrendPeriod.MONTH, 1).second / 100
@@ -419,7 +554,17 @@ private fun MinePages(
         page.startsWith("installment") || page.startsWith("save-plan") -> PlansPage(PlanRepository(database), page, onOpen, onBack)
         page.startsWith("widget") -> WidgetsPage(WidgetRepository(database), month, page, onOpen, onBack)
         page == "help" -> HelpPage(onBack)
-        else -> AccountPage(page, database, AccountRepository(database), settings, onTheme, onClear, onOpen, onBack)
+        else -> AccountPage(
+            page,
+            database,
+            AccountRepository(database),
+            settings,
+            onTheme,
+            onClear,
+            onOpen,
+            onBack,
+            paymentNotice,
+        )
     }
 }
 
