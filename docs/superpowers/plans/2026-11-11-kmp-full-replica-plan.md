@@ -2,7 +2,7 @@
 title: 喵啊记账 KMP 全量复刻实施计划
 date: 2026-11-11
 design: docs/superpowers/specs/2026-11-11-kmp-full-replica-design.md
-status: S3 完成，S4 进行中
+status: S0–S8 均已落地，门禁未完成项见 docs/功能差距表.md「剩余缺口」
 ad_free: 不接入广告 SDK，不调用广告请求端点
 ---
 
@@ -52,14 +52,14 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 4. 实现 `client_id` 幂等写、`sync_queue` 重试和本地优先刷新。已完成：`SyncEngine`（指数退避重试，纯本地模式静默保留队列）。
 5. 实现删除二次确认、草稿保留、金额输入和筛选状态。批量修改已用 `ConfirmBox` 二次确认。
 6. 为金额、去重、迁移、契约字段和同步重试写 JVM 测试。已完成 17 个新用例（BillsSyncTest/TagsTest/BooksDefaultTest/CateExtendTest/SyncQueueTest + 网络 7 个），96 用例全绿。
-7. 升级与批量修改流程回归。已完成：v2 旧库 install -r 升级后 37 表/11 列 `sync_queue`/version=3；批量修改 4 笔改「交通」无崩溃、入队 `Bills/BatchUpdate POST`。真机 vivo 安装确认框待用户点击后复核。
+7. 升级与批量修改流程回归。已完成：v2 旧库 install -r 升级后表结构/11 列 `sync_queue`/version=3；批量修改 4 笔改「交通」无崩溃。批量改分类**逐笔入队权威的 `Bills/Update POST`**（`spec/endpoints.json` 内路径），旧记录里的 `Bills/BatchUpdate POST` 是清单外幽灵路径，已移除：PR #3 用 `SyncEngine.enqueue` 的 `EndpointRegistry.isKnown` 守卫拒绝清单外 path，并把队列中残留的旧行标为终态 `status = 2`。真机 vivo 安装确认框待用户点击后复核。
 8. 更新差距表和接口对照表；提交并推送。对照表与差距表已更新到「部分实现」。
 
-完成依据：32 个契约方法逐项有实现位置；同名 `Bills/ImportBills` 重载按请求体字段区分；升级与批量修改流程在模拟器留 `uiautomator` 记录。
+完成依据：S2 阶段的 32 个契约方法逐项有实现位置；同名 `Bills/ImportBills` 重载按请求体字段区分；批量改分类按权威 `Bills/Update` 逐笔入队（不再使用 `Bills/BatchUpdate`）；升级与批量修改流程在模拟器留 `uiautomator` 记录。
 
 ## S3 · M7 预算与 M8 统计
 
-状态：部分完成（模拟器验证通过，真机待用户配合）。
+状态：完成（提交表 `:157` 记为完成；模拟器验证通过，真机待用户配合，复制年预算与自定义区间未做，见差距表 M7/M8）。
 
 1. 补齐 `budget`、`cate_budget` 和对应迁移。已做（S2 迁移 3.sqm 覆盖）。
 2. 实现 `Budget` 9 个契约方法和预算包含排除规则。已做：契约 `BudgetContracts` 9 方法、`removeCategory`、`not_in_budget` 过滤；包含排除、复制年预算未做。
@@ -73,9 +73,9 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S4 · M2 自动记账、M3 OCR、M13 导入导出
 
-状态：部分完成（S4a/S4b 已完成，S4c 真机验证待用户配合）。
+状态：完成（提交表 `:158` 记为完成；S4a/S4b 已完成，S4c 真机验证待用户配合；截屏 MediaProjection 一路未实现，见差距表「剩余缺口」）。
 
-1. ✅ 声明通知监听服务、无障碍服务；截屏与快捷磁贴服务在 S4b 补 MediaProjection 实现。
+1. ✅ 声明通知监听服务、无障碍服务；⬜ 截屏快捷磁贴只有 `ScreenCaptureTileService` 跳说明页，**MediaProjection / ImageReader / VirtualDisplay 未实现**（见差距表「剩余缺口」）。
 2. ✅ 通知/无障碍文本解析 + `CaptureBridge` 白名单过滤入队；ML Kit 中文 OCR（`text-recognition-chinese:16.0.1` 本地 bundled）接入 `PickImageButton`，`AutoRepository.captureTicket` 整图一次解析（商户取金额后首个词、日期不误判金额）。
 3. ✅ 去重键（`dedupKey(sourceApp|money|分钟桶|merchant)`）与待确认队列；确认/忽略后列表即时刷新。
 4. ✅ `KeyWordMatchingRule` 4 个、`MemberImportBillFile` 2 个、`Upload` 3 个契约方法（契约 50/112）。
@@ -90,7 +90,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S5 · M9 资产、M10 存钱、M11 周期、M12 分期、M14 小组件
 
-状态：未开始。
+状态：完成（提交表 `:159` 记为完成；`09558c5`、`d93feec`；widget 桌面放置与账户间调拨独立页未做，见差距表）。
 
 1. 补齐 `assets`、`save_plan`、`save_plan_item`、`fixed_bill`、`bill_remind`、`installment_plan`、`installment_item`、`widget_base`、`widget_user`、`widget_desktop` 和 `widget_hot` 的表与迁移。
 2. 实现 `FundAccount` 6 个、`SavePlan` 14 个、`ConsumptionInstallment` 6 个、`BillRefund` 3 个契约方法。
@@ -105,7 +105,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S6 · M15 账号安全与 M16 VIP 支付
 
-状态：未开始。
+状态：完成（提交表 `:160` 记为完成；`8e921db`；契约与本地页已落地，真实支付网关需商户资质，见差距表 M16）。
 
 1. 补齐 `member_profile`、`sms_code`、`contract_info`、`member_order` 和 `group_vip` 的表与迁移。
 2. 实现 `Account` 10 个、`Member` 10 个、`Order` 5 个、`VipGroupBuy` 3 个、`PersonCenter` 1 个契约方法。
@@ -120,7 +120,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S7 · M18 推送保活与 M19 埋点配置反馈
 
-状态：未开始。
+状态：完成（提交表 `:161` 记为完成；同 `8e921db`；100+ 事件映射与 4 厂商通道待服务端，见差距表 M18/M19）。
 
 1. 补齐 `behavior_event`、`remote_config` 和错误日志表。
 2. 实现 `Behavior` 1 个、`Config` 1 个、`Operation` 2 个契约方法。
@@ -135,7 +135,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 ## S8 · M17 无广约束、M21 全量回归
 
-状态：未开始。
+状态：完成（提交表 `:162` 记为完成；`2a8c806`、`6aff48e`；但广告依赖黑名单脚本、Android 仪器/真机测试、真实自建后端联调等门禁项未过，见差距表「剩余缺口」）。
 
 1. 运行广告依赖黑名单检查，记录结果。
 2. 核对 21 个模块、112 个端点、约 100 个页面、`02` 表清单和 `AGENTS.md` §6 的 10 条纪律。
@@ -160,3 +160,5 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 | S6 | `8e921db` | 契约测试全绿；Account/Group 业务层齐（VIP/订单/拼团 UI 已有） | — | 完成 |
 | S7 | 同 S6 | Operation/Behavior/Config/PersonCenter 5 契约 + catalog 112 断言绿 | — | 完成 |
 | S8 | `2a8c806` | 118 tests 0 fail；埋点三类落库 E2E（ac_add_bill×2 入库实证） | 模拟器记账保存+埋点；imePadding 键盘遮挡修复后回归截图 | 完成 |
+
+> **实测基线（2026-11-12 状态对账时补记）**：`origin/master` 上的 `:shared:jvmTest` = **139 tests / 0 failures**，`:app:assembleDebug` = **BUILD SUCCESSFUL**；环境 JDK 17.0.21 + Gradle 8.11.1（wrapper jar 方式，无 `gradlew` 脚本）。上表各切片的「96 / 100 / 113 / 116 / 118 tests」是当时提交记录里的历史数字，与最新基线口径不同，不要累加或当成当前值；本次对账未逐个重跑历史提交。三个先于状态对账 PR 合并的分支各自报告的测试数：PR #3 `fix/network-contract` 174 用例、PR #2 `fix/db-migration-v3` 145 用例、PR `fix/interaction-discipline` 新增 `AutoBatchConfirmTest` / `ClearLocalDataTest`（各分支独立口径，合并后以 CI 实测为准）。
