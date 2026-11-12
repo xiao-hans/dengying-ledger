@@ -1,5 +1,7 @@
 package com.meow.ledger.ui.manage
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +42,7 @@ fun AssetsPage(repository: AssetRepository, page: String, onOpen: (String) -> Un
             page == "assets" -> AssetList(repository, onOpen, onBack) { notice = it }
             page == "asset-new" -> AssetForm(repository, null, onBack) { notice = it }
             page.startsWith("asset-edit:") -> AssetForm(repository, page.substringAfter(":").toLongOrNull(), onBack) { notice = it }
+            page.startsWith("asset-flow:") -> AssetFlow(repository, page.substringAfter(":").toLongOrNull(), onBack)
             page == "asset-hidden" -> HiddenAssets(repository, onBack) { notice = it }
         }
         if (notice.isNotEmpty()) Text(notice, color = LocalPalette.current.danger, modifier = Modifier.padding(top = 12.dp))
@@ -70,6 +73,12 @@ private fun AssetList(repository: AssetRepository, onOpen: (String) -> Unit, onB
                 Text("${centsToYuan(asset.balance_cents)} 元", color = palette.textPrimary)
             }
             Text(asset.type_title, color = palette.textSecondary, modifier = Modifier.padding(top = 4.dp))
+            Text(
+                "流水 ›",
+                color = palette.textSecondary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 6.dp).clickable { onOpen("asset-flow:${asset.id}") },
+            )
         }
     }
     if (version < 0) onNotice("")
@@ -154,3 +163,46 @@ private fun HiddenAssets(repository: AssetRepository, onBack: () -> Unit, onNoti
     }
 }
 
+/** 资产流水：逐笔账单对该账户的变动与余额。 */
+@Composable
+private fun AssetFlow(repository: AssetRepository, id: Long?, onBack: () -> Unit) {
+    val palette = LocalPalette.current
+    val asset = remember(id) { id?.let(repository::one) }
+    if (id == null || asset == null) {
+        Missing("账户不存在", onBack)
+        return
+    }
+    val rows = remember(id) { repository.flow(id) }
+    Column(Modifier.fillMaxSize().background(palette.appBg)) {
+        BackHeader("${asset.name} · 流水", onBack)
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            GlassCard {
+                Text("当前余额", color = palette.textSecondary, fontSize = 12.sp)
+                Text("${centsToYuan(asset.balance_cents)} 元", color = palette.textPrimary, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+            }
+            if (rows.isEmpty()) {
+                Empty("还没有流水", "记一笔收支就会出现在这里", "去记一笔", onBack)
+            }
+            rows.forEach { row ->
+                GlassCard {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(row.desc.ifBlank { "账单" }, color = palette.textPrimary)
+                        Text(
+                            (if (row.cents >= 0) "+" else "") + centsToYuan(row.cents) + " 元",
+                            color = if (row.cents >= 0) palette.textPrimary else palette.danger,
+                        )
+                    }
+                    Text(
+                        "day ${row.day} · 余额 ${centsToYuan(row.balanceAfter)} 元",
+                        color = palette.textSecondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+}

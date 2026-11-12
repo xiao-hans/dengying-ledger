@@ -92,6 +92,19 @@ class BudgetRepository(private val db: MeowDatabase) {
         db.budgetQueries.deleteCateOne(bookId, yearMonth, categoryId)
     }
 
+    /** 复制上月预算到本月（Budget/CreateBudget 的 isCopy 语义）。上月没设预算返回 null。 */
+    fun copyPrevious(yearMonth: Long, bookId: Long = DEFAULT_BOOK_ID): Budget? {
+        val year = (yearMonth / 100).toInt()
+        val month = (yearMonth % 100).toInt()
+        val previous = if (month == 1) (year - 1) * 100L + 12 else yearMonth - 1
+        val last = db.budgetQueries.selectOne(bookId, previous).executeAsOneOrNull() ?: return null
+        db.budgetQueries.upsert(last.copy(day = yearMonth, is_copy = 1))
+        db.budgetQueries.selectByMonth(bookId, previous).executeAsList().forEach { cate ->
+            db.budgetQueries.upsertCate(cate.copy(day = yearMonth))
+        }
+        return db.budgetQueries.selectOne(bookId, yearMonth).executeAsOneOrNull()
+    }
+
     private fun spentByCategory(yearMonth: Long, bookId: Long): Map<Long, Long> {
         val from = yearMonth * 100 + 1
         val to = yearMonth * 100 + 31

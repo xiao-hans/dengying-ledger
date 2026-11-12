@@ -127,7 +127,41 @@ class AssetRepository(private val db: MeowDatabase) {
     fun iouNames(): String = all()
         .filter { it.type == IOU_TYPE && it.status == VISIBLE }
         .joinToString(",") { it.name }
+
+    /** 资产流水：该账户的全部账单变动，正为入账、负为出账，附逐笔余额（按天倒序）。 */
+    fun flow(assetId: Long): List<AssetFlowRow> {
+        val rows = db.billQueries.selectAll().executeAsList()
+            .filter { it.status == 0L && (it.from_assets_id == assetId || it.to_assets_id == assetId) }
+            .sortedBy { it.day }
+        val delta: (com.meow.ledger.shared.db.Bill) -> Long = { bill ->
+            when (bill.type) {
+                com.meow.ledger.shared.bills.TYPE_EXPENSE -> if (bill.from_assets_id == assetId) -bill.money else 0L
+                com.meow.ledger.shared.bills.TYPE_INCOME -> if (bill.to_assets_id == assetId) bill.money else 0L
+                else -> {
+                    var d = 0L
+                    if (bill.from_assets_id == assetId) d -= bill.money
+                    if (bill.to_assets_id == assetId) d += bill.money
+                    d
+                }
+            }
+        }
+        val current = one(assetId)?.balance_cents ?: 0L
+        var running = current - rows.sumOf(delta)
+        return rows.map { bill ->
+            running += delta(bill)
+            AssetFlowRow(bill.client_id, bill.day, bill.desc, delta(bill), running)
+        }.sortedByDescending { it.day }
+    }
 }
+
+/** 一条资产流水。cents 正为入账、负为出账；balanceAfter 为该笔之后的账户余额。 */
+data class AssetFlowRow(
+    val clientId: String,
+    val day: Long,
+    val desc: String,
+    val cents: Long,
+    val balanceAfter: Long,
+)
 
 private fun currentTimeMillis(): Long = System.currentTimeMillis()
 

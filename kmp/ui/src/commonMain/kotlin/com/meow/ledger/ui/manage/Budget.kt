@@ -41,16 +41,20 @@ fun BudgetPage(repo: BudgetRepository, month: Long, page: String, onOpen: (Strin
             val category = view.categories.firstOrNull { it.categoryId == id }
             if (category == null) Missing("分类不存在", onBack) else CategoryBudgetEdit(repo, month, category.categoryId, category.title, category.money, onBack)
         }
-        else -> BudgetHome(view, onOpen, onBack)
+        else -> BudgetHome(repo, view, onOpen, onBack)
     }
 }
 
 @Composable
-private fun BudgetHome(view: BudgetView, onOpen: (String) -> Unit, onBack: () -> Unit) {
+private fun BudgetHome(repo: BudgetRepository, view: BudgetView, onOpen: (String) -> Unit, onBack: () -> Unit) {
     val palette = LocalPalette.current
     val budget = view.budget
+    var notice by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().background(palette.appBg)) {
         BackHeader("预算", onBack)
+        if (notice.isNotEmpty()) {
+            Text(notice, color = palette.textSecondary, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -67,21 +71,45 @@ private fun BudgetHome(view: BudgetView, onOpen: (String) -> Unit, onBack: () ->
                     }
                 }
             }
-            view.categories.forEach { category ->
-                val over = category.money > 0 && category.spent > category.money
-                GlassCard(onClick = { onOpen("budget-edit:${category.categoryId}") }) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(category.title, color = palette.textPrimary)
-                        Text(
-                            if (category.money == 0L) "未设预算" else "${centsToYuan(category.spent)} / ${centsToYuan(category.money)}",
-                            color = if (over) palette.danger else palette.textSecondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                }
+            val included = view.categories.filter { it.money > 0 }
+            val excluded = view.categories.filter { it.money == 0L }
+            if (included.isNotEmpty()) {
+                Text("包含的分类预算（${included.size}）", color = palette.textSecondary, fontSize = 13.sp)
+                included.forEach { category -> CateCard(category, onOpen) }
+            }
+            if (excluded.isNotEmpty()) {
+                Text(
+                    "未设分类预算（${excluded.size}）· 这些分类仍计入总预算",
+                    color = palette.textSecondary,
+                    fontSize = 13.sp,
+                )
+                excluded.forEach { category -> CateCard(category, onOpen) }
             }
         }
-        Box(Modifier.padding(16.dp)) { ActionButton("设置月预算", true) { onOpen("budget-set") } }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (budget == null) {
+                ActionButton("复制上月预算", true) {
+                    notice = if (repo.copyPrevious(view.month) == null) "上月没有预算可复制" else "已复制上月预算"
+                }
+            }
+            ActionButton("设置月预算", true) { onOpen("budget-set") }
+        }
+    }
+}
+
+@Composable
+private fun CateCard(category: com.meow.ledger.shared.manage.CategoryBudget, onOpen: (String) -> Unit) {
+    val palette = LocalPalette.current
+    val over = category.money > 0 && category.spent > category.money
+    GlassCard(onClick = { onOpen("budget-edit:${category.categoryId}") }) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(category.title, color = palette.textPrimary)
+            Text(
+                if (category.money == 0L) "未设预算" else "${centsToYuan(category.spent)} / ${centsToYuan(category.money)}",
+                color = if (over) palette.danger else palette.textSecondary,
+                fontSize = 12.sp,
+            )
+        }
     }
 }
 
