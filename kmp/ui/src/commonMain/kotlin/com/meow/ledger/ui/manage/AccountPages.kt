@@ -55,25 +55,36 @@ fun AccountPage(
     onClear: () -> Unit,
     onOpen: (String) -> Unit = {},
     onBack: () -> Unit,
+    initialNotice: String = "",
 ) {
-    var notice by remember { mutableStateOf("") }
+    // 支付回调等深链带来的状态先显示出来，用户可自行核对订单，不会被静默改写成成功。
+    var notice by remember { mutableStateOf(initialNotice) }
+    var noticeIsError by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        val onNotice: (String) -> Unit = { notice = it; noticeIsError = true }
         when (page) {
-            "account" -> AccountHome(account, onBack) { notice = it }
-            "change-phone" -> ChangePhoneHome(account, onBack) { notice = it }
-            "vip" -> VipHome(database, account, onBack) { notice = it }
-            "imports" -> ImportHome(account, onBack) { notice = it }
-            "contract" -> ContractHome(account, onBack) { notice = it }
-            "feedback" -> FeedbackHome(account, onBack) { notice = it }
-            "lock" -> LockHome(settings, onBack) { notice = it }
-            "push" -> PushHome(account, { onOpen("fixed") }, onBack) { notice = it }
-            "remote" -> RemoteHome(account, onBack) { notice = it }
-            "settings" -> SettingsHome(settings, onTheme, onClear, onBack) { notice = it }
+            "account" -> AccountHome(account, onBack, onNotice)
+            "change-phone" -> ChangePhoneHome(account, onBack, onNotice)
+            "vip" -> VipHome(database, account, onBack, onNotice)
+            "imports" -> ImportHome(account, onBack, onNotice)
+            "contract" -> ContractHome(account, onBack, onNotice)
+            "feedback" -> FeedbackHome(account, onBack, onNotice)
+            "lock" -> LockHome(settings, onBack, onNotice)
+            "push" -> PushHome(account, { onOpen("fixed") }, onBack, onNotice)
+            "remote" -> RemoteHome(account, onBack, onNotice)
+            "settings" -> SettingsHome(settings, onTheme, onClear, onBack, onNotice)
         }
-        if (notice.isNotEmpty()) Text(notice, color = LocalPalette.current.danger, modifier = Modifier.padding(top = 12.dp))
+        if (notice.isNotEmpty()) {
+            // 支付回调只是状态说明，不是危险操作；只有页面内的校验失败才用 danger（§6.10）。
+            Text(
+                notice,
+                color = if (noticeIsError) LocalPalette.current.danger else LocalPalette.current.textPrimary,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
     }
 }
 

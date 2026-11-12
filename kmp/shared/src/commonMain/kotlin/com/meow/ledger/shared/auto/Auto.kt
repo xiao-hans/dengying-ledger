@@ -13,11 +13,13 @@ import kotlin.random.Random
 const val SOURCE_NOTIFICATION = "notification"
 const val SOURCE_ACCESSIBILITY = "accessibility"
 const val SOURCE_OCR = "ocr"
+/** MediaProjection 截屏这一路；与相册选图的 SOURCE_OCR 分开记账，但同样只进待确认队列。 */
+const val SOURCE_SCREENSHOT = "screenshot"
 
 /** bill.source：0 手工 / 1 通知 / 2 截屏 / 3 OCR / 4 导入 / 5 周期。 */
 fun billSourceOf(source: String): Long = when (source) {
     SOURCE_NOTIFICATION -> 1L
-    SOURCE_ACCESSIBILITY -> 2L
+    SOURCE_ACCESSIBILITY, SOURCE_SCREENSHOT -> 2L
     SOURCE_OCR -> 3L
     else -> 0L
 }
@@ -26,6 +28,7 @@ fun sourceLabel(source: String): String = when (source) {
     SOURCE_NOTIFICATION -> "通知识别"
     SOURCE_ACCESSIBILITY -> "无障碍识别"
     SOURCE_OCR -> "截屏 OCR"
+    SOURCE_SCREENSHOT -> "截屏采集"
     else -> "未知来源"
 }
 

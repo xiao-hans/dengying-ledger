@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">喵啊记账</string>
     <string name="tile_label">截屏记一笔</string>
+    <string name="capture_channel_name">截屏采集</string>
+    <string name="capture_service_title">截屏记一笔</string>
+    <string name="capture_service_body">只抓一帧用于文字识别，完成后自动停止</string>
+    <string name="capture_service_stop">停止</string>
+    <string name="capture_consent_denied">未授权截屏，本次未采集</string>
+    <string name="capture_consent_in_progress">截屏授权进行中</string>
     <string name="permission_notification">账单提醒</string>
     <string name="permission_media_images">读取票据图片</string>
     <string name="permission_camera">拍摄票据</string>

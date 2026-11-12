@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Android 14+ 的 MediaProjection 前台服务必须声明专用类型权限。 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
@@ -93,6 +95,20 @@
             android:name=".InterstitialAdActivity"
             android:targetActivity=".MainActivity"
             android:exported="false" />
+
+        <!-- 透明 Activity 等待系统 MediaProjection 同意对话框返回结果，不能用 noHistory：
+             同意对话框覆盖时 noHistory 会把它结束掉，结果丢失导致截屏静默失败。
+             结果处理完后由 Activity 显式 finish()。 -->
+        <activity
+            android:name=".platform.ScreenCaptureActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <service
+            android:name=".platform.ScreenCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
         <service
             android:name=".platform.ScreenCaptureTileService"
