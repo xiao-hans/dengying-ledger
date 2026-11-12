@@ -1,0 +1,67 @@
+-- 1 → 2：账号与小组件表。
+-- SQLDelight 的 N.sqm 表示「从版本 N 升级到 N+1」，所以这段脚本只在 1→2
+-- （以及 1→3 的链式升级）里执行。历史上这段内容被误放进 2.sqm，
+-- 导致 1→2 没有脚本可跑；现拆到正确位置，见 migrations/2.sqm。
+-- 全部带 IF NOT EXISTS：老安装可能已经由 .sq 建过这些表，重复执行是空操作。
+CREATE TABLE IF NOT EXISTS member_profile (
+  id INTEGER NOT NULL PRIMARY KEY,
+  nickname TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  login_type TEXT NOT NULL DEFAULT '',
+  bind_type TEXT NOT NULL DEFAULT '',
+  bind_id TEXT NOT NULL DEFAULT '',
+  vip INTEGER NOT NULL DEFAULT 0,
+  vip_expire INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sms_code (
+  phone TEXT NOT NULL PRIMARY KEY,
+  code TEXT NOT NULL DEFAULT '',
+  expires INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS member_import_bill_file (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS member_order (
+  id TEXT NOT NULL PRIMARY KEY,
+  money INTEGER NOT NULL DEFAULT 0,
+  method TEXT NOT NULL DEFAULT '',
+  type INTEGER NOT NULL DEFAULT 0,
+  product_id TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS contract_info (
+  id INTEGER NOT NULL PRIMARY KEY,
+  signed INTEGER NOT NULL DEFAULT 0,
+  provider TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  next_date TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS behavior_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  contact TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS widget_user (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  kind TEXT NOT NULL DEFAULT 'month',
+  create_time INTEGER NOT NULL DEFAULT 0
+);

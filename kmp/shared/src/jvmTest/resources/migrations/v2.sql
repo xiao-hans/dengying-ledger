@@ -1,0 +1,365 @@
+-- v2 全新安装的建表语句，逐字重建自 git 历史 76f82b2 的
+-- kmp/shared/src/commonMain/sqldelight/**/*.sq（28 张表 + 5 个索引，version = 2）。
+-- 76f82b2 未改动任何 .sq，故 DDL 与 v1.sql 逐字相同，仅 user_version 不同；
+-- 该提交新增的 2.sqm 因 SQLDelight 语义（N.sqm = N→N+1）其实从未在 1→2 执行。
+-- 只含 CREATE，不含 .sq 里的查询标签；本文件专供 jvmTest 的迁移回归用。
+PRAGMA user_version = 2;
+
+CREATE TABLE member_profile (
+  id INTEGER NOT NULL PRIMARY KEY,
+  nickname TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  login_type TEXT NOT NULL DEFAULT '',
+  bind_type TEXT NOT NULL DEFAULT '',
+  bind_id TEXT NOT NULL DEFAULT '',
+  vip INTEGER NOT NULL DEFAULT 0,
+  vip_expire INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE sms_code (
+  phone TEXT NOT NULL PRIMARY KEY,
+  code TEXT NOT NULL DEFAULT '',
+  expires INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE member_import_bill_file (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT '',
+  count INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  content TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE member_order (
+  id TEXT NOT NULL PRIMARY KEY,
+  money INTEGER NOT NULL DEFAULT 0,
+  method TEXT NOT NULL DEFAULT '',
+  type INTEGER NOT NULL DEFAULT 0,
+  product_id TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE contract_info (
+  id INTEGER NOT NULL PRIMARY KEY,
+  signed INTEGER NOT NULL DEFAULT 0,
+  provider TEXT NOT NULL DEFAULT '',
+  product_name TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  next_date TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE behavior_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  contact TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE assets (
+  id INTEGER NOT NULL PRIMARY KEY,
+  type_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 0,
+  type_name TEXT NOT NULL DEFAULT '',
+  type_title TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL DEFAULT '',
+  desc TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  currency TEXT NOT NULL DEFAULT 'CNY',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0,
+  credit_line INTEGER NOT NULL DEFAULT 0,
+  repayment_date INTEGER NOT NULL DEFAULT 0,
+  statement_date INTEGER NOT NULL DEFAULT 0,
+  is_remind INTEGER NOT NULL DEFAULT 0,
+  is_total_assets INTEGER NOT NULL DEFAULT 1,
+  is_next_bills INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  balance_cents INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE auto_event (
+  id TEXT NOT NULL PRIMARY KEY,
+  hash TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT '',
+  source_app TEXT NOT NULL DEFAULT '',
+  merchant TEXT NOT NULL DEFAULT '',
+  money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  occurred_at INTEGER NOT NULL DEFAULT 0,
+  raw_text TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  book_id INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  rule_id INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX auto_event_hash ON auto_event(hash);
+
+CREATE TABLE bill (
+  member_id INTEGER NOT NULL,
+  client_id TEXT NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  refund_money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  exchange INTEGER NOT NULL DEFAULT 0,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'CNY',
+  day INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
+  images TEXT NOT NULL DEFAULT '',
+  update_date INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  to_assets_id INTEGER NOT NULL DEFAULT 0,
+  from_assets_id INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  interest_reckon_type INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  import_id INTEGER NOT NULL DEFAULT 0,
+  repayment_day INTEGER NOT NULL DEFAULT 0,
+  local_create_time INTEGER NOT NULL DEFAULT 0,
+  local_update_time INTEGER NOT NULL DEFAULT 0,
+  installment_plan_id TEXT NOT NULL DEFAULT '',
+  installment_num INTEGER NOT NULL DEFAULT 0,
+  installment_money INTEGER NOT NULL DEFAULT 0,
+  installment_interest INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, client_id)
+);
+
+CREATE INDEX bill_day ON bill(day);
+
+CREATE INDEX bill_book_day ON bill(book_id, day);
+
+CREATE TABLE bill_book (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  icon_id INTEGER NOT NULL DEFAULT 0,
+  icon TEXT NOT NULL DEFAULT '',
+  tag TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  month_start_date INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE member_book (
+  member_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL,
+  role INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, book_id)
+);
+
+CREATE TABLE budget (
+  book_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  acf_money INTEGER NOT NULL DEFAULT 0,
+  is_remind INTEGER NOT NULL DEFAULT 0,
+  remind_rate INTEGER NOT NULL DEFAULT 0,
+  carry_down INTEGER NOT NULL DEFAULT 0,
+  is_copy INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (book_id, day)
+);
+
+CREATE TABLE cate_budget (
+  book_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  member_cate_id INTEGER NOT NULL,
+  money INTEGER NOT NULL DEFAULT 0,
+  acf_money INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (book_id, day, member_cate_id)
+);
+
+CREATE TABLE category (
+  id INTEGER NOT NULL,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  cate_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL DEFAULT '',
+  icon_id INTEGER NOT NULL DEFAULT 0,
+  base_icon TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  is_custom INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  sort INTEGER NOT NULL DEFAULT 0,
+  hidden INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (id, member_id)
+);
+
+CREATE TABLE remote_config (
+  key TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT '',
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE user_setting (
+  key TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE sync_queue (
+  id TEXT NOT NULL PRIMARY KEY,
+  path TEXT NOT NULL DEFAULT '',
+  payload TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE fixed_bill (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  fixed_type INTEGER NOT NULL DEFAULT 0,
+  fixed_day INTEGER NOT NULL DEFAULT 1,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  tag_ids TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
+  next_execute_date INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE bill_remind (
+  id TEXT NOT NULL PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  time TEXT NOT NULL DEFAULT '',
+  day INTEGER NOT NULL DEFAULT 1,
+  hour INTEGER NOT NULL DEFAULT 9,
+  fixed_bill_id TEXT NOT NULL DEFAULT '',
+  repeat_type INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE group_vip (
+  id TEXT NOT NULL PRIMARY KEY,
+  show_id TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE installment_plan (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL DEFAULT '',
+  deduction_asset_id INTEGER NOT NULL DEFAULT 0,
+  start_date INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  total_count INTEGER NOT NULL DEFAULT 0,
+  executed_count INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  interest_type INTEGER NOT NULL DEFAULT 0,
+  remainder_process_type INTEGER NOT NULL DEFAULT 0,
+  remaining_money INTEGER NOT NULL DEFAULT 0,
+  remaining_interest INTEGER NOT NULL DEFAULT 0,
+  next_execute_date INTEGER NOT NULL DEFAULT 0,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  not_in_budget INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  tag_ids TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL DEFAULT 0,
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE save_plan (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  type_id INTEGER NOT NULL DEFAULT 0,
+  target_money INTEGER NOT NULL DEFAULT 0,
+  saved_money INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE save_plan_item (
+  id TEXT NOT NULL PRIMARY KEY,
+  plan_id TEXT NOT NULL DEFAULT '',
+  num INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  remark TEXT NOT NULL DEFAULT '',
+  create_time INTEGER NOT NULL DEFAULT 0,
+  update_time INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE installment_item (
+  id TEXT NOT NULL PRIMARY KEY,
+  plan_id TEXT NOT NULL DEFAULT '',
+  num INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  interest INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  execute_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE refund_bill (
+  id TEXT NOT NULL PRIMARY KEY,
+  client_id TEXT NOT NULL DEFAULT '',
+  member_id INTEGER NOT NULL DEFAULT 0,
+  money INTEGER NOT NULL DEFAULT 0,
+  asset_id INTEGER NOT NULL DEFAULT 0,
+  day INTEGER NOT NULL DEFAULT 0,
+  desc TEXT NOT NULL DEFAULT '',
+  images TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  status INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX refund_client ON refund_bill(client_id);
+
+CREATE TABLE rule (
+  id INTEGER NOT NULL PRIMARY KEY,
+  key_word TEXT NOT NULL DEFAULT '',
+  source INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  type INTEGER NOT NULL DEFAULT 1,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_cate_id INTEGER NOT NULL DEFAULT 0,
+  assets_id INTEGER NOT NULL DEFAULT 0,
+  tag_ids TEXT NOT NULL DEFAULT '',
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX rule_keyword ON rule(key_word);
+
+CREATE TABLE tag (
+  tag_id INTEGER NOT NULL PRIMARY KEY,
+  book_id INTEGER NOT NULL DEFAULT 0,
+  member_id INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL DEFAULT '',
+  sort INTEGER NOT NULL DEFAULT 0,
+  create_date INTEGER NOT NULL DEFAULT 0,
+  update_date INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE widget_user (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  size TEXT NOT NULL DEFAULT 'small',
+  kind TEXT NOT NULL DEFAULT 'month',
+  create_time INTEGER NOT NULL DEFAULT 0
+);
