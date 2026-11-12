@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.bills.TYPE_EXPENSE
 import com.meow.ledger.shared.bills.TYPE_INCOME
 import com.meow.ledger.shared.bills.TYPE_TRANSFER
+import com.meow.ledger.ui.PickImageButton
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.db.Bill
@@ -64,6 +65,7 @@ fun BillEntry(
     var cateId by rememberSaveable { mutableStateOf(existing?.member_cate_id ?: 1L) }
     var desc by rememberSaveable { mutableStateOf(existing?.desc ?: "") }
     var notInBudget by rememberSaveable { mutableStateOf(existing?.not_in_budget == 1L) }
+    var images by rememberSaveable { mutableStateOf(existing?.images ?: "") }
     var error by rememberSaveable { mutableStateOf("") }
 
     val visible = categories.filter { it.type == type || type == TYPE_TRANSFER }
@@ -165,6 +167,35 @@ fun BillEntry(
                 )
             }
 
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(palette.cardBg)
+                    .border(1.dp, palette.divider, RoundedCornerShape(18.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                Text("图片", color = palette.textSecondary, fontSize = 12.sp)
+                val picked = images.split(',').filter { it.isNotBlank() }
+                if (picked.isEmpty()) {
+                    Text("还没附图，可选一张凭证照片", color = palette.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                } else {
+                    picked.forEach { img ->
+                        Text(
+                            "· " + img.substringAfterLast('/'),
+                            color = palette.textPrimary,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp).clickable { images = picked.filter { it != img }.joinToString(",") },
+                        )
+                    }
+                    Text("点文件名可移除", color = palette.textSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
+                }
+                PickImageButton(enabled = true, modifier = Modifier.padding(top = 8.dp)) { path, _ ->
+                    val list = images.split(',').filter { it.isNotBlank() }
+                    if (path !in list) images = (list + path).joinToString(",")
+                }
+            }
+
             ChoiceChip(if (notInBudget) "不计入本月预算" else "计入本月预算", notInBudget) { notInBudget = !notInBudget }
 
             if (error.isNotEmpty()) {
@@ -190,19 +221,19 @@ fun BillEntry(
                     return@ActionButton
                 }
                 error = ""
-                onSave(newBill(today, type, cents, category.id, desc, notInBudget, existing))
+                onSave(newBill(today, type, cents, category.id, desc, notInBudget, images, existing))
             }
         }
     }
 }
 
-private fun newBill(today: Long, type: Long, cents: Long, cateId: Long, desc: String, notInBudget: Boolean, existing: Bill?) = Bill(
+private fun newBill(today: Long, type: Long, cents: Long, cateId: Long, desc: String, notInBudget: Boolean, images: String, existing: Bill?) = Bill(
     member_id = existing?.member_id ?: 0,
     client_id = existing?.client_id ?: "manual-$today-${kotlin.random.Random.nextLong()}",
     money = cents, refund_money = existing?.refund_money ?: 0, type = type, exchange = existing?.exchange ?: 0,
     book_id = existing?.book_id ?: 1,
     member_cate_id = cateId, currency = existing?.currency ?: "CNY", day = existing?.day ?: today, desc = desc.trim(),
-    not_in_budget = if (notInBudget) 1 else 0, images = existing?.images ?: "", update_date = today,
+    not_in_budget = if (notInBudget) 1 else 0, images = images.ifBlank { existing?.images ?: "" }, update_date = today,
     create_date = existing?.create_date ?: today, status = existing?.status ?: 0,
     to_assets_id = existing?.to_assets_id ?: 0, from_assets_id = existing?.from_assets_id ?: 0,
     interest = existing?.interest ?: 0, interest_reckon_type = existing?.interest_reckon_type ?: 0,

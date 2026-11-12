@@ -140,6 +140,9 @@ fun BillDetail(
                     .background(palette.cardBg),
             ) {
                 DetailRow("备注", bill.desc.ifBlank { "无" })
+                if (bill.images.isNotBlank()) {
+                    DetailRow("图片", bill.images.split(',').filter { it.isNotBlank() }.size.toString() + " 张")
+                }
                 DetailRow("账本", "#${bill.book_id}")
                 DetailRow("账户", "#${bill.from_assets_id}")
                 DetailRow("标签", bill.tag_ids.ifBlank { "无" })
