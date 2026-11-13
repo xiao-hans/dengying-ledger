@@ -70,7 +70,7 @@ jobs:
         uses: joelwmale/webhook-action@v2.4.2
         with:
           url: ${{ secrets.MICA_WEBHOOK_URL }}
-          headers: '{"Authorization": "Bearer ${{ secrets.GROKBOT_WEBHOOK_KEY }}"}'
+          headers: '{"Authorization": "Bearer ${{ secrets.MICA_WEBHOOK_KEY }}"}'
           body: >-
             {"event": ${{ toJSON(github.event_name) }},
             "action": ${{ toJSON(github.event.action) }},
