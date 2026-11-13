@@ -41,15 +41,19 @@ class SettingsBaseUrlProvider(private val settings: SettingsStore) : BaseUrlProv
     }
 }
 
-/** 从 base URL 取主机名（去掉 userinfo / 端口 / 路径）；没有主机名返回 null。 */
+/** 从 base URL 取主机名（去掉 userinfo / 端口 / 路径，统一小写）；没有主机名返回 null。 */
 private fun hostOf(url: String): String? =
     url.substringAfter("://", missingDelimiterValue = "").takeIf { it.isNotEmpty() }
         ?.substringBefore('/')
         ?.substringAfterLast('@')
         ?.substringBefore(':')
         ?.takeIf { it.isNotBlank() }
+        ?.lowercase()
 
-/** 样本原 App 的生产域名（取自 [HttpConfig] 常量），用户不得填回。 */
+/**
+ * 样本原 App 的生产域名（取自 [HttpConfig] 常量），用户不得填回。
+ * [hostOf] 已把两侧主机名统一小写，因此大小写不同的写法同样会被拒绝。
+ */
 private val SAMPLE_PRODUCTION_HOSTS: Set<String> =
     setOfNotNull(hostOf(HttpConfig.MAIN_BASE), hostOf(HttpConfig.CONFIG_BASE))
 

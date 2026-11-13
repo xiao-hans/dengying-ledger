@@ -41,4 +41,11 @@ class BackendConfigTest {
         assertEquals("不能填写样本原生产域名", validateSyncUrl(HttpConfig.CONFIG_BASE))
         assertEquals("不能填写样本原生产域名", validateSyncUrl("https://puppy-api.cqmiaoa.com:8443/api/"))
     }
+
+    @Test
+    fun sampleProductionHostsAreRejectedRegardlessOfCase() {
+        assertEquals("不能填写样本原生产域名", validateSyncUrl("https://PUPPY-API.CQMIAOA.COM/api/"))
+        assertEquals("不能填写样本原生产域名", validateSyncUrl("https://Meow-Config.AIYOUAIYOU.CN/api/"))
+        assertEquals("不能填写样本原生产域名", validateSyncUrl("HTTPS://Puppy-Api.CqMiaoA.CoM:8443/api/"))
+    }
 }
