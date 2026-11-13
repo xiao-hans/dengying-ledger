@@ -137,7 +137,7 @@ ad_free: 不接入广告 SDK，不调用广告请求端点
 
 状态：完成（提交表 `:162` 记为完成；`2a8c806`、`6aff48e`；广告依赖黑名单脚本门禁已过，但 Android 仪器/真机测试、真实自建后端联调等门禁项未过，见差距表「剩余缺口」）。
 
-1. 运行广告依赖黑名单检查，记录结果。**已执行**：`scripts/check-ad-blacklist.sh` 洁净树 PASS；`--self-test` 临时夹具「命中即失败 / 洁净树通过」两用例 PASS；`kmp/build.gradle.kts` 的 `checkAdBlacklist` / `checkAdBlacklistSelfTest` 挂到 Gradle `check`，命中坐标时构建失败（注入 `com.bytedance.sdk:openadsdk` 实测非零退出）。六家 ADN 名称设计文档未点名，脚本内以注释显式列出保守匹配模式，见脚本头部。
+1. 运行广告依赖黑名单检查，记录结果。**已执行**：`scripts/check-ad-blacklist.sh` 洁净树 PASS；`--self-test` 临时夹具「命中即失败 / 洁净树通过 / 真实树通过」三用例 PASS；`kmp/build.gradle.kts` 的 `checkAdBlacklist` / `checkAdBlacklistSelfTest` 挂到 Gradle `check`，命中坐标时构建失败（注入 `com.bytedance.sdk:openadsdk` 实测非零退出）。六家 ADN 名称设计文档未点名，脚本内以注释显式列出保守匹配模式，见脚本头部。
 2. 核对 21 个模块、112 个端点、约 100 个页面、`02` 表清单和 `AGENTS.md` §6 的 10 条纪律。
 3. 运行全量 JVM 测试、Android 仪器测试、Gradle 构建和 `assembleDebug`。
 4. 在真机安装最终 APK，按 `04` 六里程碑执行端到端流程。

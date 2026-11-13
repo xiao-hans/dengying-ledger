@@ -17,8 +17,8 @@
 #   快手联盟/KSAD              : ksad, kwad, kuaishou-ad, kuaishouads, ksadsdk, kwai-ad
 #   Sigmob                      : sigmob, windads, sigmob-ad, sigmobsdk
 #   Mintegral                  : mintegral, mbridge, mtg-ad
-#   TopOn / TradPlus / GroMore : topon, anythink, tradplus, gromore, gro-more, admob-adapter-mediation
-#   通用聚合/ADX/广告 SDK 标记   : *-adx, *-ads-sdk, *-ad-sdk, ad-exchange, mediation-*, ads-mediation-*
+#   TopOn / TradPlus / GroMore : topon, anythink, tradplus, gromore, gro-more
+#   通用聚合/ADX/广告 SDK 标记   : adx, *-adx, *-ads-sdk, *-ad-sdk, ad-exchange, mediation-*, ads-mediation-*
 #
 # 有意不拦（必须保留、不得误报）：
 #   - ad_* 数据模型 / 表（ad_data、ad_info、ad_config …）
@@ -30,7 +30,7 @@
 # 依赖锁定/校验文件、.properties、settings 里的坐标、AndroidManifest 之外的声明），
 # 不扫描 Kotlin/Java 源码，避免把业务包名当成 SDK 依赖。
 # 用法：check-ad-blacklist.sh [root]   root 缺省为本脚本所在仓库根目录。
-#       --self-test 运行内置的命中/洁净夹具自测（hermetic，不联网）。
+#       --self-test 运行内置夹具自测：命中失败 / 洁净通过 / 真实树通过（hermetic，不联网）。
 
 set -uo pipefail
 
@@ -59,7 +59,7 @@ BLACKLIST_PATTERNS=(
   'com\.sigmob|\bsigmob\b|windads|sigmob[-_.]?(sdk|ad)'
   'com\.mintegral|\bmintegral\b|\bmbridge\b|mtg[-_.]?ad'
   'com\.topon|\btopon\b|com\.anythink|\banythink\b|\btradplus\b|gro[-_.]?more|\bgromore\b'
-  '(^|[:._ -])adx([-_.]|$)|ad[-_.]?exchange|(^|[:._ -])ad[-_.]?sdk|(^|[:._ -])ads[-_.]?sdk|[-_.]ad[-_.]?mediation|mediation[-_.]sdk|ads[-_.]?mediation'
+  '(^|[:._ -])adx([-_.:]|$)|ad[-_.]?exchange|(^|[:._ -])ad[-_.]?sdk|(^|[:._ -])ads[-_.]?sdk|[-_.]ad[-_.]?mediation|mediation[-_.]sdk|ads[-_.]?mediation'
 )
 
 PATTERN_LABELS=(
@@ -72,7 +72,7 @@ PATTERN_LABELS=(
   '通用 ADX/广告 SDK/聚合标记'
 )
 
-# 被扫描的依赖声明文件名（basename 匹配；只在 kmp/ 与仓库根的 gradle 相关文件里找）。
+# 被扫描的依赖声明文件名（basename 匹配；只扫描 kmp/ 树下的 Gradle 相关文件）。
 # 不扫描 *.kt / *.java / *.xml 源码，避免误伤业务包名与 ad_* 表。
 is_dep_file() {
   case "$(basename -- "$1")" in
@@ -89,13 +89,14 @@ collect_files() {
 }
 
 # ---------- 核心检查 ----------
-# 输出命中行到 stdout（格式: file:line:label:content），返回 0=有命中 / 1=无命中。
+# 输出命中行到 stdout（格式: file:line:label:content）。
+# 返回 0=扫描完成；非 0=读取/收集阶段出错（调用方必须按失败处理）。
 scan_tree() {
-  local base="$1" found=0 f line idx
+  local base="$1" f line idx status=0
   local -a files=()
   while IFS= read -r f; do
     if is_dep_file "$f"; then files+=("$f"); fi
-  done < <(collect_files "$base")
+  done < <(collect_files "$base") || status=1
 
   for f in "${files[@]}"; do
     local lineno=0
@@ -108,14 +109,13 @@ scan_tree() {
       for pat in "${BLACKLIST_PATTERNS[@]}"; do
         if printf '%s\n' "$line" | grep -iEq -- "$pat"; then
           printf '%s:%d:%s:%s\n' "${f#"$root"/}" "$lineno" "${PATTERN_LABELS[$idx]}" "$line"
-          found=1
           break
         fi
         idx=$((idx + 1))
       done
-    done < "$f"
+    done < "$f" || status=1
   done
-  return $((1 - found))
+  return "$status"
 }
 
 # ---------- 自测（hermetic fixture） ----------
@@ -139,7 +139,7 @@ dependencies {
 EOF
 
   # 用例 1：黑坐标命中 -> 应失败（非 0）
-  if "$tmp/fake/scripts/check-ad-blacklist.sh" "$tmp/fake" >"$tmp/hit.out" 2>&1; then
+  if bash "$tmp/fake/scripts/check-ad-blacklist.sh" "$tmp/fake" >"$tmp/hit.out" 2>&1; then
     echo "  [FAIL] 用例1：含穿山甲/Sigmob 坐标却判为通过" >&2
     fail=$((fail + 1))
   else
@@ -162,12 +162,23 @@ dependencies {
     implementation(libs.sqldelight.android.driver)
 }
 EOF
-  if "$tmp/fake/scripts/check-ad-blacklist.sh" "$tmp/fake" >"$tmp/clean.out" 2>&1; then
+  if bash "$tmp/fake/scripts/check-ad-blacklist.sh" "$tmp/fake" >"$tmp/clean.out" 2>&1; then
     echo "  [PASS] 用例2：洁净依赖声明（含 advertising 注释）判为通过"
     pass=$((pass + 1))
   else
     echo "  [FAIL] 用例2：洁净依赖声明却判为失败" >&2
     cat "$tmp/clean.out" >&2
+    fail=$((fail + 1))
+  fi
+
+  # 用例 3：真实仓库树应通过（自测从仓库根脚本运行时覆盖当前树）。
+  # 不修改真实文件，只调用一次无参检查。
+  if bash "$0" >"$tmp/real.out" 2>&1; then
+    echo "  [PASS] 用例3：真实仓库树洁净，脚本判为通过"
+    pass=$((pass + 1))
+  else
+    echo "  [FAIL] 用例3：真实仓库树却判为失败" >&2
+    cat "$tmp/real.out" >&2
     fail=$((fail + 1))
   fi
 
@@ -188,10 +199,11 @@ if [[ ! -d "$kmp_dir" ]]; then
 fi
 
 echo "[ad-blacklist] 扫描依赖声明文件中的广告 ADN / ADX 坐标（root=${root}）..."
-hits="$(mktemp)"
+hits="$(mktemp)" || { echo "[ad-blacklist] FAIL：无法创建临时文件" >&2; exit 2; }
 trap 'rm -f -- "$hits"' EXIT
-if scan_tree "$kmp_dir" >"$hits"; then
-  :
+if ! scan_tree "$kmp_dir" >"$hits"; then
+  echo "[ad-blacklist] FAIL：扫描过程出错，门禁按失败处理" >&2
+  exit 2
 fi
 
 if [[ -s "$hits" ]]; then
