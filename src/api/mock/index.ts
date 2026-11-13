@@ -2,7 +2,7 @@
  * M3：本地 mock 后端 —— 112 条注解路径 + 2 条动态 @Url 全量注册。
  *
  * 权威来源：jadx_out/sources/com/android/miaoa/achai/api/a.java（597 行）
- *          + spec/endpoints.json（112 条，含字段/body/返回类型）
+ *          + spec/endpoints.json（114 条 = 112 条注解 + 2 条 dynamic @Url，含字段/body/返回类型）
  * 说明：Bills/ImportBills 在样本里有两个同名重载（ImportBillsReq / ImportOcrBillsReq），
  *       Retrofit 路径相同，故只注册一次，处理器按 body 形态兼容两种载荷。
  *
