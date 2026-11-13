@@ -1,6 +1,6 @@
 package com.meow.ledger.shared.network
 
-/** 从 spec/endpoints.json 机器生成的 112 条注解端点清单。字段名按样本 Retrofit 声明保留。 */
+/** 从 spec/endpoints.json 机器生成的 112 条注解端点清单（该文件另含 2 条 `dynamic: true` 的动态 @Url 条目，不在此处）。字段名按样本 Retrofit 声明保留。 */
 val EndpointCatalog: List<EndpointSpec> = listOf(
     EndpointSpec(method = "POST", path = "KeyWordMatchingRule/Create", fields = listOf("keyWord", "type", "memberCateId", "billsBookId", "fundAccountId", "memberTagIds"), body = null, ret = "RuleResp>"),
     EndpointSpec(method = "POST", path = "SavePlan/UpdateSavePlanItemStatus", fields = listOf(), body = "Map<String, Object>", ret = "Object>"),
@@ -119,6 +119,7 @@ val EndpointCatalog: List<EndpointSpec> = listOf(
 /**
  * `api/a.java` 里两个动态 `@Url` 方法。它们没有静态路径，单独登记，
  * 不混入 [EndpointCatalog] 的 112 条注解路径，保持 112 的计数口径不变。
+ * 在 `spec/endpoints.json` 里以 `dynamic: true` 条目登记（path 即这两个 id）。
  * 与 Web 规格参考 `src/api/mock/index.ts` 的 `DYNAMIC_PATHS` 同 id。
  */
 object DynamicEndpoints {

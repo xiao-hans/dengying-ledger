@@ -4,7 +4,7 @@
  * 可在浏览器 DevTools 里 `await window.__apiSelfTest()`，也可作为 CI 冒烟测试入口。
  */
 import { call } from '../client';
-import { DYNAMIC_PATHS, verifyEndpoints } from './index';
+import { verifyEndpoints } from './index';
 import { bootstrap, selfTest } from '../../db/bootstrap';
 
 export interface EndpointTestResult {
@@ -13,10 +13,19 @@ export interface EndpointTestResult {
   stores: { name: string; count: number }[];
 }
 
-export async function apiSelfTest(endpoints: { path: string; method: string }[]): Promise<EndpointTestResult> {
+export async function apiSelfTest(
+  endpoints: { path: string; method: string; body?: string | null }[],
+): Promise<EndpointTestResult> {
   await bootstrap();
   const { missing, extra } = verifyEndpoints(endpoints);
-  const unique = [...new Map(endpoints.map((e) => [e.path, e])).values()];
+  // key 含 method + path + body：Bills/ImportBills 两条仅 body 不同的重载不能塌成一条
+  const seen = new Set<string>();
+  const unique = endpoints.filter((e) => {
+    const key = `${e.method} ${e.path} ${e.body ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   const failures: { path: string; error: string }[] = [];
   for (const e of unique) {
     try {
@@ -29,10 +38,8 @@ export async function apiSelfTest(endpoints: { path: string; method: string }[])
     }
   }
   for (const p of missing) failures.push({ path: p, error: '缺少处理器' });
-  // 2 个动态 @Url 没有静态路径，对照表明确不计入 112，不算多余
-  for (const p of extra) {
-    if (!DYNAMIC_PATHS.includes(p)) failures.push({ path: p, error: '多余处理器（不在 spec/endpoints.json）' });
-  }
+  // 动态 @Url 两条已登记进 spec/endpoints.json（dynamic: true），不再特判
+  for (const p of extra) failures.push({ path: p, error: '多余处理器（不在 spec/endpoints.json）' });
   return {
     total: endpoints.length,
     passed: endpoints.length - failures.length,
