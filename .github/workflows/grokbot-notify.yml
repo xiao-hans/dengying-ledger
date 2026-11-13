@@ -26,13 +26,14 @@ jobs:
       # job-level env can be read in a step `if` (secrets cannot), so we can
       # skip every webhook-related step when the URL is not configured.
       WEBHOOK_URL: ${{ secrets.GROKBOT_WEBHOOK_URL }}
+      MICA_WEBHOOK_URL: ${{ secrets.MICA_WEBHOOK_URL }}
     steps:
       # Body text comes from untrusted user input. It is fed in through an env
       # var, NEVER concatenated into the run script itself. Truncate to 500
       # characters and expose it as a step output via GITHUB_OUTPUT.
       - name: Prepare truncated text
         id: payload
-        if: env.WEBHOOK_URL != ''
+        if: env.WEBHOOK_URL != '' || env.MICA_WEBHOOK_URL != ''
         env:
           RAW_TEXT: ${{ github.event.comment.body || github.event.review.body || github.event.issue.body || github.event.pull_request.body || '' }}
         run: |
@@ -51,6 +52,24 @@ jobs:
         uses: joelwmale/webhook-action@v2.4.2
         with:
           url: ${{ secrets.GROKBOT_WEBHOOK_URL }}
+          headers: '{"Authorization": "Bearer ${{ secrets.GROKBOT_WEBHOOK_KEY }}"}'
+          body: >-
+            {"event": ${{ toJSON(github.event_name) }},
+            "action": ${{ toJSON(github.event.action) }},
+            "label": ${{ toJSON(github.event.label.name || '') }},
+            "repo": ${{ toJSON(github.repository) }},
+            "actor": ${{ toJSON(github.actor) }},
+            "number": ${{ toJSON(github.event.issue.number || github.event.pull_request.number || 0) }},
+            "title": ${{ toJSON(github.event.issue.title || github.event.pull_request.title || '') }},
+            "url": ${{ toJSON(github.event.comment.html_url || github.event.review.html_url || github.event.issue.html_url || github.event.pull_request.html_url || '') }},
+            "text": ${{ toJSON(steps.payload.outputs.text) }}}
+
+      # Same event, same payload, delivered to Mica's Cloudflare Worker relay.
+      - name: Send webhook to Mica
+        if: env.MICA_WEBHOOK_URL != ''
+        uses: joelwmale/webhook-action@v2.4.2
+        with:
+          url: ${{ secrets.MICA_WEBHOOK_URL }}
           headers: '{"Authorization": "Bearer ${{ secrets.GROKBOT_WEBHOOK_KEY }}"}'
           body: >-
             {"event": ${{ toJSON(github.event_name) }},
