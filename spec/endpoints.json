@@ -1055,5 +1055,21 @@
   ],
   "body": null,
   "ret": "User>"
+ },
+ {
+  "method": "GET",
+  "path": "@Url:GET:download",
+  "fields": [],
+  "body": null,
+  "ret": "ResponseBody",
+  "dynamic": true
+ },
+ {
+  "method": "POST",
+  "path": "@Url:POST:uploadOss",
+  "fields": [],
+  "body": "MultipartBody",
+  "ret": "UploadOssData",
+  "dynamic": true
  }
 ]

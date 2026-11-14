@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.auto.KEY_APP_LOCK
+import com.meow.ledger.shared.auto.KEY_SYNC_BASE_URL
+import com.meow.ledger.shared.auto.KEY_SYNC_CONFIG_BASE_URL
 import com.meow.ledger.shared.auto.KEY_THEME
 import com.meow.ledger.shared.auto.SettingsStore
 import com.meow.ledger.shared.auto.THEME_DARK
@@ -29,6 +31,7 @@ import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.bills.centsToYuan
 import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.db.MeowDatabase
+import com.meow.ledger.shared.network.validateSyncUrl
 import com.meow.ledger.shared.manage.AccountRepository
 import com.meow.ledger.shared.manage.MigrationState
 import com.meow.ledger.shared.manage.GroupRepository
@@ -391,6 +394,11 @@ private fun SettingsHome(
     val palette = LocalPalette.current
     var version by remember { mutableStateOf(0) }
     val theme = remember(version) { settings.text(KEY_THEME, THEME_SYSTEM) }
+    // 自建同步地址：草稿以已存值为初值，保存后 version + 1 重读库里的值（§6.2 草稿语义）。
+    val syncMain = remember(version) { settings.text(KEY_SYNC_BASE_URL).trim() }
+    val syncConfig = remember(version) { settings.text(KEY_SYNC_CONFIG_BASE_URL).trim() }
+    var mainDraft by remember(syncMain) { mutableStateOf(syncMain) }
+    var configDraft by remember(syncConfig) { mutableStateOf(syncConfig) }
     var confirm by remember { mutableStateOf(false) }
     BackHeader("设置", onBack)
     Text("主题", color = palette.textSecondary)
@@ -400,6 +408,32 @@ private fun SettingsHome(
                 settings.setText(KEY_THEME, value)
                 onTheme(value)
                 version += 1
+            }
+        }
+    }
+    Text("自建同步地址", color = palette.textSecondary)
+    Text("空白则只保存在本机，不向任何服务器同步", color = palette.textSecondary, fontSize = 12.sp)
+    Field("主域地址", mainDraft, { mainDraft = it }, "https://你的后端/api/")
+    Text(
+        if (syncMain.isEmpty()) "远程同步已关闭" else "远程同步开启，发往 $syncMain",
+        color = palette.textSecondary,
+        fontSize = 12.sp,
+    )
+    Spacer(Modifier.height(6.dp))
+    Field("配置域地址（可选）", configDraft, { configDraft = it }, "留空则复用主域地址")
+    ActionButton("保存同步地址", true) {
+        val main = mainDraft.trim()
+        val config = configDraft.trim()
+        val mainError = validateSyncUrl(main)
+        val configError = validateSyncUrl(config)
+        when {
+            mainError != null -> onNotice("主域地址：$mainError")
+            configError != null -> onNotice("配置域地址：$configError")
+            else -> {
+                settings.setText(KEY_SYNC_BASE_URL, main)
+                settings.setText(KEY_SYNC_CONFIG_BASE_URL, config)
+                version += 1
+                onNotice(if (main.isEmpty()) "已关闭远程同步" else "已保存")
             }
         }
     }
