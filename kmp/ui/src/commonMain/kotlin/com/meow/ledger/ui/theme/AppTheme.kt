@@ -22,18 +22,20 @@ fun paletteOf(theme: String): PaletteScheme = if (isDarkTheme(theme)) DarkPalett
 fun glassOf(theme: String): GlassScheme = if (isDarkTheme(theme)) DarkGlass else LightGlass
 
 /**
- * 主题注入的唯一入口：一次性提供 [LocalPalette] 与 [LocalGlassScheme]，两者共用同一份
- * 三态判定。入口页 `EntryNavHost` 与主界面 `MeowApp` 必须用本函数包住内容，否则
+ * 主题注入的唯一入口：一次性提供 [LocalPalette]、[LocalGlassScheme] 与 [LocalTypography]。
+ * 配色与玻璃共用同一份三态判定，字阶不随深浅色变化但同样经此注入（预览 / 单测可替换）。
+ * 入口页 `EntryNavHost` 与主界面 `MeowApp` 必须用本函数包住内容，否则
  * [LocalGlassScheme] 会退回缺省的 [LightGlass]，深色模式下的玻璃配色会错。
  *
- * 旧的 `CompositionLocalProvider(LocalPalette provides palette)` 写法不提供玻璃方案，
- * 已全部替换为本函数。
+ * 旧的 `CompositionLocalProvider(LocalPalette provides palette)` 写法不提供玻璃方案与
+ * 字阶，已全部替换为本函数。
  */
 @Composable
 fun MeowTheme(theme: String, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalPalette provides paletteOf(theme),
         LocalGlassScheme provides glassOf(theme),
+        LocalTypography provides DefaultTypography,
         content = content,
     )
 }

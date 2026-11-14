@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.Color
  * 既不像塑料膜（太透）也不退回白卡（太实）。
  *
  * 【选中态不用墨色实底】选中 = 更亮更实的玻璃面 + 半粗文字；未选中 = 更透的玻璃面 +
- * 次要文字。深浅色都用白 / 黑透明度反向表达，见 [LightGlass] / [DarkGlass]。
+ * 次要文字。深浅色都用白 / 黑透明度反向表达，见 [LightGlass] / [DarkGlass]；
+ * `fillStrong` 在深色下也用白色半透明（不是浅色那块近实白），避免 Dock 变成亮斑。
  *
  * 【主题感知】与 `LocalPalette` 同机制：[LocalGlassScheme] 由 `AppTheme.kt` 的
  * [MeowTheme]（内部按三态计算 `glassOf(theme)`）注入，[Glass] 的 getter 读
@@ -65,7 +66,7 @@ val LightGlass = GlassScheme(
 
 val DarkGlass = GlassScheme(
     fill = Color(0x1CFFFFFF),
-    fillStrong = Color(0xC7FFFFFF),
+    fillStrong = Color(0x3DFFFFFF),
     darkFill = Color(0x73000000),
     liquidTint = Color(0x1CFFFFFF),
     border = Color(0x3DFFFFFF),

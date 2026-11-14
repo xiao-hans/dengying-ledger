@@ -3,7 +3,9 @@ package com.meow.ledger.ui.theme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -24,35 +26,43 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * §2 玻璃构件的参数常量：对应 CSS `.glass { backdrop-filter: blur(12px) saturate(1.6) }`。
  *
  * 【口径】白面够实（`GlassScheme.fill` 浅色 60% 白 / 深色 11% 白）+ 模糊够浅
- * （12dp，背后内容还认得出形状）。模糊 / 饱和只作用于**背板层**（[glassBackdrop]），
+ * （12dp，背后内容还认得出形状）。[GlassLayers] 把玻璃面画在前、把只含
+ * [glassBackdrop] 的空采样层夹在玻璃面与业务内容之间：模糊 / 饱和只作用于采样层，
  * 玻璃面自身的填充、描边、投影、sheen 与业务内容（文字 / 图标）全部保持清晰——
  * 这正是 v1 把 `Modifier.blur` 挂到内容上导致「字也糊了」的修复点。
  *
  * 【为什么用 drawWithCache 画 sheen】`background(brush)` 只能铺满矩形，无法按 shape
  * 裁切 135° 高光；`drawOutline` 按 shape 描边 + 填充，1px 边线与 sheen 都精确贴合圆角。
  * sheen 峰值 alpha 取 [GlassScheme.sheenAlpha]（浅色 0.30 / 深色 0.06），不是硬编码。
+ *
+ * 【API 26–30 的背板】低版本没有 GPU 模糊，采样层退化为透明（见 [glassBackdrop]）；
+ * 玻璃面仍绘制半透明填充 / 描边 / 投影 / sheen，绝不把文字糊掉。
  */
 const val GLASS_BLUR_RADIUS_DP = 12
 /** §2 CSS `backdrop-filter: saturate(1.6)` 的采样层饱和度倍率，传给 [glassBackdrop]。 */
 const val GLASS_SATURATION = 1.6f
+/** §4 卡片圆角。 */
+val GLASS_CARD_SHAPE: Shape = RoundedCornerShape(18.dp)
+/** §4 胶囊圆角：全圆。 */
+val GLASS_PILL_SHAPE: Shape = RoundedCornerShape(999.dp)
 /** §2 `.chip.selected` 的半粗字重。 */
 val CHIP_SELECTED_WEIGHT = FontWeight.SemiBold
 
 /**
- * 玻璃面的填充 / 描边 / 投影 / sheen 修饰符。**不画背板模糊**——背板模糊由
- * [GlassCard] / [GlassChip] 用独立的 [glassBackdrop] 层提供，避免把内容糊掉。
+ * 玻璃面的填充 / 描边 / 投影 / sheen 修饰符。**不画背板模糊**——按 shape 裁切后，
+ * 在 `drawContent()` 之前铺底并描边；[GlassLayers] 会把独立的 [glassBackdrop]
+ * 采样层作为该 composable 的内容之一放在业务内容之前，避免把业务内容糊掉。
  *
  * 供 `Box` / `Column` / `Row` 直接 `.glassBackground(...)` 使用，不强制换容器。
  */
 @Composable
 fun Modifier.glassBackground(
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = GLASS_CARD_SHAPE,
     fill: Color = Glass.fill,
     borderColor: Color = Glass.border,
     shadowColor: Color = Glass.shadow,
@@ -74,41 +84,102 @@ fun Modifier.glassBackground(
                 start = Offset.Zero,
                 end = Offset(size.width, size.height * 1.4f),
             )
-            onDrawWithContent {
+            onDrawBehind {
                 drawOutline(outline, brush = SolidColor(fill), style = Fill)
                 drawOutline(outline, brush = sheen, style = Fill)
                 drawOutline(outline, brush = SolidColor(borderColor), style = Stroke(edgePx))
-                drawContent()
             }
         }
 }
 
 /**
- * 可复用玻璃卡片：§2 `.glass` 的 Compose 落地。
- * 结构 = 背板磨砂层（[glassBackdrop]）+ 玻璃面（[glassBackground]）+ 内容。
- * 背板层是空 Box，只承载模糊 / 饱和，不含任何文字或图标；内容叠在其上，不被模糊。
+ * 玻璃卡片便捷修饰器：给已有的 `Row` / `Column` / `Box` 直接换上玻璃面
+ * （填充 / 描边 / 投影 / sheen），替代散落各页的
+ * `shadow + clip + background(cardBg) + border(divider)` 白卡四件套。
+ *
+ * 注意：Modifier 无法插入「兄弟背板层」，故本修饰器只提供玻璃面；
+ * 完整三层（玻璃面 → [glassBackdrop] 采样层 → 内容）请用 [GlassPanel] / [GlassCard] /
+ * [GlassChip]。列表卡与 Dock 等悬浮件走三层版本，内嵌在滚动内容里的普通卡用本
+ * 便捷修饰器即可；都取同一套 [GlassScheme] token，不会出现「一半白卡一半玻璃」。
  */
+@Composable
+fun Modifier.glassCard(
+    shape: Shape = GLASS_CARD_SHAPE,
+    fill: Color = Glass.fill,
+    elevation: Dp = 2.dp,
+): Modifier = glassBackground(
+    shape = shape,
+    fill = fill,
+    elevation = elevation,
+)
+
+/**
+ * 玻璃构件的统一结构：**玻璃面 → 空的模糊采样层 → 内容**。
+ *
+ * 外层 Box 的 `drawBehind` 先绘制填充 / 描边 / 投影 / sheen；紧随其后的空 Box 用
+ * `matchParentSize` + [glassBackdrop] 对**已绘制的玻璃面背后的区域**做模糊 / 饱和采样
+ * （`matchParentSize` 是 `BoxScope` 的成员扩展，在 Box 内容 lambda 内直接调用、无需 import；
+ * 它在其它子内容测量完后按父级最终尺寸测量，因此滚动列表里不会出现 0 高度的采样层；
+ * API 31+ 的 `graphicsLayer` 会强制裁切，模糊不会溢出圆角），业务内容最后绘制。
+ * 因此玻璃面与文字 / 图标都不被模糊，外层高度由内容撑开。所有玻璃组件
+ * （[GlassPanel] / [GlassCard] / [GlassChip]）都复用本函数，避免两套观感。
+ */
+@Composable
+private fun GlassLayers(
+    modifier: Modifier,
+    shape: Shape,
+    fill: Color,
+    elevation: Dp,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(modifier.glassBackground(shape = shape, fill = fill, elevation = elevation)) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .clip(shape)
+                .glassBackdrop(GLASS_BLUR_RADIUS_DP, GLASS_SATURATION),
+        )
+        content()
+    }
+}
+
+/**
+ * 列表 / 表单用的玻璃面板：§2 `.glass` 的 Compose 落地，内容按 [ColumnScope] 排布。
+ *
+ * `onClick` 为空时不可点；`contentPadding` 默认 14dp，与旧白卡一致，调用点零改动。
+ * 这是 `manage` 包各页面「GlassCard」的唯一实现来源（见 `Plans.kt` 的委托）。
+ */
+@Composable
+fun GlassPanel(
+    modifier: Modifier = Modifier,
+    shape: Shape = GLASS_CARD_SHAPE,
+    fill: Color = Glass.fill,
+    elevation: Dp = 2.dp,
+    onClick: (() -> Unit)? = null,
+    contentPadding: Dp = 14.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    GlassLayers(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = shape,
+        fill = fill,
+        elevation = elevation,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(contentPadding), content = content)
+    }
+}
+
+/** 兼容旧调用：Box 内容的玻璃卡片，内部委托 [GlassLayers]。 */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = GLASS_CARD_SHAPE,
     fill: Color = Glass.fill,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box(modifier) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .glassBackdrop(GLASS_BLUR_RADIUS_DP, GLASS_SATURATION)
-                .clip(shape),
-        )
-        Box(
-            Modifier
-                .fillMaxSize()
-                .glassBackground(shape = shape, fill = fill),
-            content = content,
-        )
-    }
+    GlassLayers(modifier = modifier, shape = shape, fill = fill, elevation = 6.dp, content = content)
 }
 
 /**
@@ -124,25 +195,26 @@ fun GlassChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(999.dp)
     val fill = if (selected) Glass.chipSelectedFill else Glass.chipFill
     val palette = LocalPalette.current
-    Box(
-        modifier
-            .glassBackground(
-                shape = shape,
-                fill = fill,
-                elevation = if (selected) 2.dp else 0.dp,
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+    GlassLayers(
+        modifier = modifier,
+        shape = GLASS_PILL_SHAPE,
+        fill = fill,
+        elevation = if (selected) 2.dp else 0.dp,
     ) {
-        Text(
-            label,
-            color = if (selected) palette.textPrimary else palette.textSecondary,
-            fontSize = 14.sp,
-            fontWeight = if (selected) CHIP_SELECTED_WEIGHT else FontWeight.Normal,
-        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 18.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                label,
+                color = if (selected) palette.textPrimary else palette.textSecondary,
+                style = if (selected) AppTypography.bodyMedium.semiBold() else AppTypography.bodyMedium,
+            )
+        }
     }
 }

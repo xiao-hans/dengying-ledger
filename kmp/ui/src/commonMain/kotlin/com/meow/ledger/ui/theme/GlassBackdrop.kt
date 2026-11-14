@@ -4,8 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * 玻璃背板的「磨砂」层：只作用于玻璃面背后的内容，不作用于玻璃面自身的内容
- * （文字、图标、子控件必须保持清晰）。
+ * 玻璃面背后的「磨砂采样」层：只模糊 / 饱和本层之前绘制的内容，不碰玻璃面自身的
+ * 填充、描边、文字与图标（文字、图标、子控件必须保持清晰）。[GlassLayers] 把玻璃面
+ * 画在本层之前，业务内容画在本层之后，因此三者都不会互相糊掉。
  *
  * 对应 §2 的 `.glass { backdrop-filter: blur(12px) saturate(1.6) }`。
  * CMP 1.7.3 的 commonMain 没有可移植的 backdrop-filter 构造器，`Modifier.blur`
@@ -14,8 +15,8 @@ import androidx.compose.ui.Modifier
  *   - Android 11 及以下 / JVM：无 GPU 效应时安全退化为 `Modifier`（玻璃填充、描边、
  *     投影、sheen 仍完整，只是背后内容不被模糊）。
  *
- * 该 Modifier 只应挂在玻璃面的**背板层**（一个不含文字 / 图标的空 Box），
- * 见 [glassBackground] 的用法。不承诺 JVM / 低版本 Android 上有模糊观感，
+ * 该 Modifier 只应挂在玻璃面**之后**、业务内容**之前**的空 Box 上（不含文字 / 图标），
+ * 见 [GlassSurface.kt] 的 `GlassLayers`。不承诺 JVM / 低版本 Android 上有模糊观感，
  * 不做截图测试，也不把退化伪装成通过。
  */
 @Composable

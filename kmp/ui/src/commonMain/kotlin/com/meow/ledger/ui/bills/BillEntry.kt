@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +44,8 @@ import com.meow.ledger.shared.bills.toCents
 import com.meow.ledger.shared.db.Bill
 import com.meow.ledger.shared.db.Category
 import com.meow.ledger.ui.manage.ChoiceChip
+import com.meow.ledger.ui.theme.GlassChip
+import com.meow.ledger.ui.theme.GlassPanel
 import com.meow.ledger.ui.theme.LocalPalette
 
 private val TYPES = listOf(TYPE_EXPENSE to "支出", TYPE_INCOME to "收入", TYPE_TRANSFER to "转账")
@@ -98,15 +99,9 @@ fun BillEntry(
                 }
             }
 
-            Column(
-                Modifier
-                    .padding(top = 14.dp)
-                    .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(18.dp), ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(palette.cardBg)
-                    .border(1.dp, palette.divider, RoundedCornerShape(18.dp))
-                    .padding(16.dp),
+            GlassPanel(
+                modifier = Modifier.padding(top = 14.dp),
+                contentPadding = 16.dp,
             ) {
                 Text("金额（元）", color = palette.textSecondary, fontSize = 12.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -144,37 +139,28 @@ fun BillEntry(
                 }
             }
 
-            Column(
-                Modifier
-                    .padding(top = 14.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(palette.cardBg)
-                    .border(1.dp, palette.divider, RoundedCornerShape(18.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            GlassPanel(
+                modifier = Modifier.padding(top = 14.dp),
+                contentPadding = 0.dp,
             ) {
-                Text("备注", color = palette.textSecondary, fontSize = 12.sp)
-                androidx.compose.foundation.text.BasicTextField(
-                    value = desc,
-                    onValueChange = { desc = it },
-                    textStyle = androidx.compose.ui.text.TextStyle(color = palette.textPrimary, fontSize = 14.sp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    decorationBox = { inner ->
-                        if (desc.isEmpty()) Text("写点什么（选填）", color = palette.textSecondary, fontSize = 14.sp)
-                        inner()
-                    },
-                )
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Text("备注", color = palette.textSecondary, fontSize = 12.sp)
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = desc,
+                        onValueChange = { desc = it },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = palette.textPrimary, fontSize = 14.sp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                        decorationBox = { inner ->
+                            if (desc.isEmpty()) Text("写点什么（选填）", color = palette.textSecondary, fontSize = 14.sp)
+                            inner()
+                        },
+                    )
+                }
             }
 
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(palette.cardBg)
-                    .border(1.dp, palette.divider, RoundedCornerShape(18.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
+            GlassPanel(contentPadding = 0.dp) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
                 Text("图片", color = palette.textSecondary, fontSize = 12.sp)
                 val picked = images.split(',').filter { it.isNotBlank() }
                 if (picked.isEmpty()) {
@@ -193,6 +179,7 @@ fun BillEntry(
                 PickImageButton(enabled = true, modifier = Modifier.padding(top = 8.dp)) { path, _ ->
                     val list = images.split(',').filter { it.isNotBlank() }
                     if (path !in list) images = (list + path).joinToString(",")
+                }
                 }
             }
 
@@ -247,23 +234,7 @@ private fun newBill(today: Long, type: Long, cents: Long, cateId: Long, desc: St
 
 @Composable
 private fun TypeChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    val shape = RoundedCornerShape(999.dp)
-    Box(
-        Modifier
-            .clip(shape)
-            .background(if (selected) palette.chipSelectedFill else palette.chipFill)
-            .border(1.dp, palette.glassBorder, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-    ) {
-        Text(
-            label,
-            color = if (selected) palette.textPrimary else palette.textSecondary,
-            fontSize = 14.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        )
-    }
+    GlassChip(label = label, selected = selected, onClick = onClick)
 }
 
 @Composable

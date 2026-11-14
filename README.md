@@ -79,7 +79,7 @@ npm run build
 
 ## 路线图
 
-- 玻璃质感（`Glass.kt`）与字阶（`AppTypography`）落地
+- ~~玻璃质感（`Glass.kt`）与字阶（`AppTypography`）落地~~ 已落地并构建验证；模糊观感与三态视觉待真机验证
 - 截屏自动记账（MediaProjection）采集
 - 真机验证：装机、同步、推送与厂商通道
 - 复制年预算、自定义区间、账户间调拨独立页等剩余页面补齐

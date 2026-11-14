@@ -1,7 +1,6 @@
 package com.meow.ledger.ui.auto
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +47,9 @@ import com.meow.ledger.shared.db.Auto_event
 import com.meow.ledger.shared.db.Category
 import com.meow.ledger.shared.db.Rule
 import com.meow.ledger.ui.theme.DangerConfirmDialog
+import com.meow.ledger.ui.theme.GlassChip
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 /**
  * 待确认队列（交互纪律 §6.7）。
@@ -88,7 +89,7 @@ fun PendingPage(
 
         val allSelected = selected.size == items.size
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(palette.cardBg).padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(
@@ -111,8 +112,7 @@ fun PendingPage(
                 Modifier
                     .fillMaxWidth()
                     .padding(vertical = 5.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(palette.cardBg)
+                    .glassCard(elevation = 2.dp)
                     .padding(14.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -231,16 +231,11 @@ private fun PendingEditDialog(
                 Text("分类", color = palette.textSecondary, fontSize = 12.sp)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     visible.forEach { cate ->
-                        Box(
-                            Modifier
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(if (cate.id == cateId) palette.chipSelectedFill else palette.chipFill)
-                                .border(1.dp, palette.glassBorder, RoundedCornerShape(999.dp))
-                                .clickable { cateId = cate.id }
-                                .padding(horizontal = 14.dp, vertical = 7.dp),
-                        ) {
-                            Text(cate.title, color = if (cate.id == cateId) palette.textPrimary else palette.textSecondary, fontSize = 13.sp)
-                        }
+                        GlassChip(
+                            label = cate.title,
+                            selected = cate.id == cateId,
+                            onClick = { cateId = cate.id },
+                        )
                     }
                 }
                 if (error.isNotEmpty()) Text(error, color = palette.danger, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
@@ -318,7 +313,7 @@ fun RulesPage(
         if (rules.isEmpty()) EmptyHint("还没有规则", "添加一条关键词开始自动分类")
         rules.forEach { rule ->
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp)).background(palette.cardBg).padding(horizontal = 14.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().padding(vertical = 4.dp).glassCard(elevation = 2.dp).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
@@ -365,7 +360,7 @@ fun AppsPage(
         WATCH_APPS.forEach { app ->
             val on = app.pkg in selected
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp)).background(palette.cardBg).padding(horizontal = 14.dp, vertical = 8.dp),
+                Modifier.fillMaxWidth().padding(vertical = 4.dp).glassCard(elevation = 2.dp).padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
@@ -385,7 +380,7 @@ fun KeepAlivePage(on: Boolean, onBack: () -> Unit, onToggle: (Boolean) -> Unit) 
     Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
         BackHeader("保活设置", onBack)
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(palette.cardBg).padding(horizontal = 16.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -440,7 +435,7 @@ fun AutoSettingsPage(onBack: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
         BackHeader("自动记账设置", onBack)
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(palette.cardBg).padding(16.dp),
+            Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(16.dp),
         ) {
             Text("确认后才入账", color = palette.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(6.dp))

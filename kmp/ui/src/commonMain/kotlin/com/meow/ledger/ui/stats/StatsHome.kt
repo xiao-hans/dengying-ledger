@@ -1,7 +1,6 @@
 package com.meow.ledger.ui.stats
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,7 +31,9 @@ import com.meow.ledger.shared.stats.PeriodTotal
 import com.meow.ledger.shared.stats.Summary
 import com.meow.ledger.shared.stats.TrendPeriod
 import com.meow.ledger.ui.home.formatYuan
+import com.meow.ledger.ui.theme.GlassChip
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 private val PERIODS = listOf("周" to TrendPeriod.WEEK, "月" to TrendPeriod.MONTH, "年" to TrendPeriod.YEAR)
 private val TYPES = listOf("支出" to TYPE_EXPENSE, "收入" to TYPE_INCOME)
@@ -114,24 +114,7 @@ private fun LinkRow(title: String, hint: String, onClick: () -> Unit) {
 
 @Composable
 private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    val shape = RoundedCornerShape(999.dp)
-    Box(
-        Modifier
-            .shadow(if (selected) 2.dp else 0.dp, shape, ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-            .clip(shape)
-            .background(if (selected) palette.chipSelectedFill else palette.chipFill)
-            .border(1.dp, palette.glassBorder, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-    ) {
-        Text(
-            label,
-            color = if (selected) palette.textPrimary else palette.textSecondary,
-            fontSize = 14.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        )
-    }
+    GlassChip(label = label, selected = selected, onClick = onClick)
 }
 
 @Composable
@@ -224,15 +207,8 @@ private fun EmptyHint(text: String) {
     )
 }
 
+/** 内嵌在滚动内容里的统计卡片：与玻璃组件共用同一套填充 / 描边 / 投影 / sheen token。 */
 @Composable
-private fun Modifier.card(): Modifier {
-    val palette = LocalPalette.current
-    val shape = RoundedCornerShape(18.dp)
-    return fillMaxWidth()
-        .shadow(2.dp, shape, ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-        .clip(shape)
-        .background(palette.cardBg)
-        .border(1.dp, palette.divider, shape)
-}
+private fun Modifier.card(): Modifier = fillMaxWidth().glassCard(elevation = 2.dp)
 
 private fun pointLabel(key: Int) = if (key > 9999) (key % 100).toString() else key.toString().takeLast(2)

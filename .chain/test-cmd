@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Glass-theme verification: full fresh JVM test run + debug APK build.
+# Run from the repo root (/tmp/meow-glass); Pi executes only this script.
+# Low-memory settings avoid the Gradle daemon being killed by host memory
+# pressure during :app:mergeExtDexDebug (8 GB box, other daemons resident).
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO/kmp"
+
+GRADLE=(java
+  -Dorg.gradle.jvmargs="-Xmx1g -XX:HeapBaseMinAddress=40g -Dfile.encoding=UTF-8"
+  -Dkotlin.compiler.execution.strategy=in-process
+  -cp gradle/wrapper/gradle-wrapper.jar
+  org.gradle.wrapper.GradleWrapperMain)
+
+"${GRADLE[@]}" :ui:compileDebugKotlinAndroid --no-daemon --no-parallel --max-workers=1 --console=plain
+"${GRADLE[@]}" :shared:jvmTest --rerun-tasks --no-daemon --no-parallel --max-workers=1 --console=plain
+"${GRADLE[@]}" :app:assembleDebug --no-daemon --no-parallel --max-workers=1 --console=plain
+
+cd "$REPO"
+git diff --check

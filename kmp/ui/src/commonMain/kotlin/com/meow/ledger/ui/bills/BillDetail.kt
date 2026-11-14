@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +40,9 @@ import com.meow.ledger.shared.db.Bill
 import com.meow.ledger.shared.db.Refund_bill
 import com.meow.ledger.ui.home.formatDay
 import com.meow.ledger.ui.home.formatYuan
+import com.meow.ledger.ui.theme.GlassChip
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 private val SOURCE = mapOf(
     0L to "手动记账",
@@ -76,7 +77,6 @@ fun BillDetail(
     onRevokeRefund: (String) -> Unit,
 ) {
     val palette = LocalPalette.current
-    val card = RoundedCornerShape(18.dp)
     val refunded = refundedCents(refunds)
     var amount by rememberSaveable { mutableStateOf("") }
     var editRefundId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -102,9 +102,7 @@ fun BillDetail(
             Column(
                 Modifier
                     .padding(horizontal = 16.dp)
-                    .shadow(2.dp, card)
-                    .clip(card)
-                    .background(palette.cardBg)
+                    .glassCard(elevation = 2.dp)
                     .padding(18.dp),
             ) {
                 Text(
@@ -135,9 +133,7 @@ fun BillDetail(
             Column(
                 Modifier
                     .padding(horizontal = 16.dp)
-                    .shadow(2.dp, card)
-                    .clip(card)
-                    .background(palette.cardBg),
+                    .glassCard(elevation = 2.dp),
             ) {
                 DetailRow("备注", bill.desc.ifBlank { "无" })
                 if (bill.images.isNotBlank()) {
@@ -155,9 +151,7 @@ fun BillDetail(
             Column(
                 Modifier
                     .padding(horizontal = 16.dp)
-                    .shadow(2.dp, card)
-                    .clip(card)
-                    .background(palette.cardBg),
+                    .glassCard(elevation = 2.dp),
             ) {
                 if (refunds.isEmpty()) {
                     Column(Modifier.padding(18.dp)) {
@@ -293,31 +287,19 @@ private fun DetailRow(label: String, value: String) {
 
 @Composable
 private fun TextButton(label: String, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(palette.chipFill)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-    ) {
-        Text(label, color = palette.brand, fontSize = 14.sp)
-    }
+    GlassChip(label = label, selected = false, onClick = onClick)
 }
 
 @Composable
 internal fun ConfirmBox(title: String, message: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
     val palette = LocalPalette.current
-    val card = RoundedCornerShape(18.dp)
     Box(
         Modifier.background(palette.glassShadow).padding(32.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             Modifier
-                .shadow(8.dp, card)
-                .clip(card)
-                .background(palette.cardBg)
+                .glassCard(elevation = 8.dp)
                 .padding(20.dp),
         ) {
             Text(title, color = palette.textPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)

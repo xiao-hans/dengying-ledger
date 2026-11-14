@@ -33,6 +33,7 @@ import com.meow.ledger.shared.manage.SOURCE_OCR
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 /** 导出与导入。page 为 export、import 或 import:<id>。 */
 @Composable
@@ -76,7 +77,7 @@ private fun ExportHome(exchange: ExchangeRepository, onBack: () -> Unit) {
                 onValueChange = {},
                 readOnly = true,
                 textStyle = TextStyle(color = palette.textPrimary, fontSize = 12.sp),
-                modifier = Modifier.fillMaxWidth().background(palette.cardBg).padding(12.dp),
+                modifier = Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(12.dp),
             )
         }
     }
@@ -121,7 +122,7 @@ private fun ImportHome(exchange: ExchangeRepository, account: AccountRepository,
                 value = text,
                 onValueChange = { text = it },
                 textStyle = TextStyle(color = palette.textPrimary, fontSize = 13.sp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp).background(palette.cardBg).padding(12.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp).glassCard(elevation = 2.dp).padding(12.dp),
             )
             if (result.isNotEmpty()) Text(result, color = palette.textPrimary, fontSize = 13.sp)
             if (files.isEmpty()) {
@@ -173,7 +174,7 @@ private fun ImportPreview(
                     onValueChange = {},
                     readOnly = true,
                     textStyle = TextStyle(color = palette.textPrimary, fontSize = 12.sp),
-                    modifier = Modifier.fillMaxWidth().background(palette.cardBg).padding(12.dp),
+                    modifier = Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(12.dp),
                 )
             }
             if (result.isNotEmpty()) Text(result, color = palette.textPrimary, fontSize = 13.sp)

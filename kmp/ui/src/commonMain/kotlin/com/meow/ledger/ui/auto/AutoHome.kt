@@ -38,6 +38,7 @@ import com.meow.ledger.shared.auto.SOURCE_NOTIFICATION
 import com.meow.ledger.shared.auto.SOURCE_OCR
 import com.meow.ledger.shared.auto.sourceLabel
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 private data class CaptureRow(val source: String, val hint: String)
 
@@ -99,8 +100,7 @@ fun AutoHome(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 18.dp, vertical = 8.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(palette.cardBg)
+                .glassCard(elevation = 2.dp)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -150,8 +150,7 @@ private fun MenuRow(title: String, subtitle: String, enabled: Boolean, onClick: 
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 18.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(palette.cardBg)
+            .glassCard(elevation = 2.dp)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

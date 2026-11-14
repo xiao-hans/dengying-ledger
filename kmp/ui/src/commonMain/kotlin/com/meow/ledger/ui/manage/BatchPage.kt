@@ -40,6 +40,7 @@ import com.meow.ledger.ui.AppGraph
 import com.meow.ledger.ui.auto.BackHeader
 import com.meow.ledger.ui.bills.ConfirmBox
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 private fun moneyYuan(cents: Long): String {
     val sign = if (cents < 0) "-" else ""
@@ -82,8 +83,7 @@ internal fun BatchPage(onBack: () -> Unit) {
 
         // 月份切换，显式展示当前值。
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-                .background(palette.cardBg).border(1.dp, palette.divider, RoundedCornerShape(16.dp))
+            Modifier.fillMaxWidth().glassCard(elevation = 2.dp)
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

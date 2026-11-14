@@ -29,6 +29,7 @@ import com.meow.ledger.ui.auto.BackHeader
 import com.meow.ledger.ui.home.formatYuan
 import com.meow.ledger.ui.manage.ChoiceChip
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassCard
 
 /** 统计下钻二级页。page 为 cate:<id>、tags、tag:<id>、type、report。 */
 @Composable
@@ -117,7 +118,7 @@ private fun BillListPage(
                     Modifier
                         .fillMaxWidth()
                         .clickable { onOpenBill(bill.client_id) }
-                        .background(palette.cardBg)
+                        .glassCard(elevation = 2.dp)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Row(Modifier.fillMaxWidth()) {
@@ -164,7 +165,7 @@ private fun TagPickerPage(
                     Modifier
                         .fillMaxWidth()
                         .clickable { onOpenPage("tag:${tag.tag_id}") }
-                        .background(palette.cardBg)
+                        .glassCard(elevation = 2.dp)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Text(tag.name, color = palette.textPrimary)
@@ -186,7 +187,7 @@ private fun MonthListPage(title: String, months: List<PeriodTotal>, onBack: () -
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .background(palette.cardBg)
+                        .glassCard(elevation = 2.dp)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Text("${row.key / 100} 年 ${row.key % 100} 月", color = palette.textPrimary, modifier = Modifier.weight(1f))
@@ -211,7 +212,7 @@ private fun ReportPage(year: Long, months: List<PeriodTotal>, onBack: () -> Unit
         BackHeader("${year} 年度报表", onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
-                Modifier.fillMaxWidth().background(palette.cardBg).padding(horizontal = 16.dp, vertical = 14.dp),
+                Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(horizontal = 16.dp, vertical = 14.dp),
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("全年支出", color = palette.textSecondary, fontSize = 12.sp)
@@ -233,7 +234,7 @@ private fun ReportPage(year: Long, months: List<PeriodTotal>, onBack: () -> Unit
             }
             months.forEach { row ->
                 Row(
-                    Modifier.fillMaxWidth().background(palette.cardBg).padding(horizontal = 16.dp, vertical = 12.dp),
+                    Modifier.fillMaxWidth().glassCard(elevation = 2.dp).padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Text("${row.key % 100} 月", color = palette.textPrimary, modifier = Modifier.weight(1f))
                     Text(

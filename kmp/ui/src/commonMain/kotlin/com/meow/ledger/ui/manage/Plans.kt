@@ -1,7 +1,6 @@
 package com.meow.ledger.ui.manage
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,8 @@ import com.meow.ledger.shared.manage.SAVE_PLAN_DONE
 import com.meow.ledger.shared.manage.WISH_TYPE
 import com.meow.ledger.ui.auto.ActionButton
 import com.meow.ledger.ui.auto.BackHeader
+import com.meow.ledger.ui.theme.GlassChip
+import com.meow.ledger.ui.theme.GlassPanel
 import com.meow.ledger.ui.theme.LocalPalette
 
 /** 分期列表、新建、详情，以及存钱计划的列表、编辑、详情。 */
@@ -381,33 +382,25 @@ private fun StatusChip(label: String) {
 
 @Composable
 internal fun ChoiceChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    Box(
-        Modifier.clip(RoundedCornerShape(14.dp))
-            .background(if (selected) palette.brand else palette.searchBg)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        Text(label, color = if (selected) palette.cardBg else palette.textPrimary, fontSize = 13.sp)
-    }
+    // 统一走 theme 层玻璃胶囊：选中态不用墨色实底，用更亮更实的玻璃面 + 半粗文字。
+    // 保持三参签名：50+ 调用点用尾随 lambda 传 onClick，加 modifier 会破坏全部调用。
+    GlassChip(label = label, selected = selected, onClick = onClick)
 }
 
-/** 列表卡。onClick 为空时不可点。 */
+/**
+ * 列表卡（毛玻璃主题）。`manage` 包各页面的卡片统一走 theme 层的 [GlassPanel]：
+ * 背板磨砂 + 玻璃填充 / 描边 / 投影 / sheen，内容保持清晰。
+ * `onClick` 为空时不可点。保留本函数名与签名，60+ 调用点零改动即获得玻璃质感。
+ */
 @Composable
 internal fun GlassCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    val palette = LocalPalette.current
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(palette.cardBg)
-            .border(1.dp, palette.divider, RoundedCornerShape(16.dp))
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(14.dp),
+    GlassPanel(
+        modifier = modifier,
+        onClick = onClick,
         content = { content() },
     )
 }

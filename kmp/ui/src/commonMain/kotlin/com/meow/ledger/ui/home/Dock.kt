@@ -3,8 +3,6 @@ package com.meow.ledger.ui.home
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -33,16 +31,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.meow.ledger.ui.theme.AppTypography
 import com.meow.ledger.ui.theme.GLASS_BLUR_RADIUS_DP
 import com.meow.ledger.ui.theme.GLASS_SATURATION
 import com.meow.ledger.ui.theme.Glass
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassBackground
 import com.meow.ledger.ui.theme.glassBackdrop
+import com.meow.ledger.ui.theme.semiBold
 
 private val EASE = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
 
@@ -66,15 +64,13 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
             .navigationBarsPadding()
             .padding(horizontal = 20.dp)
             .height(56.dp)
-            .shadow(6.dp, shape, ambientColor = Glass.shadow, spotColor = Glass.shadow)
-            .clip(shape)
-            .background(Glass.fillStrong)
-            .border(1.dp, Glass.border, shape),
+            .glassBackground(shape = shape, fill = Glass.fillStrong, elevation = 6.dp),
     ) {
         // Dock 用强化玻璃：背板磨砂层只模糊背后页面，高光条 / 图标 / 文字保持清晰。
         Box(
             Modifier
                 .fillMaxSize()
+                .clip(shape)
                 .glassBackdrop(GLASS_BLUR_RADIUS_DP, GLASS_SATURATION),
         )
         val itemWidth = maxWidth / ITEMS.size
@@ -89,9 +85,11 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
                 .padding(vertical = 4.dp)
                 .width(itemWidth)
                 .fillMaxHeight()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Glass.dockHighlight)
-                .border(1.dp, Glass.border, RoundedCornerShape(24.dp)),
+                .glassBackground(
+                    shape = RoundedCornerShape(24.dp),
+                    fill = Glass.dockHighlight,
+                    elevation = 0.dp,
+                ),
         )
         Row(Modifier.fillMaxSize()) {
             ITEMS.forEachIndexed { index, item ->
@@ -117,8 +115,7 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
                         Text(
                             item.label,
                             color = palette.textPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = AppTypography.bodySmall.semiBold(),
                             modifier = Modifier.padding(start = 6.dp),
                         )
                     }

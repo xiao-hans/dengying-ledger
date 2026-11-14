@@ -34,8 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meow.ledger.shared.bills.DayGroup
@@ -45,8 +43,12 @@ import com.meow.ledger.shared.bills.TYPE_EXPENSE
 import com.meow.ledger.shared.bills.TYPE_INCOME
 import com.meow.ledger.shared.bills.TYPE_TRANSFER
 import com.meow.ledger.shared.db.Bill
+import com.meow.ledger.ui.theme.AppTypography
 import com.meow.ledger.ui.theme.GlassChip
+import com.meow.ledger.ui.theme.GlassPanel
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.bold
+import com.meow.ledger.ui.theme.semiBold
 
 private val FILTERS = listOf("全部", "支出", "收入", "转账")
 private val FILTER_TYPES = listOf(0L, TYPE_EXPENSE, TYPE_INCOME, TYPE_TRANSFER)
@@ -88,14 +90,13 @@ fun BillsHome(
                 Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)).background(palette.brand),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("咪", color = palette.cardBg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text("咪", color = palette.cardBg, style = AppTypography.bodyLarge.bold())
             }
             Spacer(Modifier.width(10.dp))
             Text(
                 "咪啊记账",
                 color = palette.textPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = AppTypography.titleLarge,
                 letterSpacing = 2.4.sp,
                 modifier = Modifier.weight(1f),
             )
@@ -124,10 +125,10 @@ fun BillsHome(
                 value = query,
                 onValueChange = { query = it },
                 singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(color = palette.textPrimary, fontSize = 14.sp),
+                textStyle = AppTypography.bodyMedium.copy(color = palette.textPrimary),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
-                    if (query.isEmpty()) Text("搜索备注", color = palette.textSecondary, fontSize = 14.sp)
+                    if (query.isEmpty()) Text("搜索备注", color = palette.textSecondary, style = AppTypography.bodyMedium)
                     inner()
                 },
             )
@@ -148,7 +149,7 @@ fun BillsHome(
                 Icon(Icons.Outlined.Add, contentDescription = null, tint = palette.cardBg, modifier = Modifier.size(16.dp))
             }
             Spacer(Modifier.width(8.dp))
-            Text("快捷记账", color = palette.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text("快捷记账", color = palette.textPrimary, style = AppTypography.bodyMedium.semiBold())
         }
 
         Row(
@@ -169,7 +170,7 @@ fun BillsHome(
             Text(
                 if (groups.isEmpty()) "这个月还没有账单，点右下角记一笔" else "没有符合条件的账单",
                 color = palette.textSecondary,
-                fontSize = 13.sp,
+                style = AppTypography.bodySmall,
                 modifier = Modifier.padding(top = 48.dp).align(Alignment.CenterHorizontally),
             )
         } else {
@@ -187,22 +188,14 @@ private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
 @Composable
 private fun SummaryCard(summary: MonthSummary, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
-    Column(
-        modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(18.dp), ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-            .clip(RoundedCornerShape(18.dp))
-            .background(palette.cardBg)
-            .border(1.dp, palette.divider, RoundedCornerShape(18.dp))
-            .padding(16.dp),
-    ) {
+    GlassPanel(modifier = modifier, elevation = 2.dp, contentPadding = 16.dp) {
         Row(Modifier.fillMaxWidth()) {
             SummaryCell("本月支出", summary.expense, palette.danger, Modifier.weight(1f))
             SummaryCell("本月收入", summary.income, palette.brand, Modifier.weight(1f))
             SummaryCell("结余", summary.income - summary.expense, palette.textPrimary, Modifier.weight(1f))
         }
         Spacer(Modifier.height(8.dp))
-        Text("${summary.count} 笔", color = palette.textSecondary, fontSize = 12.sp)
+        Text("${summary.count} 笔", color = palette.textSecondary, style = AppTypography.labelMedium)
     }
 }
 
@@ -210,9 +203,9 @@ private fun SummaryCard(summary: MonthSummary, modifier: Modifier = Modifier) {
 private fun SummaryCell(label: String, cents: Long, valueColor: androidx.compose.ui.graphics.Color, modifier: Modifier) {
     val palette = LocalPalette.current
     Column(modifier) {
-        Text(label, color = palette.textSecondary, fontSize = 12.sp)
+        Text(label, color = palette.textSecondary, style = AppTypography.labelMedium)
         Spacer(Modifier.height(4.dp))
-        Text(formatYuan(cents), color = valueColor, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(formatYuan(cents), color = valueColor, style = AppTypography.titleSmall.bold())
     }
 }
 
@@ -222,17 +215,14 @@ private fun DaySection(group: DayGroup, onOpen: (String) -> Unit) {
     Text(
         formatDay(group.day),
         color = palette.textSecondary,
-        fontSize = 12.sp,
+        style = AppTypography.labelMedium,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 8.dp),
     )
-    Column(
-        Modifier
-            .padding(horizontal = 18.dp)
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(18.dp), ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-            .clip(RoundedCornerShape(18.dp))
-            .background(palette.cardBg)
-            .border(1.dp, palette.divider, RoundedCornerShape(18.dp)),
+    // 按天分组的玻璃卡：无内边距（行自带 padding），分隔线仍用 divider token。
+    GlassPanel(
+        modifier = Modifier.padding(horizontal = 18.dp),
+        elevation = 2.dp,
+        contentPadding = 0.dp,
     ) {
         group.bills.forEachIndexed { index, bill ->
             BillRow(bill, group.refunded[bill.client_id] ?: 0, onOpen)
@@ -264,16 +254,16 @@ private fun BillRow(bill: Bill, refunded: Long, onOpen: (String) -> Unit) {
             Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(palette.searchBg),
             contentAlignment = Alignment.Center,
         ) {
-            Text(typeGlyph(bill.type), color = palette.textPrimary, fontSize = 14.sp)
+            Text(typeGlyph(bill.type), color = palette.textPrimary, style = AppTypography.bodyMedium)
         }
         Spacer(Modifier.width(12.dp))
         Text(
             bill.desc.ifBlank { "未填写" },
             color = palette.textPrimary,
-            fontSize = 14.sp,
+            style = AppTypography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
-        Text("$sign${formatYuan(netPaid(bill.money, refunded))}", color = color, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("$sign${formatYuan(netPaid(bill.money, refunded))}", color = color, style = AppTypography.bodyMedium.semiBold())
     }
 }
 
