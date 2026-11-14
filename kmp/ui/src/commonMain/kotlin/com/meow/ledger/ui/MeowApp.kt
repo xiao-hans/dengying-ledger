@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -79,6 +78,7 @@ import com.meow.ledger.ui.manage.WidgetsPage
 import com.meow.ledger.ui.stats.StatsHome
 import com.meow.ledger.ui.stats.StatsPages
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.MeowTheme
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -94,13 +94,14 @@ fun MeowApp(
     // 清空本机数据后由 onTheme 把这里也拉回缺省值，避免界面与库里的设置脱节。
     var theme by rememberSaveable { mutableStateOf(settings.snapshot().theme) }
     EntryNavHost(initialTarget = initialTarget, host = entryHost, theme = theme) { target ->
-        MainApp(target = target, onTheme = { theme = it })
+        MainApp(target = target, theme = theme, onTheme = { theme = it })
     }
 }
 
 @Composable
 private fun MainApp(
     target: DeepLinkTarget,
+    theme: String,
     onTheme: (String) -> Unit,
 ) {
     val settings = SettingsStore(AppGraph.database)
@@ -232,12 +233,12 @@ private fun MainApp(
         )
     }
 
-    CompositionLocalProvider(LocalPalette provides palette) {
+    MeowTheme(theme) {
         if (!unlocked) {
             Box(Modifier.fillMaxSize().background(palette.appBg).statusBarsPadding()) {
                 LockGate(lockPin) { unlocked = true }
             }
-            return@CompositionLocalProvider
+            return@MeowTheme
         }
         // 系统返回键：二级页回上级，根页面才交给系统退出（交互纪律 §6.9）。
         BackButton(

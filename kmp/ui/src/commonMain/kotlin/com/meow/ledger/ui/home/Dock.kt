@@ -38,7 +38,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.meow.ledger.ui.theme.GLASS_BLUR_RADIUS_DP
+import com.meow.ledger.ui.theme.GLASS_SATURATION
+import com.meow.ledger.ui.theme.Glass
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.glassBackdrop
 
 private val EASE = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
 
@@ -62,11 +66,17 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
             .navigationBarsPadding()
             .padding(horizontal = 20.dp)
             .height(56.dp)
-            .shadow(6.dp, shape, ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
+            .shadow(6.dp, shape, ambientColor = Glass.shadow, spotColor = Glass.shadow)
             .clip(shape)
-            .background(palette.glassFill)
-            .border(1.dp, palette.glassBorder, shape),
+            .background(Glass.fillStrong)
+            .border(1.dp, Glass.border, shape),
     ) {
+        // Dock 用强化玻璃：背板磨砂层只模糊背后页面，高光条 / 图标 / 文字保持清晰。
+        Box(
+            Modifier
+                .fillMaxSize()
+                .glassBackdrop(GLASS_BLUR_RADIUS_DP, GLASS_SATURATION),
+        )
         val itemWidth = maxWidth / ITEMS.size
         val offset by animateDpAsState(
             targetValue = itemWidth * selected,
@@ -80,8 +90,8 @@ fun Dock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) 
                 .width(itemWidth)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(24.dp))
-                .background(palette.dockHighlight)
-                .border(1.dp, palette.glassBorder, RoundedCornerShape(24.dp)),
+                .background(Glass.dockHighlight)
+                .border(1.dp, Glass.border, RoundedCornerShape(24.dp)),
         )
         Row(Modifier.fillMaxSize()) {
             ITEMS.forEachIndexed { index, item ->

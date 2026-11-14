@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +33,7 @@ import com.meow.ledger.shared.auto.DEFAULT_WEBVIEW_URL
 import com.meow.ledger.shared.auto.THEME_SYSTEM
 import com.meow.ledger.shared.auto.isAllowedWebViewUrl
 import com.meow.ledger.ui.theme.LocalPalette
+import com.meow.ledger.ui.theme.MeowTheme
 import com.meow.ledger.ui.theme.paletteOf
 
 /** 平台侧能力接口。Android 入口注入真实实现，预览可提供只读假实现。 */
@@ -118,7 +118,7 @@ fun EntryNavHost(
         }.getOrDefault("系统功能暂不可用，已回到底部导航，可在对应页面手动操作。")
     }
 
-    CompositionLocalProvider(LocalPalette provides palette) {
+    MeowTheme(theme) {
         Box(
             Modifier
                 .fillMaxSize()

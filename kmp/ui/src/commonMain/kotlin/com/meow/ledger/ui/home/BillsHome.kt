@@ -45,6 +45,7 @@ import com.meow.ledger.shared.bills.TYPE_EXPENSE
 import com.meow.ledger.shared.bills.TYPE_INCOME
 import com.meow.ledger.shared.bills.TYPE_TRANSFER
 import com.meow.ledger.shared.db.Bill
+import com.meow.ledger.ui.theme.GlassChip
 import com.meow.ledger.ui.theme.LocalPalette
 
 private val FILTERS = listOf("全部", "支出", "收入", "转账")
@@ -179,24 +180,8 @@ fun BillsHome(
 
 @Composable
 private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    val shape = RoundedCornerShape(999.dp)
-    Box(
-        Modifier
-            .shadow(if (selected) 2.dp else 0.dp, shape, ambientColor = palette.glassShadow, spotColor = palette.glassShadow)
-            .clip(shape)
-            .background(if (selected) palette.chipSelectedFill else palette.chipFill)
-            .border(1.dp, palette.glassBorder, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-    ) {
-        Text(
-            label,
-            color = if (selected) palette.textPrimary else palette.textSecondary,
-            fontSize = 14.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        )
-    }
+    // 统一走 theme 层的玻璃胶囊：选中态 = 更亮更实的玻璃面 + 半粗文字（风格对照 §2）。
+    GlassChip(label = label, selected = selected, onClick = onClick)
 }
 
 @Composable
