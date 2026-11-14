@@ -187,6 +187,12 @@ fun GlassCard(
  * 选中 = 更亮更实的玻璃面（`chipSelectedFill`）+ 半粗主文字；
  * 未选中 = 更透的玻璃面（`chipFill`）+ 次要文字。**绝不用墨色实底**。
  * 填充只画一次（[glassBackground] 内），不再叠加 `background(fill)` 覆盖 sheen 与描边。
+ *
+ * 【胶囊按文字宽度收缩】内容 Box 不挂 `fillMaxWidth()`：外层 [GlassLayers] 会收到
+ * Row / Column 给的可用宽度上界，若填满，Row 里第一颗 chip 会吃掉整行剩余宽度、
+ * Column 里的 chip 会变成通栏，破坏灯影的横向胶囊排布。外层 Box 默认不向子级传递
+ * 最小宽度约束，去掉它后胶囊就是「文字 + 18dp 左右内边距」，点击区仍是整颗胶囊；
+ * 需要定宽时由调用方显式传 `modifier`。
  */
 @Composable
 fun GlassChip(
@@ -205,7 +211,6 @@ fun GlassChip(
     ) {
         Box(
             Modifier
-                .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(horizontal = 18.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
